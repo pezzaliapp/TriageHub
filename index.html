@@ -878,6 +878,62 @@
   }
   footer.app-footer a { color: var(--text-secondary); text-decoration: none; }
   footer.app-footer a:hover { color: var(--accent); }
+
+  /* ===== Export dialog v1.2.5 ===== */
+  .export-options { display: flex; flex-direction: column; gap: 10px; }
+  .export-option {
+    display: flex; flex-direction: column; gap: 4px;
+    width: 100%;
+    text-align: left;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    color: var(--text);
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color .15s ease, transform .05s ease, background .15s ease;
+  }
+  .export-option:hover { border-color: var(--accent); background: var(--bg-soft, rgba(0,0,0,0.02)); }
+  .export-option:active { transform: translateY(1px); }
+  .export-option-title { font-size: 15px; font-weight: 600; }
+  .export-option-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+  .export-option--primary {
+    border-color: var(--accent);
+    border-width: 2px;
+    background: rgba(0, 122, 255, 0.04);
+  }
+  .export-option--primary .export-option-title { color: var(--accent); }
+  .export-option--compact { padding: 10px 14px; }
+  .export-option--compact .export-option-title { font-size: 14px; font-weight: 500; }
+  .export-advanced { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .export-advanced-summary {
+    cursor: pointer;
+    font-size: 14px; font-weight: 500;
+    color: var(--text-secondary);
+    padding: 6px 0;
+    list-style: none;
+    user-select: none;
+  }
+  .export-advanced-summary::-webkit-details-marker { display: none; }
+  .export-advanced-summary::before { content: "▸ "; display: inline-block; transition: transform .15s ease; }
+  .export-advanced[open] .export-advanced-summary::before { transform: rotate(90deg); }
+  .export-advanced-desc { margin: 6px 0 12px; }
+
+  /* ===== PDF export (print) — applies only inside the print iframe ===== */
+  @media print {
+    @page { margin: 18mm 16mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #111; line-height: 1.5; font-size: 11pt; }
+    h1 { font-size: 22pt; margin: 0 0 8pt; }
+    h2 { font-size: 15pt; margin: 16pt 0 6pt; page-break-after: avoid; }
+    h3 { font-size: 12pt; margin: 10pt 0 4pt; page-break-after: avoid; }
+    p, li { font-size: 10.5pt; margin: 4pt 0; }
+    code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9.5pt; background: #f4f4f5; padding: 1pt 4pt; border-radius: 3pt; }
+    pre { background: #f4f4f5; padding: 8pt; border-radius: 4pt; overflow-x: auto; }
+    hr { border: 0; border-top: 1px solid #ccc; margin: 14pt 0; }
+    ul, ol { padding-left: 18pt; }
+    a { color: #0a58ca; text-decoration: none; }
+  }
 </style>
 </head>
 <body>
@@ -1035,12 +1091,38 @@
     <button class="dialog-close" data-close="dlg-export">×</button>
   </div>
   <div class="dialog-body">
-    <p class="small" style="margin-bottom:14px" data-i18n="exportIntro">Salva i tuoi dati in un file. Il backup JSON è completo. Markdown e CSV sono leggibili da chiunque.</p>
-    <div class="row-end" style="justify-content:flex-start; flex-wrap:wrap">
-      <button class="btn primary" id="exp-json">📦 <span data-i18n="exportJson">Backup completo (JSON)</span></button>
-      <button class="btn" id="exp-md">📝 <span data-i18n="exportMd">Report (Markdown)</span></button>
-      <button class="btn" id="exp-csv">📊 <span data-i18n="exportCsv">Tabella (CSV)</span></button>
+    <p class="small" style="margin-bottom:14px" data-i18n="exportIntro">Salva il tuo report in un file. Scegli il formato che preferisci.</p>
+    <div class="export-options">
+      <button class="export-option export-option--primary" id="exp-pdf">
+        <span class="export-option-title" data-i18n="exportPDF">📄 PDF (consigliato)</span>
+        <span class="export-option-desc" data-i18n="exportPDFDesc">Documento stampabile, leggibile su qualsiasi dispositivo. Apre la finestra di stampa: scegli "Salva come PDF".</span>
+      </button>
+      <button class="export-option" id="exp-word">
+        <span class="export-option-title" data-i18n="exportWord">📝 Word</span>
+        <span class="export-option-desc" data-i18n="exportWordDesc">File modificabile (.rtf) compatibile con Microsoft Word, Pages, LibreOffice.</span>
+      </button>
+      <button class="export-option" id="exp-txt">
+        <span class="export-option-title" data-i18n="exportTXT">📃 Testo semplice</span>
+        <span class="export-option-desc" data-i18n="exportTXTDesc">File .txt leggibile ovunque, anche dal Blocco note.</span>
+      </button>
     </div>
+    <details class="export-advanced">
+      <summary class="export-advanced-summary">
+        <span data-i18n="exportAdvanced">🔧 Avanzato (per sviluppatori)</span>
+      </summary>
+      <p class="small export-advanced-desc" data-i18n="exportAdvancedDesc">Formati tecnici per backup completi e integrazioni.</p>
+      <div class="export-options">
+        <button class="export-option export-option--compact" id="exp-json">
+          <span class="export-option-title" data-i18n="exportJSONLabel">📦 Backup completo (JSON)</span>
+        </button>
+        <button class="export-option export-option--compact" id="exp-csv">
+          <span class="export-option-title" data-i18n="exportCSVLabel">📊 Tabella (CSV per Excel)</span>
+        </button>
+        <button class="export-option export-option--compact" id="exp-md">
+          <span class="export-option-title" data-i18n="exportMDLabel">📝 Report (Markdown)</span>
+        </button>
+      </div>
+    </details>
   </div>
 </dialog>
 
@@ -1204,7 +1286,15 @@ const I18N = {
     dropJson: "Trascina qui un file JSON",
     jsonReplace: "Sostituisci tutti i dati esistenti (altrimenti aggiunge)",
     exportTitle: "Esporta",
-    exportIntro: "Salva i tuoi dati in un file. Il backup JSON è completo. Markdown e CSV sono leggibili da chiunque.",
+    exportIntro: "Salva il tuo report in un file. Scegli il formato che preferisci.",
+    exportPDF: "📄 PDF (consigliato)", exportPDFDesc: "Documento stampabile, leggibile su qualsiasi dispositivo. Apre la finestra di stampa: scegli \"Salva come PDF\".",
+    exportWord: "📝 Word", exportWordDesc: "File modificabile (.rtf) compatibile con Microsoft Word, Pages, LibreOffice.",
+    exportTXT: "📃 Testo semplice", exportTXTDesc: "File .txt leggibile ovunque, anche dal Blocco note.",
+    exportAdvanced: "🔧 Avanzato (per sviluppatori)",
+    exportAdvancedDesc: "Formati tecnici per backup completi e integrazioni.",
+    exportJSONLabel: "📦 Backup completo (JSON)",
+    exportCSVLabel: "📊 Tabella (CSV per Excel)",
+    exportMDLabel: "📝 Report (Markdown)",
     exportJson: "Backup completo (JSON)", exportMd: "Report (Markdown)", exportCsv: "Tabella (CSV)",
     categoriesTitle: "Gestisci categorie",
     categoriesIntro: "Le categorie raggruppano i tuoi item. Eliminandone una, gli item resteranno ma senza categoria.",
@@ -1227,6 +1317,9 @@ const I18N = {
     jsonInvalid: "⚠️ JSON non valido", jsonUnknown: "⚠️ Formato JSON non riconosciuto",
     csvImported: itm => `✓ ${itm} item importati dal CSV`, jsonImported: "✓ Import JSON completato",
     backupSaved: "✓ Backup JSON scaricato", mdSaved: "✓ Report markdown scaricato", csvSaved: "✓ Tabella CSV scaricata",
+    pdfPrepared: "✓ Apro la finestra di stampa: scegli \"Salva come PDF\"",
+    wordSaved: "✓ Documento Word scaricato",
+    txtSaved: "✓ Testo scaricato",
     nothingToExport: "Nessun dato da esportare", allCleared: "✓ Tutto cancellato",
     storageFull: "⚠️ Spazio esaurito sul dispositivo",
     catManageHint: "Gestisci le categorie dal pulsante 🗂 in toolbar.",
@@ -1270,7 +1363,7 @@ const I18N = {
     cleanupDisclaimerTitle: "📂 Pulizia file & Desktop",
     cleanupDisclaimerConfirm: "Ho capito, procedi",
     cleanupDisclaimerDontShow: "Non mostrare più questo messaggio",
-    cleanupBanner: "💡 <strong>Promemoria</strong>: TriageHub non sposta i file da solo. Le scelte qui sono marcature per il report finale. Quando hai finito di smistare, clicca <strong>↑ Esporta</strong> → <strong>Markdown</strong>: il report ti guiderà passo-passo nello spostamento e cancellazione dei file sul tuo computer."
+    cleanupBanner: "💡 <strong>Promemoria</strong>: TriageHub non sposta i file da solo. Le scelte qui sono marcature per il report finale. Quando hai finito di smistare, clicca <strong>↑ Esporta</strong> → <strong>📄 PDF</strong>: il report ti guiderà passo-passo nello spostamento e cancellazione dei file sul tuo computer."
   },
   en: {
     subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
@@ -1297,7 +1390,15 @@ const I18N = {
     dropJson: "Drop a JSON file here",
     jsonReplace: "Replace all existing data (otherwise append)",
     exportTitle: "Export",
-    exportIntro: "Save your data to a file. The JSON backup is complete. Markdown and CSV are universally readable.",
+    exportIntro: "Save your report as a file. Pick the format that suits you.",
+    exportPDF: "📄 PDF (recommended)", exportPDFDesc: "Printable document, readable on any device. Opens the print dialog: pick \"Save as PDF\".",
+    exportWord: "📝 Word", exportWordDesc: "Editable file (.rtf), compatible with Microsoft Word, Pages, LibreOffice.",
+    exportTXT: "📃 Plain text", exportTXTDesc: "A .txt file readable anywhere, even Notepad.",
+    exportAdvanced: "🔧 Advanced (for developers)",
+    exportAdvancedDesc: "Technical formats for full backups and integrations.",
+    exportJSONLabel: "📦 Full backup (JSON)",
+    exportCSVLabel: "📊 Table (CSV for Excel)",
+    exportMDLabel: "📝 Report (Markdown)",
     exportJson: "Full backup (JSON)", exportMd: "Report (Markdown)", exportCsv: "Table (CSV)",
     categoriesTitle: "Manage categories",
     categoriesIntro: "Categories group your items. If you delete one, items stay but become uncategorized.",
@@ -1320,6 +1421,9 @@ const I18N = {
     jsonInvalid: "⚠️ Invalid JSON", jsonUnknown: "⚠️ Unrecognized JSON format",
     csvImported: itm => `✓ ${itm} items imported from CSV`, jsonImported: "✓ JSON import complete",
     backupSaved: "✓ JSON backup downloaded", mdSaved: "✓ Markdown report downloaded", csvSaved: "✓ CSV table downloaded",
+    pdfPrepared: "✓ Opening the print dialog: choose \"Save as PDF\"",
+    wordSaved: "✓ Word document downloaded",
+    txtSaved: "✓ Text file downloaded",
     nothingToExport: "Nothing to export", allCleared: "✓ All cleared",
     storageFull: "⚠️ Device storage full",
     catManageHint: "Manage categories from the 🗂 toolbar button.",
@@ -1363,7 +1467,7 @@ const I18N = {
     cleanupDisclaimerTitle: "📂 File & Desktop cleanup",
     cleanupDisclaimerConfirm: "Got it, proceed",
     cleanupDisclaimerDontShow: "Don't show this message again",
-    cleanupBanner: "💡 <strong>Reminder</strong>: TriageHub doesn't move files for you. Your choices here are markers for the final report. When done sorting, click <strong>↑ Export</strong> → <strong>Markdown</strong>: the report will guide you step-by-step through moving and deleting files on your computer."
+    cleanupBanner: "💡 <strong>Reminder</strong>: TriageHub doesn't move files for you. Your choices here are markers for the final report. When done sorting, click <strong>↑ Export</strong> → <strong>📄 PDF</strong>: the report will guide you step-by-step through moving and deleting files on your computer."
   }
 };
 
@@ -1613,8 +1717,8 @@ const MICRO_GUIDES = {
           body: "Clicca il bottone qui sotto: si aprirà una finestra del Mac. Vai sul Desktop, seleziona i file (anche tutti insieme con Cmd+A), conferma. L'app legge nome e dimensione di ogni file." },
         { emoji: '🎯', title: 'Smista in 3 stati',
           body: 'Per ogni file clicca uno dei 3 stati:<br>📌 <strong>Tieni</strong> — i file che servono al loro posto<br>🗄️ <strong>Archivia</strong> — i file da spostare in altre cartelle<br>🗑️ <strong>Cestina</strong> — i file da buttare via' },
-        { emoji: '📋', title: 'Esporta il report e agisci',
-          body: "Quando hai finito, clicca <strong>↑ Esporta</strong> → Report Markdown. Apri il Finder e segui il report: sposta gli 'Archivia' nelle cartelle giuste, butta i 'Cestina' nel Cestino del Mac." }
+        { emoji: '📋', title: 'Esporta il report PDF e agisci',
+          body: "Quando hai finito, clicca <strong>↑ Esporta</strong> → <strong>📄 PDF</strong>. Si apre la finestra di stampa: scegli <em>Salva come PDF</em>. Apri il PDF e segui le istruzioni passo-passo: sposta gli 'Archivia' nelle cartelle giuste, butta i 'Cestina' nel Cestino del Mac." }
       ],
       tip: '💡 In 15 minuti il tuo Desktop torna pulito. 🔒 I file restano dove sono — TriageHub non sposta nulla.',
       actions: [
@@ -1631,7 +1735,7 @@ const MICRO_GUIDES = {
         { emoji: '🎯', title: 'Smista in 3 stati',
           body: '✉️ <strong>Da rispondere</strong> — meritano una risposta tua<br>⏳ <strong>In attesa</strong> — aspetti tu una risposta da qualcuno<br>📦 <strong>Archiviata</strong> — letta, niente da fare' },
         { emoji: '📋', title: 'Usa il report come to-do',
-          body: "Esporta in Markdown: la lista 'Da rispondere' è la tua to-do della giornata." }
+          body: "Esporta in <strong>📄 PDF</strong>: la lista 'Da rispondere' è la tua to-do della giornata, da stampare o tenere aperta sul telefono." }
       ],
       tip: '💡 Funziona meglio se lo fai una volta a settimana, non ogni giorno.',
       actions: [
@@ -1752,8 +1856,8 @@ const MICRO_GUIDES = {
           body: "Click the button below: a system dialog opens. Go to your Desktop, select the files (Cmd+A picks all of them), confirm. The app reads name and size of each file." },
         { emoji: '🎯', title: 'Sort into 3 states',
           body: 'For each file click one of the 3 states:<br>📌 <strong>Keep</strong> — files that belong where they are<br>🗄️ <strong>Archive</strong> — files to move into proper folders<br>🗑️ <strong>Trash</strong> — files to throw away' },
-        { emoji: '📋', title: 'Export the report and act',
-          body: "When you're done, click <strong>↑ Export</strong> → Markdown report. Open Finder and follow the report: move 'Archive' files to the right folders, drop 'Trash' files into the Bin." }
+        { emoji: '📋', title: 'Export the PDF report and act',
+          body: "When you're done, click <strong>↑ Export</strong> → <strong>📄 PDF</strong>. The print dialog opens: choose <em>Save as PDF</em>. Open the PDF and follow the step-by-step instructions: move 'Archive' files to proper folders, drop 'Trash' files into the Bin." }
       ],
       tip: '💡 In 15 minutes your Desktop is clean. 🔒 Files stay where they are — TriageHub never moves anything.',
       actions: [
@@ -1770,7 +1874,7 @@ const MICRO_GUIDES = {
         { emoji: '🎯', title: 'Sort into 3 states',
           body: '✉️ <strong>To reply</strong> — they need an answer from you<br>⏳ <strong>Waiting</strong> — you are waiting on someone<br>📦 <strong>Archived</strong> — read, nothing to do' },
         { emoji: '📋', title: 'Use the report as a to-do',
-          body: "Export to Markdown: the 'To reply' list is your to-do for the day." }
+          body: "Export to <strong>📄 PDF</strong>: the 'To reply' list is your to-do for the day, ready to print or keep on your phone." }
       ],
       tip: '💡 Works best once a week, not every day.',
       actions: [
@@ -1952,13 +2056,14 @@ const MANUAL_HTML = {
 </ul>
 
 <h4>Step 4: esporta il report</h4>
-<p>Click <strong>↑ Esporta</strong> → <strong>Markdown</strong>. Si scarica un file <code>.md</code> con istruzioni passo-passo per il tuo sistema operativo.</p>
+<p>Click <strong>↑ Esporta</strong> → <strong>📄 PDF (consigliato)</strong>. Si apre la finestra di stampa del browser: scegli <em>Salva come PDF</em>. Hai un documento stampabile, leggibile su qualsiasi telefono o tablet, anche offline.</p>
+<p>Se preferisci, puoi anche scaricare il report come <strong>📝 Word</strong> (modificabile in Word, Pages, LibreOffice) o <strong>📃 Testo semplice</strong>.</p>
 
 <h4>Step 5: ESEGUI nel sistema operativo</h4>
-<p><strong>⚠️ Importante</strong>: TriageHub non sposta né cestina i file — è il browser, non un'applicazione di sistema. Il report Markdown ti dice esattamente cosa fare:</p>
+<p><strong>⚠️ Importante</strong>: TriageHub non sposta né cestina i file — è il browser, non un'applicazione di sistema. Il report PDF ti dice esattamente cosa fare:</p>
 <ul>
 <li>Apri il file manager (Finder su Mac, Esplora File su Windows, file manager su Linux)</li>
-<li>Apri accanto il report con un editor di testo</li>
+<li>Tieni il PDF aperto su una metà schermo (o sul telefono accanto al computer)</li>
 <li>Per ogni sezione del report, esegui le azioni indicate</li>
 </ul>
 <p>In 15-20 minuti il Desktop è pulito.</p>` },
@@ -1995,11 +2100,17 @@ const MANUAL_HTML = {
 <h4>↓ Importare JSON</h4>
 <p>I file JSON che TriageHub esporta come backup possono essere re-importati per ripristinare i dati. Click su <strong>↓ Importa</strong> e scegli il file .json.</p>
 <h4>↑ Esportare</h4>
-<p>3 formati disponibili:</p>
+<p>Tre formati per chiunque, più tre formati tecnici nel sottomenu <em>Avanzato</em>:</p>
+<ul>
+<li><strong>📄 PDF (consigliato)</strong>: documento stampabile, leggibile da qualsiasi dispositivo. Apre la finestra di stampa: scegli <em>Salva come PDF</em>.</li>
+<li><strong>📝 Word</strong>: file <code>.rtf</code> modificabile in Word, Pages, LibreOffice.</li>
+<li><strong>📃 Testo semplice</strong>: file <code>.txt</code> apribile ovunque, anche dal Blocco note.</li>
+</ul>
+<p>Nel sottomenu <strong>🔧 Avanzato</strong> trovi i formati per backup e integrazioni:</p>
 <ul>
 <li><strong>JSON</strong>: backup completo (tutti i workspace). Usalo per fare backup periodici.</li>
-<li><strong>Markdown</strong>: report leggibile, organizzato per stato. Usalo come to-do o per condividere con altri.</li>
-<li><strong>CSV</strong>: tabella, una riga per item. Usalo per re-importare in Excel o altri tool.</li>
+<li><strong>CSV</strong>: tabella, una riga per item. Per re-importare in Excel o altri tool.</li>
+<li><strong>Markdown</strong>: lo stesso testo del PDF in formato sorgente, per chi vuole modificarlo o pubblicarlo su un blog.</li>
 </ul>` },
 
     { id: 's7', title: 'Privacy e backup', body:
@@ -2085,13 +2196,14 @@ const MANUAL_HTML = {
 </ul>
 
 <h4>Step 4: export the report</h4>
-<p>Click <strong>↑ Export</strong> → <strong>Markdown</strong>. A <code>.md</code> file is downloaded with step-by-step instructions for your operating system.</p>
+<p>Click <strong>↑ Export</strong> → <strong>📄 PDF (recommended)</strong>. The browser print dialog opens: pick <em>Save as PDF</em>. You get a printable document, readable on any phone or tablet, even offline.</p>
+<p>If you prefer, you can also download it as <strong>📝 Word</strong> (editable in Word, Pages, LibreOffice) or <strong>📃 plain text</strong>.</p>
 
 <h4>Step 5: EXECUTE in the operating system</h4>
-<p><strong>⚠️ Important</strong>: TriageHub doesn't move or trash files — it's the browser, not a system app. The Markdown report tells you exactly what to do:</p>
+<p><strong>⚠️ Important</strong>: TriageHub doesn't move or trash files — it's the browser, not a system app. The PDF report tells you exactly what to do:</p>
 <ul>
 <li>Open the file manager (Finder on Mac, File Explorer on Windows, your file manager on Linux)</li>
-<li>Open the report next to it with a text editor</li>
+<li>Keep the PDF open on half the screen (or on your phone next to the computer)</li>
 <li>For each report section, execute the indicated actions</li>
 </ul>
 <p>In 15-20 minutes the Desktop is clean.</p>` },
@@ -2128,11 +2240,17 @@ const MANUAL_HTML = {
 <h4>↓ Import JSON</h4>
 <p>JSON files exported by TriageHub as backup can be re-imported to restore data. Click <strong>↓ Import</strong> and pick the .json file.</p>
 <h4>↑ Export</h4>
-<p>3 formats available:</p>
+<p>Three formats anyone can read, plus three technical formats under the <em>Advanced</em> submenu:</p>
+<ul>
+<li><strong>📄 PDF (recommended)</strong>: printable document, readable on any device. Opens the print dialog: pick <em>Save as PDF</em>.</li>
+<li><strong>📝 Word</strong>: <code>.rtf</code> file, editable in Word, Pages, LibreOffice.</li>
+<li><strong>📃 Plain text</strong>: <code>.txt</code> file, opens anywhere, even Notepad.</li>
+</ul>
+<p>In the <strong>🔧 Advanced</strong> submenu you find formats for backup and integrations:</p>
 <ul>
 <li><strong>JSON</strong>: full backup (all workspaces). Use it for periodic backups.</li>
-<li><strong>Markdown</strong>: readable report, grouped by state. Use it as to-do or to share.</li>
-<li><strong>CSV</strong>: table, one row per item. Use it to re-import into Excel or other tools.</li>
+<li><strong>CSV</strong>: table, one row per item. To re-import into Excel or other tools.</li>
+<li><strong>Markdown</strong>: same text as the PDF in source format, for those who want to edit it or publish it on a blog.</li>
 </ul>` },
 
     { id: 's7', title: 'Privacy and backup', body:
@@ -4016,7 +4134,7 @@ function buildCleanupMarkdown(ws) {
     }
 
     md += `## ✅ Quando hai finito\n\n1. Verifica che i file "Da tenere" siano ancora sul Desktop\n2. Verifica che le cartelle di archivio abbiano i file giusti\n3. Svuota il Cestino per liberare spazio\n4. Torna su TriageHub se vuoi smistare un'altra cartella\n\n---\n\n`;
-    md += `🔒 **Privacy**: TriageHub ha letto solo i metadata dei tuoi file (nome, dimensione, tipo). Niente è stato caricato online, niente è stato letto del contenuto.\n\nGenerato da TriageHub v1.2.4 il ${date}\nhttps://www.alessandropezzali.it/TriageHub/\n`;
+    md += `🔒 **Privacy**: TriageHub ha letto solo i metadata dei tuoi file (nome, dimensione, tipo). Niente è stato caricato online, niente è stato letto del contenuto.\n\nGenerato da TriageHub v1.2.5 il ${date}\nhttps://www.alessandropezzali.it/TriageHub/\n`;
   } else {
     // EN
     md += `# File & Desktop cleanup — ${date}\n\n`;
@@ -4089,23 +4207,24 @@ function buildCleanupMarkdown(ws) {
     }
 
     md += `## ✅ When you're done\n\n1. Check that "To keep" files are still on the Desktop\n2. Check that archive folders received the right files\n3. Empty the Trash to reclaim space\n4. Come back to TriageHub for another folder\n\n---\n\n`;
-    md += `🔒 **Privacy**: TriageHub only read the metadata of your files (name, size, type). Nothing was uploaded, nothing was read of the content.\n\nGenerated by TriageHub v1.2.4 on ${date}\nhttps://www.alessandropezzali.it/TriageHub/\n`;
+    md += `🔒 **Privacy**: TriageHub only read the metadata of your files (name, size, type). Nothing was uploaded, nothing was read of the content.\n\nGenerated by TriageHub v1.2.5 on ${date}\nhttps://www.alessandropezzali.it/TriageHub/\n`;
   }
   return { md, dateShort };
 }
 
-// Markdown = report del solo workspace attivo. Branch dedicato per template "cleanup".
-document.getElementById('exp-md').addEventListener('click', () => {
-  const ws = activeWorkspace();
-  if (!ws) return;
+// Costruisce il markdown del workspace attivo. Per il template "cleanup"
+// delega a buildCleanupMarkdown, altrimenti genera il report generico.
+// Ritorna { md, filename } usato da tutti gli export user-friendly (PDF/Word/TXT/MD).
+function buildMarkdownReport(ws) {
+  const dateShort = new Date().toISOString().slice(0,10);
 
   if (ws.templateId === 'cleanup') {
-    const { md, dateShort } = buildCleanupMarkdown(ws);
-    downloadFile(md, `triagehub-cleanup-${dateShort}.md`, 'text/markdown');
-    toast(t('mdSaved')); closeDialog('dlg-export');
-    return;
+    const { md } = buildCleanupMarkdown(ws);
+    return { md, filename: `triagehub-cleanup-${dateShort}` };
   }
 
+  const isIT = currentLang === 'it';
+  const date = new Date().toLocaleString(isIT ? 'it-IT' : 'en-US');
   const groups = {};
   ws.statuses.forEach(s => groups[s.id] = []);
   groups['__none__'] = [];
@@ -4114,18 +4233,19 @@ document.getElementById('exp-md').addEventListener('click', () => {
     if (groups[st]) groups[st].push(it);
   });
 
-  let md = `# TriageHub — ${currentLang === 'it' ? 'Report' : 'Report'}\n\n_${currentLang === 'it' ? 'Esportato il' : 'Exported on'} ${new Date().toLocaleString(currentLang === 'it' ? 'it-IT' : 'en-US')}_\n\n`;
-  md += `**${currentLang === 'it' ? 'Totale' : 'Total'}**: ${ws.items.length} ${t('items')}\n\n`;
+  let md = `# TriageHub — Report\n\n_${isIT ? 'Esportato il' : 'Exported on'} ${date}_\n\n`;
+  md += `**${isIT ? 'Workspace' : 'Workspace'}**: ${ws.emoji || ''} ${ws.name}\n\n`;
+  md += `**${isIT ? 'Totale' : 'Total'}**: ${ws.items.length} ${t('items')}\n\n---\n\n`;
   ws.statuses.forEach(s => {
     md += `## ${s.emoji} ${localized(s.label)} (${groups[s.id].length})\n\n`;
-    if (groups[s.id].length === 0) { md += `_${currentLang === 'it' ? 'Nessuno' : 'None'}._\n\n`; return; }
+    if (groups[s.id].length === 0) { md += `_${isIT ? 'Nessuno' : 'None'}._\n\n`; return; }
     groups[s.id].forEach(it => {
       const cat = findCat(it.cat);
-      md += `### ${it.name}\n`;
+      md += `### ${it.name}\n\n`;
       if (it.desc) md += `${it.desc}\n\n`;
-      if (cat) md += `- ${currentLang === 'it' ? 'Categoria' : 'Category'}: ${cat.emoji || ''} ${localized(cat.name)}\n`;
-      if (it.tag) md += `- ${currentLang === 'it' ? 'Tag' : 'Tag'}: ${it.tag}\n`;
-      if (it.value !== null && it.value !== undefined && it.value !== '') md += `- ${currentLang === 'it' ? 'Valore' : 'Value'}: ${fmtNumber(it.value)} ${ws.valueUnit}\n`;
+      if (cat) md += `- ${isIT ? 'Categoria' : 'Category'}: ${cat.emoji || ''} ${localized(cat.name)}\n`;
+      if (it.tag) md += `- ${isIT ? 'Tag' : 'Tag'}: ${it.tag}\n`;
+      if (it.value !== null && it.value !== undefined && it.value !== '') md += `- ${isIT ? 'Valore' : 'Value'}: ${fmtNumber(it.value)} ${ws.valueUnit}\n`;
       (it.links || []).forEach(l => md += `- ${l.label}: ${l.url}\n`);
       md += '\n';
     });
@@ -4133,9 +4253,252 @@ document.getElementById('exp-md').addEventListener('click', () => {
   if (groups['__none__'].length) {
     md += `## ⚪ ${t('noChoice')} (${groups['__none__'].length})\n\n`;
     groups['__none__'].forEach(it => md += `- ${it.name}\n`);
+    md += '\n';
   }
+  md += `---\n\n${isIT ? 'Generato da' : 'Generated by'} TriageHub v1.2.5 — https://www.alessandropezzali.it/TriageHub/\n`;
+  return { md, filename: `triagehub-${dateShort}` };
+}
 
-  downloadFile(md, `triagehub-${new Date().toISOString().slice(0,10)}.md`, 'text/markdown');
+// Inline markdown → HTML (bold/italic/code/links). Sicuro contro injection: l'input
+// non viene da utenti remoti, ma escapiamo comunque i tag HTML grezzi.
+function inlineMdToHtml(s) {
+  s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  return s;
+}
+
+// Markdown → HTML (block-level). Output usato dentro l'iframe di stampa per il PDF.
+function markdownToHTML(md) {
+  const lines = md.split('\n');
+  let html = '';
+  let inList = false;
+  const closeList = () => { if (inList) { html += '</ul>\n'; inList = false; } };
+  for (let raw of lines) {
+    const line = raw.replace(/\s+$/, '');
+    if (line === '') { closeList(); html += '\n'; continue; }
+    if (line === '---') { closeList(); html += '<hr>\n'; continue; }
+    let m;
+    if ((m = line.match(/^### (.+)$/))) { closeList(); html += `<h3>${inlineMdToHtml(m[1])}</h3>\n`; continue; }
+    if ((m = line.match(/^## (.+)$/)))  { closeList(); html += `<h2>${inlineMdToHtml(m[1])}</h2>\n`; continue; }
+    if ((m = line.match(/^# (.+)$/)))   { closeList(); html += `<h1>${inlineMdToHtml(m[1])}</h1>\n`; continue; }
+    if ((m = line.match(/^- (.+)$/)))   {
+      if (!inList) { html += '<ul>\n'; inList = true; }
+      html += `<li>${inlineMdToHtml(m[1])}</li>\n`;
+      continue;
+    }
+    if ((m = line.match(/^\d+\.\s+(.+)$/))) {
+      closeList();
+      html += `<p>${inlineMdToHtml(line)}</p>\n`;
+      continue;
+    }
+    closeList();
+    html += `<p>${inlineMdToHtml(line)}</p>\n`;
+  }
+  closeList();
+  return html;
+}
+
+// Markdown → testo semplice. Mantiene una struttura leggibile in un .txt.
+function markdownToText(md) {
+  return md
+    .split('\n')
+    .map(line => {
+      let m;
+      if ((m = line.match(/^# (.+)$/))) {
+        const t = m[1];
+        return t.toUpperCase() + '\n' + '='.repeat(Math.min(t.length, 60));
+      }
+      if ((m = line.match(/^## (.+)$/))) {
+        const t = m[1];
+        return '\n' + t + '\n' + '-'.repeat(Math.min(t.length, 60));
+      }
+      if ((m = line.match(/^### (.+)$/))) return '\n' + m[1] + '\n';
+      if (line === '---') return '------------------------------------------------------------';
+      // strip emphasis and code
+      return line
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/(^|[^_])_([^_\n]+)_/g, '$1$2')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)');
+    })
+    .join('\n');
+}
+
+// Escape RTF: \\ { } e tutti i caratteri non-ASCII (incluso emoji con surrogate pairs).
+function rtfEscape(str) {
+  let out = '';
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    const code = str.charCodeAt(i);
+    if (ch === '\\') { out += '\\\\'; continue; }
+    if (ch === '{')  { out += '\\{';  continue; }
+    if (ch === '}')  { out += '\\}';  continue; }
+    if (code < 128)  { out += ch;     continue; }
+    // RTF \uN? — N è un signed 16-bit. Per code > 32767 usiamo offset.
+    const signed = code > 32767 ? code - 65536 : code;
+    out += '\\u' + signed + '?';
+  }
+  return out;
+}
+
+// Markdown → RTF (Word-compatibile). Solo block-level: heading, lista, paragrafi, hr.
+function markdownToRTF(md) {
+  const header = '{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1040\n{\\fonttbl{\\f0\\fnil\\fcharset0 Helvetica;}{\\f1\\fmodern\\fcharset0 Menlo;}}\n\\viewkind4\\uc1\\pard\\sa180\\sl276\\slmult1\\f0\\fs22 ';
+  const footer = '\n}';
+  const inlineFmt = s => {
+    // strip inline markdown markers; bold/italic become \b ... \b0 etc.
+    // Order matters: do code first (literal), then bold, then italic, then links.
+    let out = '';
+    let i = 0;
+    while (i < s.length) {
+      // code
+      if (s[i] === '`') {
+        const end = s.indexOf('`', i + 1);
+        if (end > -1) { out += '\\f1 ' + rtfEscape(s.slice(i + 1, end)) + '\\f0 '; i = end + 1; continue; }
+      }
+      // bold
+      if (s[i] === '*' && s[i + 1] === '*') {
+        const end = s.indexOf('**', i + 2);
+        if (end > -1) { out += '\\b ' + rtfEscape(s.slice(i + 2, end)) + '\\b0 '; i = end + 2; continue; }
+      }
+      // italic _x_
+      if (s[i] === '_' && (i === 0 || /\s/.test(s[i - 1]))) {
+        const end = s.indexOf('_', i + 1);
+        if (end > -1 && end - i > 1 && !/\s/.test(s[end - 1])) {
+          out += '\\i ' + rtfEscape(s.slice(i + 1, end)) + '\\i0 '; i = end + 1; continue;
+        }
+      }
+      // link [text](url)
+      if (s[i] === '[') {
+        const close = s.indexOf('](', i + 1);
+        const close2 = close > -1 ? s.indexOf(')', close + 2) : -1;
+        if (close > -1 && close2 > -1) {
+          const text = s.slice(i + 1, close);
+          const url = s.slice(close + 2, close2);
+          out += rtfEscape(text) + ' (' + rtfEscape(url) + ')';
+          i = close2 + 1; continue;
+        }
+      }
+      out += rtfEscape(s[i]);
+      i++;
+    }
+    return out;
+  };
+
+  let body = '';
+  const lines = md.split('\n');
+  let inList = false;
+  const closeList = () => { if (inList) { body += '\\pard\\sa180\\sl276\\slmult1 '; inList = false; } };
+  for (const raw of lines) {
+    const line = raw.replace(/\s+$/, '');
+    if (line === '') { closeList(); body += '\\par '; continue; }
+    if (line === '---') { closeList(); body += '\\par\\brdrb\\brdrs\\brdrw10\\brsp20 \\par '; continue; }
+    let m;
+    if ((m = line.match(/^# (.+)$/)))   { closeList(); body += '\\par\\fs36\\b ' + inlineFmt(m[1]) + '\\b0\\fs22\\par '; continue; }
+    if ((m = line.match(/^## (.+)$/)))  { closeList(); body += '\\par\\fs28\\b ' + inlineFmt(m[1]) + '\\b0\\fs22\\par '; continue; }
+    if ((m = line.match(/^### (.+)$/))) { closeList(); body += '\\par\\fs24\\b ' + inlineFmt(m[1]) + '\\b0\\fs22\\par '; continue; }
+    if ((m = line.match(/^- (.+)$/))) {
+      if (!inList) { body += '\\pard\\fi-300\\li600\\sa120 '; inList = true; }
+      body += '\\bullet  ' + inlineFmt(m[1]) + '\\par ';
+      continue;
+    }
+    closeList();
+    body += inlineFmt(line) + '\\par ';
+  }
+  closeList();
+  return header + body + footer;
+}
+
+// PDF = stampa via iframe nascosto. L'utente sceglie "Salva come PDF" nella finestra
+// di dialogo nativa del browser. Niente librerie, niente upload.
+function exportPDF(ws) {
+  const { md, filename } = buildMarkdownReport(ws);
+  const html = markdownToHTML(md);
+  const isIT = currentLang === 'it';
+  const title = isIT ? 'TriageHub — Report' : 'TriageHub — Report';
+
+  // CSS inline coerente con il @media print del documento principale, ma duplicato
+  // qui perché l'iframe ha il suo document e non eredita gli stili del parent.
+  const printCss = `
+    @page { margin: 18mm 16mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: #111; line-height: 1.5; font-size: 11pt; padding: 0; margin: 0; }
+    h1 { font-size: 22pt; margin: 0 0 8pt; }
+    h2 { font-size: 15pt; margin: 16pt 0 6pt; page-break-after: avoid; }
+    h3 { font-size: 12pt; margin: 10pt 0 4pt; page-break-after: avoid; }
+    p, li { font-size: 10.5pt; margin: 4pt 0; }
+    code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9.5pt; background: #f4f4f5; padding: 1pt 4pt; border-radius: 3pt; }
+    hr { border: 0; border-top: 1px solid #ccc; margin: 14pt 0; }
+    ul, ol { padding-left: 18pt; }
+    a { color: #0a58ca; text-decoration: none; }
+    em { font-style: italic; }
+    strong { font-weight: 600; }
+  `;
+  const docHTML = `<!doctype html><html><head><meta charset="utf-8"><title>${title} — ${ws.name}</title><style>${printCss}</style></head><body>${html}</body></html>`;
+
+  // Crea iframe nascosto, carica il documento, attendi onload, poi stampa.
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+  const cleanup = () => {
+    setTimeout(() => { try { document.body.removeChild(iframe); } catch (_){} }, 1000);
+  };
+  iframe.onload = () => {
+    try {
+      // Imposta il titolo che diventerà il nome di default del PDF nel dialog.
+      iframe.contentDocument.title = filename;
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } catch (e) { console.warn('print failed', e); }
+    cleanup();
+  };
+  iframe.srcdoc = docHTML;
+  toast(t('pdfPrepared'));
+  closeDialog('dlg-export');
+}
+
+// Word/RTF: scarica un file .rtf che si apre in Word, Pages, LibreOffice.
+function exportWord(ws) {
+  const { md, filename } = buildMarkdownReport(ws);
+  const rtf = markdownToRTF(md);
+  downloadFile(rtf, `${filename}.rtf`, 'application/rtf');
+  toast(t('wordSaved')); closeDialog('dlg-export');
+}
+
+// Plain text — rimuove i marker markdown, mantiene struttura visiva con underline.
+function exportText(ws) {
+  const { md, filename } = buildMarkdownReport(ws);
+  const txt = markdownToText(md);
+  downloadFile(txt, `${filename}.txt`, 'text/plain');
+  toast(t('txtSaved')); closeDialog('dlg-export');
+}
+
+// User-friendly handlers (v1.2.5).
+document.getElementById('exp-pdf').addEventListener('click', () => {
+  const ws = activeWorkspace(); if (!ws) return;
+  exportPDF(ws);
+});
+document.getElementById('exp-word').addEventListener('click', () => {
+  const ws = activeWorkspace(); if (!ws) return;
+  exportWord(ws);
+});
+document.getElementById('exp-txt').addEventListener('click', () => {
+  const ws = activeWorkspace(); if (!ws) return;
+  exportText(ws);
+});
+
+// Markdown nudo: ora vive nel sottomenu "Avanzato" ma usa lo stesso builder.
+document.getElementById('exp-md').addEventListener('click', () => {
+  const ws = activeWorkspace(); if (!ws) return;
+  const { md, filename } = buildMarkdownReport(ws);
+  downloadFile(md, `${filename}.md`, 'text/markdown');
   toast(t('mdSaved')); closeDialog('dlg-export');
 });
 
