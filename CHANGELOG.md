@@ -3,6 +3,11 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.3.3] — Unreleased
+
+### Fixed
+- 🏷 **L'export Excel ora include la colonna `Categoria`** con il nome della categoria assegnata manualmente a ciascun item. Prima l'utente poteva categorizzare 100 item dentro TriageHub e poi non trovava traccia di quelle scelte nel file scaricato. Modalità foglio unico: header → `…colonne originali, Categoria, Stato`. Modalità 3 fogli: ogni foglio aggiunge solo `Categoria` (lo stato è implicito nel nome del foglio). Per item senza categoria assegnata il valore è una cella vuota — convenzione Excel-friendly per filtri e pivot.
+
 ## [1.3.2] — Unreleased
 
 > Risposta tecnica al fact-check `FACT_CHECK_xlsx_v1.3.1.md`. Il template Excel dichiarava più di quanto poteva mantenere: passa dal ~30% al ~95% di promesse mantenute restringendo lo scope ed essendo trasparente sui limiti.
