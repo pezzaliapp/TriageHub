@@ -3,6 +3,29 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.3.2] — Unreleased
+
+> Risposta tecnica al fact-check `FACT_CHECK_xlsx_v1.3.1.md`. Il template Excel dichiarava più di quanto poteva mantenere: passa dal ~30% al ~95% di promesse mantenute restringendo lo scope ed essendo trasparente sui limiti.
+
+### Changed
+- 🎯 **Scope del template Excel ristretto a file tabellari puliti**: descrizione del template, micro-guida e manuale aggiornati con linee guida esplicite "quando funziona bene / quando NON usarlo". I file con più fogli, formule, titoli prima degli header, totali in mezzo ai dati o celle merge non sono ben supportati e ora vengono segnalati prima dell'import.
+- 📖 **Manuale in-app**: nuovo riquadro giallo "⚠️ Limiti del template Excel" nella sezione 4b "Tutorial Excel" (IT + EN), che elenca i casi non gestiti e suggerisce come pulire il file in Excel prima di caricarlo.
+- 🪧 **Micro-guida xlsx**: due nuovi step iniziali (`🎯 Quando funziona bene` / `⚠️ Quando NON usarlo`) prima dei passi tecnici, IT e EN.
+
+### Added
+- 📑 **Dialog di avviso pre-import** (`dlg-xlsx-warn`): rileva e mostra in un'unica schermata, prima di caricare gli item, queste casistiche:
+  - **Multi-foglio**: indica quanti fogli ci sono e quali (oltre al primo) verranno ignorati
+  - **Formule**: avverte che `=B2*1.22` viene valutato al caricamento e nell'export salvato come valore statico
+  - **Header dubbio**: la prima riga ha < 50% di celle non vuote, oppure contiene numeri/non-stringhe (sintomo di un titolo o di una riga incompleta)
+  L'utente può `Continua comunque` o `Annulla`. Niente più import silenziosi che producono risultati sbagliati senza che l'utente sappia perché.
+- 🔢 **Preservazione tipi numerici nell'export Excel**: `parseXlsxFile` ora usa `XLSX.read({cellDates:true})` + `sheet_to_json({raw:true})` e immagazzina numeri come numeri (non più stringhe). Il roundtrip preserva il `type:'n'` delle celle Excel: prima `Prezzo: 51.25 (number)` diventava `"51.25" (string)` rendendo `=SUM(D:D)` rotto nell'export, ora resta `51.25 (number)`. Le date diventano stringhe `YYYY-MM-DD`.
+- 🛠 **Helper `normalizeXlsxCell`** per la normalizzazione coerente in input: numeri/boolean restano nativi, Date diventa stringa ISO breve, null/undefined diventa stringa vuota.
+- 🧮 **Helper `collectXlsxWarnings`** scansiona il workbook per le 3 casistiche e ritorna un array di stringhe HTML pronte per il dialog.
+
+### Fixed
+- 🐛 `xlsxItemExtraColumns` ora mostra `0` (zero) e altri valori falsy validi che prima venivano filtrati. I numeri vengono formattati con `fmtNumber()` per coerenza con l'item value.
+- 🐛 `syncXlsxCategories` gestisce correttamente valori non-stringa nella colonna categoria (tipicamente numeri).
+
 ## [1.3.1] — Unreleased
 
 ### Fixed

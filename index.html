@@ -923,6 +923,30 @@
   .export-advanced[open] .export-advanced-summary::before { transform: rotate(90deg); }
   .export-advanced-desc { margin: 6px 0 12px; }
 
+  /* ===== Warning box inside in-app manual (v1.3.2) ===== */
+  .warning-box {
+    margin: 14px 0 18px;
+    padding: 14px 16px;
+    background: rgba(255, 159, 10, 0.08);
+    border-left: 4px solid #ff9f0a;
+    border-radius: 8px;
+  }
+  .warning-box > strong { display: block; margin-bottom: 6px; color: var(--text); }
+  .warning-box p { margin: 6px 0; font-size: 14px; line-height: 1.5; }
+  .warning-box ul { margin: 6px 0; padding-left: 22px; font-size: 14px; }
+
+  /* ===== XLSX warning dialog (v1.3.2) ===== */
+  .xlsx-warn-list { display: flex; flex-direction: column; gap: 10px; }
+  .xlsx-warn-list .xlsx-warn-item {
+    padding: 12px 14px;
+    background: rgba(255, 159, 10, 0.08);
+    border: 1px solid rgba(255, 159, 10, 0.3);
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .xlsx-warn-list .xlsx-warn-item strong { color: var(--text); }
+
   /* ===== XLSX item details (v1.3.0) ===== */
   .item-xlsx-details { margin: 6px 0 12px; }
   .item-xlsx-summary {
@@ -1307,6 +1331,23 @@
   </div>
 </dialog>
 
+<!-- DIALOG: Avvisi sul file Excel (v1.3.2) -->
+<dialog id="dlg-xlsx-warn">
+  <div class="dialog-header">
+    <h2 class="dialog-title" id="xlsx-warn-title" data-i18n="xlsxWarnTitle">Verifica prima di importare</h2>
+    <button class="dialog-close" data-close="dlg-xlsx-warn">×</button>
+  </div>
+  <div class="dialog-body">
+    <p class="small" style="margin-bottom:14px" data-i18n="xlsxWarnIntro">Il tuo file ha alcune caratteristiche che TriageHub non gestisce alla perfezione. Leggile prima di continuare:</p>
+    <div id="xlsx-warn-list" class="xlsx-warn-list"></div>
+    <p class="small" style="margin-top:14px; color:var(--text-secondary)" data-i18n="xlsxWarnHint">Se preferisci, annulla, sistema il file in Excel (un foglio solo, niente formule, header in riga 1) e ricaricalo.</p>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn" data-close="dlg-xlsx-warn" id="xlsx-warn-cancel" data-i18n="cancel">Annulla</button>
+    <button class="btn primary" id="xlsx-warn-confirm" data-i18n="xlsxWarnContinue">Continua comunque</button>
+  </div>
+</dialog>
+
 <!-- DIALOG: Esporta Excel organizzato (v1.3.0) -->
 <dialog id="dlg-xlsx-export">
   <div class="dialog-header">
@@ -1410,6 +1451,14 @@ const I18N = {
     xlsxLoaded: n => `✓ ${n} righe importate`,
     xlsxParseError: "⚠️ Impossibile leggere il file. Verifica che sia un .xlsx, .csv o .tsv valido.",
     xlsxLibMissing: "⚠️ Libreria Excel non caricata. Ricarica la pagina.",
+    xlsxWarnTitle: "Verifica prima di importare",
+    xlsxWarnIntro: "Il tuo file ha alcune caratteristiche che TriageHub non gestisce alla perfezione. Leggile prima di continuare:",
+    xlsxWarnHint: "Se preferisci, annulla, sistema il file in Excel (un foglio solo, niente formule, header in riga 1) e ricaricalo.",
+    xlsxWarnContinue: "Continua comunque",
+    xlsxWarnMultiSheet: (n, first, rest) => `<strong>📑 Trovati ${n} fogli</strong>: TriageHub legge solo "<strong>${first}</strong>". I fogli ${rest} verranno ignorati. Se ti servono, salva ogni foglio come file separato.`,
+    xlsxWarnFormulas: "<strong>🧮 Il file contiene formule</strong>: TriageHub valuta le formule al caricamento e salva solo il risultato come valore. All'esportazione le formule non saranno ripristinate. Se servono live, lavora direttamente in Excel.",
+    xlsxWarnHeader: "<strong>🪧 La prima riga non sembra un'intestazione</strong>: TriageHub usa la prima riga come nomi delle colonne. Nel tuo file la riga 1 ha celle vuote o numeri. Se i tuoi header sono in una riga successiva, salva il file con la riga 1 = nomi colonne.",
+    xlsxImportCancelled: "Import annullato",
     xlsxMappingApplied: "✓ Mapping aggiornato",
     xlsxMappingBtn: "🔧 Mapping colonne",
     xlsxExportTitle: "Excel organizzato",
@@ -1540,6 +1589,14 @@ const I18N = {
     xlsxLoaded: n => `✓ ${n} rows imported`,
     xlsxParseError: "⚠️ Couldn't read the file. Make sure it's a valid .xlsx, .csv or .tsv.",
     xlsxLibMissing: "⚠️ Excel library not loaded. Reload the page.",
+    xlsxWarnTitle: "Check before importing",
+    xlsxWarnIntro: "Your file has features TriageHub doesn't handle perfectly. Read these before continuing:",
+    xlsxWarnHint: "If you prefer, cancel, fix the file in Excel (single sheet, no formulas, header on row 1) and reload it.",
+    xlsxWarnContinue: "Continue anyway",
+    xlsxWarnMultiSheet: (n, first, rest) => `<strong>📑 Found ${n} sheets</strong>: TriageHub reads only "<strong>${first}</strong>". Sheets ${rest} will be ignored. If you need them, save each sheet as a separate file.`,
+    xlsxWarnFormulas: "<strong>🧮 The file contains formulas</strong>: TriageHub evaluates formulas at load time and saves only the value. On export, formulas are not restored. If you need them live, work in Excel.",
+    xlsxWarnHeader: "<strong>🪧 The first row doesn't look like a header</strong>: TriageHub uses the first row as column names. In your file row 1 has empty cells or numbers. If your headers are on a later row, save the file with row 1 = column names.",
+    xlsxImportCancelled: "Import cancelled",
     xlsxMappingApplied: "✓ Mapping updated",
     xlsxMappingBtn: "🔧 Column mapping",
     xlsxExportTitle: "Organized Excel",
@@ -1696,8 +1753,8 @@ const TEMPLATES = [
     id: 'xlsx', emoji: '📊',
     name: { it: 'Lista Excel', en: 'Excel List' },
     desc: {
-      it: 'Carica .xlsx, .csv o .tsv. Smista le righe in 3 stati. Esporta un nuovo Excel organizzato.',
-      en: 'Upload .xlsx, .csv or .tsv. Sort rows into 3 states. Export a new organized Excel.'
+      it: 'Per file Excel/CSV puliti: una riga di intestazioni, dati sotto, un foglio solo. Smista le righe in 3 stati ed esporta un nuovo file organizzato. Per file con più fogli, formule o totali, esporta prima il solo foglio dati.',
+      en: 'For clean Excel/CSV files: one header row, data below, single sheet. Sort rows into 3 states and export an organized file. For multi-sheet files, formulas or totals, export just the data sheet first.'
     },
     statuses: [
       { label: { it: 'Da tenere',     en: 'To keep'    }, emoji: '📌',  color: '#34c759' },
@@ -1760,18 +1817,22 @@ const MICRO_GUIDES = {
     },
     xlsx: {
       title: '📊 Come funziona Lista Excel',
-      intro: 'Hai aperto questo workspace per smistare le righe di un Excel/CSV. Funziona in 4 passi:',
+      intro: 'Hai aperto questo workspace per smistare le righe di un Excel/CSV. Prima di iniziare, controlla i prerequisiti:',
       steps: [
+        { emoji: '🎯', title: 'Quando funziona bene',
+          body: 'Questo template funziona meglio con file <strong>tabellari semplici</strong>: una riga di intestazioni in cima, dati sotto, un solo foglio, nessuna formula. Esempi tipici: anagrafiche clienti, lead list, codici prodotto, contatti.' },
+        { emoji: '⚠️', title: 'Quando NON usarlo',
+          body: 'Se il tuo file ha: <strong>più fogli</strong>, <strong>titoli prima degli header</strong>, <strong>formule</strong> (=SOMMA, =VLOOKUP), <strong>totali in fondo</strong>, <strong>celle merge</strong>, il risultato sarà parziale o sbagliato. Apri il file in Excel, copia solo la tabella dati in un nuovo foglio, salva come .csv o .xlsx pulito, e poi caricalo qui.' },
         { emoji: '📥', title: 'Carica il file Excel',
-          body: "Click su <strong>📥 Carica file Excel/CSV</strong>, seleziona il tuo .xlsx, .csv o .tsv. TriageHub legge le righe automaticamente. La prima colonna diventa il nome dell'item." },
+          body: "Click su <strong>📥 Carica file Excel/CSV</strong>, seleziona il tuo .xlsx, .csv o .tsv. TriageHub legge le righe automaticamente. La prima colonna diventa il nome dell'item. Se TriageHub rileva problemi (multi-foglio, formule, header dubbi), te lo dice prima di procedere." },
         { emoji: '🔧', title: 'Sistema il mapping (opzionale)',
           body: "Se la prima colonna non è il nome o vuoi raggruppare per una categoria, click <strong>🔧 Mapping colonne</strong>. Puoi cambiare la colonna nome, scegliere una colonna categoria, rinominare e nascondere colonne." },
         { emoji: '🎯', title: 'Smista riga per riga',
           body: '📌 <strong>Da tenere</strong> — righe valide<br>🗄️ <strong>Da archiviare</strong> — vanno spostate altrove<br>🗑️ <strong>Da cestinare</strong> — eliminale dal listino' },
         { emoji: '📊', title: 'Esporta il nuovo Excel',
-          body: "Click <strong>↑ Esporta</strong> → <strong>📊 Excel organizzato</strong>. Scegli foglio unico con colonna 'Stato' o 3 fogli separati per stato. Apri in Excel/Numbers e usa il file." }
+          body: "Click <strong>↑ Esporta</strong> → <strong>📊 Excel organizzato</strong>. Scegli foglio unico con colonna 'Stato' o 3 fogli separati per stato. Apri in Excel/Numbers e usa il file. I tipi numerici sono preservati, le formule no." }
       ],
-      tip: '💡 Funziona con listini, anagrafiche clienti, qualsiasi tabella. 🔒 Il file resta sul tuo dispositivo: niente upload.',
+      tip: '💡 Funziona con listini, anagrafiche clienti, contatti — tutto ciò che è già una tabella pulita. 🔒 Il file resta sul tuo dispositivo: niente upload.',
       actions: [
         { id: 'load-xlsx', label: '📥 Carica file Excel/CSV', primary: true },
         { id: 'add-manual', label: '✏️ Aggiungo a mano' }
@@ -1816,18 +1877,22 @@ const MICRO_GUIDES = {
     },
     xlsx: {
       title: '📊 How Excel List works',
-      intro: 'You opened this workspace to triage rows from an Excel/CSV file. It works in 4 steps:',
+      intro: 'You opened this workspace to triage rows from an Excel/CSV file. Check the prerequisites first:',
       steps: [
+        { emoji: '🎯', title: 'When it works well',
+          body: 'This template works best with <strong>simple tabular files</strong>: one header row at the top, data below, single sheet, no formulas. Typical examples: customer rosters, lead lists, product codes, contacts.' },
+        { emoji: '⚠️', title: "When NOT to use it",
+          body: 'If your file has: <strong>multiple sheets</strong>, <strong>titles before the headers</strong>, <strong>formulas</strong> (=SUM, =VLOOKUP), <strong>totals at the bottom</strong>, <strong>merged cells</strong>, the result will be partial or wrong. Open the file in Excel, copy just the data table to a new sheet, save as a clean .csv or .xlsx, and load that here.' },
         { emoji: '📥', title: 'Load the Excel file',
-          body: "Click <strong>📥 Load Excel/CSV file</strong>, pick your .xlsx, .csv or .tsv. TriageHub reads the rows automatically. The first column becomes the item name." },
+          body: "Click <strong>📥 Load Excel/CSV file</strong>, pick your .xlsx, .csv or .tsv. TriageHub reads the rows automatically. The first column becomes the item name. If TriageHub detects issues (multi-sheet, formulas, ambiguous header), it tells you before proceeding." },
         { emoji: '🔧', title: 'Adjust mapping (optional)',
           body: "If the first column isn't the name, or you want to group by a category, click <strong>🔧 Column mapping</strong>. You can change the name column, pick a category column, rename and hide columns." },
         { emoji: '🎯', title: 'Sort row by row',
           body: '📌 <strong>To keep</strong> — valid rows<br>🗄️ <strong>To archive</strong> — move them elsewhere<br>🗑️ <strong>To trash</strong> — remove from the list' },
         { emoji: '📊', title: 'Export the new Excel',
-          body: "Click <strong>↑ Export</strong> → <strong>📊 Organized Excel</strong>. Pick single sheet with a 'Status' column or three sheets per status. Open in Excel/Numbers and use the file." }
+          body: "Click <strong>↑ Export</strong> → <strong>📊 Organized Excel</strong>. Pick single sheet with a 'Status' column or three sheets per status. Open in Excel/Numbers and use the file. Numeric types are preserved; formulas are not." }
       ],
-      tip: "💡 Works for price lists, customer rosters, any table. 🔒 The file stays on your device: nothing is uploaded.",
+      tip: "💡 Works for price lists, customer rosters, contacts — anything that is already a clean table. 🔒 The file stays on your device: nothing is uploaded.",
       actions: [
         { id: 'load-xlsx', label: '📥 Load Excel/CSV file', primary: true },
         { id: 'add-manual', label: "✏️ I'll add by hand" }
@@ -1936,6 +2001,19 @@ const MANUAL_HTML = {
 
     { id: 's4b', title: 'Tutorial: smistare un Excel in 10 minuti', body:
 `<p>Hai un foglio Excel di 200 righe (anagrafica clienti, listino, lista contatti) e devi decidere riga per riga cosa farne. Ecco come:</p>
+
+<div class="warning-box">
+<strong>⚠️ Limiti del template Excel</strong>
+<p>TriageHub legge file Excel/CSV semplici. Non gestisce bene:</p>
+<ul>
+<li>File con più di un foglio (legge solo il primo)</li>
+<li>Formule (vengono convertite in valori statici nell'export)</li>
+<li>Totali, subtotali, righe pivot in mezzo ai dati</li>
+<li>Celle merge, titoli prima della riga di intestazione</li>
+</ul>
+<p>Per questi file: apri in Excel, copia la sola tabella dati in un nuovo foglio, salva come CSV o XLSX pulito, e poi caricalo qui. Se TriageHub rileva problemi al caricamento, te lo dice prima di procedere.</p>
+</div>
+
 <h4>Step 1: crea il workspace Excel</h4>
 <p>Click sulla card <strong>📊 Lista Excel</strong> nella galleria template. Si crea un workspace vuoto con i 3 stati Da tenere / Da archiviare / Da cestinare.</p>
 <h4>Step 2: carica il file</h4>
@@ -2092,6 +2170,19 @@ const MANUAL_HTML = {
 
     { id: 's4b', title: 'Tutorial: triage an Excel in 10 minutes', body:
 `<p>You have an Excel with 200 rows (customer roster, price list, contact list) and you must decide row by row what to do with each. Here's how:</p>
+
+<div class="warning-box">
+<strong>⚠️ Excel template limits</strong>
+<p>TriageHub reads simple Excel/CSV files. It doesn't handle well:</p>
+<ul>
+<li>Files with more than one sheet (only the first is read)</li>
+<li>Formulas (converted to static values on export)</li>
+<li>Totals, subtotals, pivot rows in the middle of data</li>
+<li>Merged cells, titles before the header row</li>
+</ul>
+<p>For these files: open in Excel, copy just the data table to a new sheet, save as a clean CSV or XLSX, and load it here. If TriageHub detects issues during loading, it warns you before proceeding.</p>
+</div>
+
 <h4>Step 1: create the Excel workspace</h4>
 <p>Click the <strong>📊 Excel List</strong> card in the template gallery. A blank workspace is created with the 3 states To keep / To archive / To trash.</p>
 <h4>Step 2: load the file</h4>
@@ -3320,9 +3411,82 @@ document.getElementById('xlsx-file').addEventListener('change', e => {
   parseXlsxFile(f);
 });
 
+// Rileva caratteristiche del file Excel che TriageHub non gestisce alla
+// perfezione (multi-sheet, formule, header riga 1 dubbio). v1.3.2.
+// Ritorna un array di stringhe HTML, una per warning rilevato.
+function collectXlsxWarnings(wb, sheet, rows) {
+  const warnings = [];
+  if (wb.SheetNames.length > 1) {
+    const first = wb.SheetNames[0];
+    const rest = wb.SheetNames.slice(1).map(n => `"${n}"`).join(', ');
+    warnings.push(t('xlsxWarnMultiSheet', wb.SheetNames.length, first, rest));
+  }
+  // Formule: SheetJS le espone come .f sulla cella. Scansiona tutte le celle del foglio.
+  const hasFormulas = Object.keys(sheet).some(cell =>
+    cell[0] !== '!' && sheet[cell] && sheet[cell].f != null
+  );
+  if (hasFormulas) warnings.push(t('xlsxWarnFormulas'));
+  // Header dubbio: con raw:true gli header letti sono stringhe se sono testo.
+  // Heuristic: meno del 50% di celle non vuote o presenza di numeri/non-stringhe.
+  const firstRow = rows[0] || [];
+  if (firstRow.length) {
+    const nonEmpty = firstRow.filter(c => c !== null && c !== undefined && c !== '').length;
+    const ratioOk = nonEmpty / firstRow.length >= 0.5;
+    const allTextOrEmpty = firstRow.every(c => c === null || c === undefined || c === '' || typeof c === 'string');
+    if (!ratioOk || !allTextOrEmpty) warnings.push(t('xlsxWarnHeader'));
+  }
+  return warnings;
+}
+
+// Mostra il dialog di warning con la lista di issue rilevate. Su "Continua",
+// chiama onConfirm(); su "Annulla" o close, esegue onCancel().
+function showXlsxWarnings(warnings, onConfirm, onCancel) {
+  const list = document.getElementById('xlsx-warn-list');
+  list.innerHTML = warnings.map(w => `<div class="xlsx-warn-item">${w}</div>`).join('');
+  const dlg = document.getElementById('dlg-xlsx-warn');
+  const confirmBtn = document.getElementById('xlsx-warn-confirm');
+  const cancelBtn  = document.getElementById('xlsx-warn-cancel');
+  const cleanup = () => {
+    confirmBtn.removeEventListener('click', onConfirmClick);
+    cancelBtn.removeEventListener('click', onCancelClick);
+    dlg.removeEventListener('close', onCancelClick);
+  };
+  function onConfirmClick() {
+    cleanup();
+    closeDialog('dlg-xlsx-warn');
+    onConfirm();
+  }
+  function onCancelClick() {
+    cleanup();
+    onCancel && onCancel();
+  }
+  confirmBtn.addEventListener('click', onConfirmClick);
+  cancelBtn.addEventListener('click', onCancelClick);
+  dlg.addEventListener('close', onCancelClick);
+  openDialog('dlg-xlsx-warn');
+}
+
+// Normalizza una cella: numeri restano numeri (così l'export preserva il
+// type 'n' di Excel), Date diventa stringa ISO YYYY-MM-DD, null/undefined
+// diventano '', il resto si rifiuta a stringa. v1.3.2.
+function normalizeXlsxCell(v) {
+  if (v == null) return '';
+  if (typeof v === 'number') return v;
+  if (typeof v === 'boolean') return v;
+  if (v instanceof Date) {
+    const y = v.getFullYear();
+    const m = String(v.getMonth() + 1).padStart(2, '0');
+    const d = String(v.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  return String(v);
+}
+
 // Parse di un file Excel/CSV/TSV via SheetJS. Crea N item nel workspace
 // attivo, uno per riga (escluso header). Salva headers + intera row in
 // item.xlsxData per render successivo.
+// v1.3.2: usa raw:true per preservare i tipi numerici nel roundtrip.
+// Se il file ha multi-sheet/formule/header dubbio, mostra dialog di conferma.
 function parseXlsxFile(file) {
   if (typeof XLSX === 'undefined') { toast(t('xlsxLibMissing')); return; }
   const ws = activeWorkspace();
@@ -3332,46 +3496,63 @@ function parseXlsxFile(file) {
   reader.onload = () => {
     try {
       const data = new Uint8Array(reader.result);
-      const wb = XLSX.read(data, { type: 'array' });
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
       const sheetName = wb.SheetNames[0];
       const sheet = wb.Sheets[sheetName];
-      // header:1 = AOA (array of arrays), defval:'' = celle vuote come stringa
-      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+      // raw:true mantiene i tipi nativi (numero, Date, boolean).
+      // defval:null lascia le celle vuote come null (gestite da normalizeXlsxCell).
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
       if (!rows.length) { toast(t('xlsxParseError')); return; }
-      const headers = (rows[0] || []).map((h, i) => String(h || '').trim() || `Col ${i + 1}`);
-      const dataRows = rows.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
-      if (!dataRows.length) { toast(t('xlsxParseError')); return; }
-      // Inizializza mapping (auto-detect: prima colonna = nome).
-      ws.xlsxMapping = ws.xlsxMapping || {};
-      ws.xlsxMapping.headers = headers;
-      ws.xlsxMapping.nameCol = ws.xlsxMapping.nameCol != null && ws.xlsxMapping.nameCol < headers.length
-        ? ws.xlsxMapping.nameCol : 0;
-      ws.xlsxMapping.catCol = ws.xlsxMapping.catCol != null && ws.xlsxMapping.catCol < headers.length
-        ? ws.xlsxMapping.catCol : null;
-      ws.xlsxMapping.renames = ws.xlsxMapping.renames || {}; // colIndex → newName
-      ws.xlsxMapping.hidden = ws.xlsxMapping.hidden || {};   // colIndex → true
-      // Crea item per ogni riga, salvando l'intera riga in xlsxData.
-      dataRows.forEach(r => {
-        const xd = {};
-        headers.forEach((h, i) => { xd[i] = String(r[i] != null ? r[i] : ''); });
-        const itemName = String(xd[ws.xlsxMapping.nameCol] || '').trim() || `(${currentLang === 'it' ? 'senza nome' : 'no name'})`;
-        ws.items.push({
-          id: uid(),
-          name: itemName,
-          desc: '',
-          cat: null, // la categoria viene calcolata via mapping al render
-          tag: '',
-          value: null,
-          links: [],
-          xlsxData: xd,
-          created: new Date().toISOString()
+
+      const finishParse = () => {
+        const headers = (rows[0] || []).map((h, i) => {
+          const s = h == null ? '' : String(h);
+          return s.trim() || `Col ${i + 1}`;
         });
-      });
-      // Sync categories dal valore della catCol, se mappata.
-      syncXlsxCategories(ws);
-      saveState();
-      renderAll();
-      toast(t('xlsxLoaded', dataRows.length));
+        const dataRows = rows.slice(1).filter(r =>
+          r.some(c => c !== null && c !== undefined && String(c).trim() !== '')
+        );
+        if (!dataRows.length) { toast(t('xlsxParseError')); return; }
+        // Inizializza mapping (auto-detect: prima colonna = nome).
+        ws.xlsxMapping = ws.xlsxMapping || {};
+        ws.xlsxMapping.headers = headers;
+        ws.xlsxMapping.nameCol = ws.xlsxMapping.nameCol != null && ws.xlsxMapping.nameCol < headers.length
+          ? ws.xlsxMapping.nameCol : 0;
+        ws.xlsxMapping.catCol = ws.xlsxMapping.catCol != null && ws.xlsxMapping.catCol < headers.length
+          ? ws.xlsxMapping.catCol : null;
+        ws.xlsxMapping.renames = ws.xlsxMapping.renames || {};
+        ws.xlsxMapping.hidden = ws.xlsxMapping.hidden || {};
+        dataRows.forEach(r => {
+          const xd = {};
+          headers.forEach((_, i) => { xd[i] = normalizeXlsxCell(r[i]); });
+          const rawName = xd[ws.xlsxMapping.nameCol];
+          const itemName = (rawName === '' || rawName == null)
+            ? `(${currentLang === 'it' ? 'senza nome' : 'no name'})`
+            : String(rawName).trim() || `(${currentLang === 'it' ? 'senza nome' : 'no name'})`;
+          ws.items.push({
+            id: uid(),
+            name: itemName,
+            desc: '',
+            cat: null,
+            tag: '',
+            value: null,
+            links: [],
+            xlsxData: xd,
+            created: new Date().toISOString()
+          });
+        });
+        syncXlsxCategories(ws);
+        saveState();
+        renderAll();
+        toast(t('xlsxLoaded', dataRows.length));
+      };
+
+      const warnings = collectXlsxWarnings(wb, sheet, rows);
+      if (warnings.length === 0) {
+        finishParse();
+      } else {
+        showXlsxWarnings(warnings, finishParse, () => toast(t('xlsxImportCancelled')));
+      }
     } catch (err) {
       console.warn('xlsx parse error', err);
       toast(t('xlsxParseError'));
@@ -3395,7 +3576,8 @@ function syncXlsxCategories(ws) {
   ws.categories.forEach(c => { if (c.xlsxValue != null) seen.set(c.xlsxValue, c.id); });
   ws.items.forEach(it => {
     if (!it.xlsxData) return;
-    const val = String(it.xlsxData[colIdx] || '').trim();
+    const raw = it.xlsxData[colIdx];
+    const val = (raw == null || raw === '') ? '' : String(raw).trim();
     if (!val) { it.cat = null; return; }
     if (!seen.has(val)) {
       const newCat = { id: uid(), name: val, emoji: '🏷️', xlsxValue: val };
@@ -3465,7 +3647,9 @@ document.getElementById('xlsx-mapping-apply').addEventListener('click', () => {
   // Aggiorna i nomi degli item con la nuova colonna nome.
   ws.items.forEach(it => {
     if (!it.xlsxData) return;
-    it.name = String(it.xlsxData[m.nameCol] || '').trim() || `(${currentLang === 'it' ? 'senza nome' : 'no name'})`;
+    const raw = it.xlsxData[m.nameCol];
+    const fallback = `(${currentLang === 'it' ? 'senza nome' : 'no name'})`;
+    it.name = (raw == null || raw === '') ? fallback : String(raw).trim() || fallback;
   });
   syncXlsxCategories(ws);
   saveState();
@@ -3484,7 +3668,10 @@ function xlsxItemExtraColumns(ws, it) {
     if (i === m.nameCol) return;
     if (m.catCol != null && i === m.catCol) return;
     if (m.hidden[i]) return;
-    const val = String(it.xlsxData[i] || '').trim();
+    const raw = it.xlsxData[i];
+    if (raw == null || raw === '') return;
+    // Numeri formattati con locale corrente, stringhe trim, boolean stringificati.
+    const val = typeof raw === 'number' ? fmtNumber(raw) : String(raw).trim();
     if (!val) return;
     const label = m.renames[i] || h;
     out.push({ label, value: val });
@@ -3527,7 +3714,13 @@ function exportXLSX(ws, mode) {
   const isXlsxItem = it => !!it.xlsxData;
 
   // Map item → row values (in original column order, applying renames only to header).
-  const itemRow = it => m.headers.map((_, i) => it.xlsxData ? String(it.xlsxData[i] || '') : '');
+  // v1.3.2: pass raw values (number / string / boolean) so aoa_to_sheet preserves
+  // Excel cell types. Numeric columns stay numeric, no more =SUM() broken in output.
+  const itemRow = it => m.headers.map((_, i) => {
+    if (!it.xlsxData) return '';
+    const v = it.xlsxData[i];
+    return v != null && v !== '' ? v : '';
+  });
   const statusOf = it => {
     const sid = ws.itemStatus[it.id];
     const st = ws.statuses.find(s => s.id === sid);
