@@ -3,6 +3,19 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.3.4] — Unreleased
+
+### Fixed
+- 📝 **Export Excel preserva tutti i campi item nativi**, non solo le colonne del file originale + categoria/stato. Aggiunte 4 colonne: `Descrizione (TriageHub)`, `Link`, `Tag`, `Valore`. Prima un utente che modificava un item su TriageHub aggiungendo descrizione/link/tag/valore non trovava traccia di quei campi nell'export Excel — ora compaiono tutti.
+  - **Modalità foglio unico**: header → `…colonne originali, Descrizione (TriageHub), Link, Tag, Valore, Categoria, Stato`.
+  - **Modalità 3 fogli**: header → `…colonne originali, Descrizione (TriageHub), Link, Tag, Valore, Categoria` (lo stato è il nome del foglio).
+  - **Link**: 1 link → solo URL; più link → "label: url" su una riga ciascuno (Excel rispetta `\n` nelle celle con wrap-text).
+  - **Valore**: esportato come numero raw, mantiene il `type:'n'` di Excel per `=SUM/AVERAGE`. Nessun valueUnit appiccicato — l'utente può formattare in Excel come preferisce.
+  - **Suffisso "(TriageHub)"** sulla colonna `Descrizione`: evita collisioni con eventuali colonne `Descrizione` già presenti nel file Excel originale.
+
+### Verified
+- ✅ I template `cleanup` e `blank` esportano già tutti i campi item (desc, cat, tag, value, links) nei report PDF/Word/Testo/Markdown via `buildMarkdownReport`. Nessuna modifica necessaria su quel path.
+
 ## [1.3.3] — Unreleased
 
 ### Fixed

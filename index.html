@@ -3710,8 +3710,17 @@ function exportXLSX(ws, mode) {
   }
   const m = ws.xlsxMapping;
   const headerRow = m.headers.map((h, i) => m.renames[i] || h);
-  const statusLabel = currentLang === 'it' ? 'Stato' : 'Status';
-  const categoryLabel = currentLang === 'it' ? 'Categoria' : 'Category';
+  const isIT = currentLang === 'it';
+  // Etichette colonne aggiuntive (v1.3.4: tutti i campi item nativi).
+  // "Descrizione (TriageHub)" usa il suffisso per evitare collisione con una
+  // eventuale colonna "Descrizione" nel file Excel originale dell'utente.
+  const descLabel     = isIT ? 'Descrizione (TriageHub)' : 'Description (TriageHub)';
+  const linkLabel     = isIT ? 'Link' : 'Links';
+  const tagLabel      = isIT ? 'Tag'  : 'Tag';
+  const valueLabel    = isIT ? 'Valore' : 'Value';
+  const categoryLabel = isIT ? 'Categoria' : 'Category';
+  const statusLabel   = isIT ? 'Stato' : 'Status';
+  const extraHeaders  = [descLabel, linkLabel, tagLabel, valueLabel, categoryLabel];
   const isXlsxItem = it => !!it.xlsxData;
 
   // Map item → row values (in original column order, applying renames only to header).
@@ -3735,24 +3744,51 @@ function exportXLSX(ws, mode) {
     const c = ws.categories.find(c => c.id === it.cat);
     return c ? localized(c.name) : '';
   };
+  // v1.3.4: serializza i link come stringa multi-line. Se c'è un solo link
+  // con label generica ("link") prendi solo l'URL — senza "link: " davanti.
+  // Per più link mostra "label: url" su una riga ciascuno.
+  const linksOf = it => {
+    const links = it.links || [];
+    if (!links.length) return '';
+    if (links.length === 1) {
+      const l = links[0];
+      const lbl = (l.label || '').trim();
+      // "link" o "Link" è la label di default — non aggiunge informazione.
+      if (!lbl || lbl.toLowerCase() === 'link') return l.url || '';
+      return `${lbl}: ${l.url}`;
+    }
+    return links.map(l => {
+      const lbl = (l.label || '').trim() || 'link';
+      return `${lbl}: ${l.url}`;
+    }).join('\n');
+  };
+  // v1.3.4: campi item nativi nell'ordine [desc, link, tag, value, category].
+  // value è raw (number) per preservare il type 'n' di Excel.
+  const extraRow = it => [
+    it.desc || '',
+    linksOf(it),
+    it.tag  || '',
+    (it.value === null || it.value === undefined || it.value === '') ? '' : it.value,
+    categoryOf(it)
+  ];
 
   const wb = XLSX.utils.book_new();
   const safeSheetName = name => String(name || '').replace(/[\\\/\*\?\[\]\:]/g, '').slice(0, 30) || 'Sheet';
   if (mode === 'single') {
-    // Header: …colonne originali, Categoria, Stato.
-    const aoa = [headerRow.concat([categoryLabel, statusLabel])];
+    // Header: …colonne originali, Descrizione (TriageHub), Link, Tag, Valore, Categoria, Stato.
+    const aoa = [headerRow.concat(extraHeaders).concat([statusLabel])];
     ws.items.filter(isXlsxItem).forEach(it => {
-      aoa.push(itemRow(it).concat([categoryOf(it), statusOf(it)]));
+      aoa.push(itemRow(it).concat(extraRow(it)).concat([statusOf(it)]));
     });
     const sheet = XLSX.utils.aoa_to_sheet(aoa);
     XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(wsDisplayName(ws) || 'TriageHub'));
   } else {
     // Multi: un foglio per ciascuno dei 3 stati ordinati. Lo stato è implicito
-    // nel nome del foglio, quindi aggiungiamo solo la colonna Categoria.
+    // nel nome del foglio, quindi non serve la colonna Stato.
     ws.statuses.forEach(s => {
-      const aoa = [headerRow.concat([categoryLabel])];
+      const aoa = [headerRow.concat(extraHeaders)];
       ws.items.filter(it => isXlsxItem(it) && ws.itemStatus[it.id] === s.id).forEach(it => {
-        aoa.push(itemRow(it).concat([categoryOf(it)]));
+        aoa.push(itemRow(it).concat(extraRow(it)));
       });
       const sheet = XLSX.utils.aoa_to_sheet(aoa);
       XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(`${s.emoji || ''} ${localized(s.label)}`.trim()));
@@ -3760,10 +3796,10 @@ function exportXLSX(ws, mode) {
     // Aggiungi anche un foglio "Senza scelta" se esistono item non triagiati.
     const unsorted = ws.items.filter(it => isXlsxItem(it) && !ws.itemStatus[it.id]);
     if (unsorted.length) {
-      const aoa = [headerRow.concat([categoryLabel])];
-      unsorted.forEach(it => aoa.push(itemRow(it).concat([categoryOf(it)])));
+      const aoa = [headerRow.concat(extraHeaders)];
+      unsorted.forEach(it => aoa.push(itemRow(it).concat(extraRow(it))));
       const sheet = XLSX.utils.aoa_to_sheet(aoa);
-      XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(currentLang === 'it' ? 'Senza scelta' : 'Unsorted'));
+      XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(isIT ? 'Senza scelta' : 'Unsorted'));
     }
   }
   const out = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
