@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="it" data-lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0071e3">
+<meta name="description" content="TriageHub — Smista qualsiasi cosa in tre stati. PWA gratuita, offline, privacy-first.">
+<title>TriageHub — Smista qualsiasi cosa</title>
+
+<!-- PWA -->
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TriageHub">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --card-hover: #fafafc;
+    --border: #d2d2d7;
+    --border-strong: #b0b0b8;
+    --text: #1d1d1f;
+    --text-secondary: #515154;
+    --text-tertiary: #86868b;
+    --accent: #0071e3;
+    --accent-hover: #0077ed;
+    --accent-2: #6c40e2;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 24px 48px rgba(0,0,0,0.16);
+    --serif: "Instrument Serif", "Times New Roman", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 17px;
+    line-height: 1.47;
+    letter-spacing: -0.022em;
+    min-height: 100vh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .container { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+
+  /* HEADER */
+  header.app-header { padding: 60px 0 32px; }
+  .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+  .logo-mark {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: inline-flex; align-items: center; justify-content: center;
+    color: white; font-family: var(--serif); font-size: 28px; font-style: italic;
+    line-height: 1; flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(0, 113, 227, 0.25);
+  }
+  .app-title {
+    font-family: var(--serif); font-size: 64px; font-weight: 400;
+    letter-spacing: -0.02em; line-height: 1;
+  }
+  .app-title em { font-style: italic; color: var(--accent); }
+  .lang-switch {
+    margin-left: auto;
+    display: inline-flex; gap: 2px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 10px; padding: 3px;
+  }
+  .lang-switch button {
+    background: transparent; border: none; padding: 6px 12px;
+    border-radius: 7px; cursor: pointer; font-family: inherit; font-size: 13px;
+    font-weight: 500; color: var(--text-secondary);
+  }
+  .lang-switch button.active { background: var(--accent); color: white; }
+  .app-subtitle {
+    font-size: 21px; font-weight: 400; color: var(--text-secondary);
+    letter-spacing: -0.01em; margin-bottom: 32px; max-width: 720px;
+  }
+  .privacy-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(52, 199, 89, 0.12); color: #1c8c3f;
+    padding: 3px 10px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    margin-left: 6px; vertical-align: 2px;
+  }
+
+  /* STAT CARDS */
+  .stat-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px; margin-bottom: 8px;
+  }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 20px; transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .stat-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .stat-num {
+    font-family: var(--serif); font-size: 44px; font-weight: 400; font-style: italic;
+    letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px;
+    color: var(--stat-color, var(--text));
+  }
+  .stat-label {
+    font-size: 13px; color: var(--text-tertiary); font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* TOOLBAR */
+  .toolbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(245, 245, 247, 0.85);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    padding: 16px 0; margin: 24px -22px 0;
+    padding-left: 22px; padding-right: 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .toolbar-inner { display: flex; flex-direction: column; gap: 12px; }
+  .search-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .search-box { flex: 1; min-width: 240px; position: relative; }
+  .search-input {
+    width: 100%; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px 12px 42px;
+    font-family: inherit; font-size: 16px; color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .search-input::placeholder { color: var(--text-tertiary); }
+  .search-input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
+  }
+  .search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-tertiary); pointer-events: none;
+  }
+  .btn {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; font-family: inherit; font-size: 14px; font-weight: 500;
+    color: var(--text); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: var(--card-hover); border-color: var(--border-strong); }
+  .btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn.danger { color: #d70015; }
+  .btn.danger:hover { background: rgba(255, 59, 48, 0.08); border-color: #ff3b30; }
+
+  .chips {
+    display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;
+    scrollbar-width: thin; flex-wrap: wrap;
+  }
+  .chips::-webkit-scrollbar { height: 4px; }
+  .chips::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .chip {
+    background: var(--card); border: 1px solid var(--border); color: var(--text-secondary);
+    padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap; user-select: none;
+  }
+  .chip:hover { background: var(--card-hover); color: var(--text); }
+  .chip.active { background: var(--text); color: white; border-color: var(--text); }
+  .chip-count { font-size: 11px; opacity: 0.7; margin-left: 4px; }
+  .chip.divider {
+    border: none; background: transparent; color: var(--text-tertiary);
+    cursor: default; padding: 7px 4px;
+  }
+  .chip.divider:hover { background: transparent; }
+
+  /* MAIN */
+  main { padding: 32px 0 80px; }
+  .cat-section { margin-bottom: 48px; }
+  .cat-section:last-child { margin-bottom: 0; }
+  .cat-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .cat-emoji { font-size: 26px; line-height: 1; }
+  .cat-title { font-family: var(--serif); font-size: 30px; font-weight: 400; letter-spacing: -0.01em; }
+  .cat-count { font-size: 15px; color: var(--text-tertiary); font-family: var(--serif); font-style: italic; }
+
+  /* ITEM CARD */
+  .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 12px; }
+  .item-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 20px; transition: all 0.15s; position: relative;
+    border-left: 4px solid transparent;
+  }
+  .item-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
+  .item-card.has-status { border-left-color: var(--status-color); }
+  .item-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 10px; margin-bottom: 6px;
+  }
+  .item-name {
+    font-size: 16px; font-weight: 600; letter-spacing: -0.01em;
+    line-height: 1.3; word-break: break-word; flex: 1;
+  }
+  .item-value {
+    font-family: var(--serif); font-style: italic; font-size: 22px;
+    color: var(--accent); white-space: nowrap; flex-shrink: 0;
+    line-height: 1; margin-top: 2px;
+  }
+  .item-value-unit {
+    font-family: var(--sans); font-style: normal; font-size: 11px;
+    color: var(--text-tertiary); margin-left: 2px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .item-edit-btn {
+    background: transparent; border: none; color: var(--text-tertiary);
+    cursor: pointer; padding: 4px; border-radius: 6px; flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .item-edit-btn:hover { color: var(--text); background: var(--bg); }
+  .item-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4; }
+  .item-links { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .item-link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); text-decoration: none; font-size: 13px; word-break: break-all; }
+  .item-link:hover { text-decoration: underline; }
+  .item-link-label {
+    background: var(--bg); color: var(--text-secondary);
+    padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0;
+  }
+  .item-meta { font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px; }
+
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .action-btn {
+    flex: 1; min-width: 0; background: var(--bg); border: 1px solid transparent;
+    border-radius: 8px; padding: 7px 10px; font-family: inherit; font-size: 12px;
+    font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .action-btn:hover { background: var(--card); border-color: var(--border); }
+  .action-btn.active { background: var(--status-color); color: white; border-color: var(--status-color); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center; padding: 72px 22px; background: var(--card);
+    border: 1px dashed var(--border); border-radius: 18px;
+  }
+  .empty-state-emoji { font-size: 56px; margin-bottom: 16px; display: block; }
+  .empty-state h2 {
+    font-family: var(--serif); font-size: 38px; font-weight: 400;
+    letter-spacing: -0.02em; margin-bottom: 8px;
+  }
+  .empty-state h2 em { font-style: italic; color: var(--accent); }
+  .empty-state p {
+    color: var(--text-secondary); font-size: 17px; margin-bottom: 24px;
+    max-width: 480px; margin-left: auto; margin-right: auto;
+  }
+  .empty-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  /* DIALOG */
+  dialog {
+    border: none; border-radius: 18px; padding: 0; max-width: 640px;
+    width: calc(100% - 32px); max-height: calc(100vh - 64px);
+    box-shadow: var(--shadow-lg); background: var(--card); color: var(--text);
+    font-family: var(--sans); overflow: hidden;
+  }
+  dialog::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .dialog-header {
+    padding: 22px 24px 14px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  }
+  .dialog-title { font-family: var(--serif); font-size: 28px; font-weight: 400; letter-spacing: -0.01em; }
+  .dialog-close {
+    background: var(--bg); border: none; width: 30px; height: 30px;
+    border-radius: 50%; cursor: pointer; color: var(--text-secondary);
+    font-size: 18px; line-height: 1; flex-shrink: 0;
+  }
+  .dialog-close:hover { background: var(--border); }
+  .dialog-body { padding: 18px 24px; overflow-y: auto; max-height: calc(100vh - 220px); }
+  .dialog-footer {
+    padding: 16px 24px; border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: 8px; background: var(--bg);
+  }
+
+  /* TEMPLATE GALLERY */
+  .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  .template-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; cursor: pointer; transition: all 0.15s; text-align: left;
+    font-family: inherit;
+  }
+  .template-card:hover {
+    border-color: var(--accent); box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  .template-emoji { font-size: 32px; display: block; margin-bottom: 8px; }
+  .template-name {
+    font-family: var(--serif); font-size: 22px; font-weight: 400;
+    letter-spacing: -0.01em; line-height: 1.1; margin-bottom: 4px;
+  }
+  .template-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.35; }
+  .template-blank {
+    background: var(--bg); border-style: dashed; color: var(--text-secondary);
+  }
+  .template-blank:hover { background: var(--card); }
+
+  /* FORM */
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+  .field input[type="text"], .field input[type="number"], .field input[type="url"], .field textarea, .field select {
+    width: 100%; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 15px;
+    color: var(--text); transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input[type="color"] {
+    width: 50px; height: 36px; border: 1px solid var(--border); border-radius: 8px;
+    padding: 2px; cursor: pointer; background: var(--card);
+  }
+  .field textarea { resize: vertical; min-height: 70px; font-family: inherit; }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
+  }
+  .field-row { display: flex; gap: 10px; align-items: flex-end; }
+  .field-row .field { flex: 1; margin-bottom: 0; }
+  .field .hint { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+
+  /* EDITOR LIST */
+  .editor-list { list-style: none; }
+  .editor-row {
+    display: flex; gap: 8px; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .editor-row:last-child { border-bottom: none; }
+  .editor-emoji {
+    width: 44px; height: 38px; border: 1px solid var(--border);
+    border-radius: 8px; text-align: center; font-size: 20px;
+    background: var(--card); flex-shrink: 0; font-family: inherit;
+  }
+  .editor-name {
+    flex: 1; border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 10px; font-family: inherit; font-size: 14px;
+    background: var(--card); min-width: 0;
+  }
+  .editor-color {
+    width: 38px; height: 38px; border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer; padding: 2px; flex-shrink: 0; background: var(--card);
+  }
+  .editor-del {
+    background: transparent; border: 1px solid transparent; color: var(--text-tertiary);
+    width: 38px; height: 38px; border-radius: 8px; cursor: pointer; flex-shrink: 0; font-size: 16px;
+  }
+  .editor-del:hover { color: #ff3b30; background: rgba(255, 59, 48, 0.08); }
+
+  /* IMPORT TABS */
+  .tabs {
+    display: flex; gap: 4px; background: var(--bg);
+    padding: 4px; border-radius: 10px; margin-bottom: 18px;
+  }
+  .tab {
+    flex: 1; background: transparent; border: none; padding: 8px 12px;
+    border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 500;
+    color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+  }
+  .tab.active { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .drop-zone {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 32px;
+    text-align: center; color: var(--text-secondary); cursor: pointer;
+    transition: all 0.15s; background: var(--bg);
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent); background: rgba(0, 113, 227, 0.04); color: var(--accent);
+  }
+  .drop-zone-emoji { font-size: 36px; display: block; margin-bottom: 8px; }
+  .preview-area {
+    margin-top: 14px; padding: 12px; background: var(--bg); border-radius: 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
+    max-height: 200px; overflow: auto; white-space: pre;
+  }
+  .mapping-grid {
+    display: grid; grid-template-columns: 130px 1fr; gap: 8px 10px;
+    align-items: center; margin-top: 12px;
+  }
+  .mapping-grid label { font-size: 13px; color: var(--text-secondary); }
+  .mapping-grid select {
+    border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
+    font-family: inherit; font-size: 13px; background: var(--card);
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    header.app-header { padding: 36px 0 22px; }
+    .app-title { font-size: 44px; }
+    .app-subtitle { font-size: 17px; }
+    .stat-num { font-size: 36px; }
+    .item-grid { grid-template-columns: 1fr; }
+    .cat-title { font-size: 24px; }
+    .empty-state h2 { font-size: 28px; }
+    .dialog-title { font-size: 22px; }
+  }
+
+  /* UTIL */
+  .hidden { display: none !important; }
+  .row-end { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+  .small { font-size: 13px; color: var(--text-tertiary); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--text); color: white;
+    padding: 12px 22px; border-radius: 24px;
+    font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg);
+    opacity: 0; transition: all 0.25s ease; z-index: 1000; pointer-events: none;
+    max-width: calc(100% - 48px); text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* FOOTER */
+  footer.app-footer {
+    padding: 40px 0 24px; text-align: center;
+    color: var(--text-tertiary); font-size: 13px;
+    border-top: 1px solid var(--border); margin-top: 60px;
+  }
+  footer.app-footer a { color: var(--text-secondary); text-decoration: none; }
+  footer.app-footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo-mark">T</span>
+      <h1 class="app-title">Triage<em>Hub</em></h1>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button data-lang-btn="it" class="active">IT</button>
+        <button data-lang-btn="en">EN</button>
+      </div>
+    </div>
+    <p class="app-subtitle">
+      <span data-i18n="subtitle">Smista qualsiasi cosa in tre stati. Item, categorie e stati totalmente personalizzabili.</span>
+      <span class="privacy-pill">● <span data-i18n="privacy">I dati restano sul tuo dispositivo</span></span>
+    </p>
+    <div class="stat-grid" id="stat-grid"></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="toolbar-inner">
+      <div class="search-row">
+        <div class="search-box">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <input type="text" id="search" class="search-input" data-i18n-attr="placeholder:searchPlaceholder">
+        </div>
+        <button class="btn primary" id="btn-add">＋ <span data-i18n="new">Nuovo</span></button>
+        <button class="btn" id="btn-templates">✨ <span data-i18n="templates">Template</span></button>
+        <button class="btn" id="btn-import">↓ <span data-i18n="import">Importa</span></button>
+        <button class="btn" id="btn-export">↑ <span data-i18n="export">Esporta</span></button>
+        <button class="btn" id="btn-categories">🗂 <span data-i18n="categories">Categorie</span></button>
+        <button class="btn" id="btn-statuses">🏷 <span data-i18n="statuses">Stati</span></button>
+        <button class="btn danger" id="btn-clear" data-i18n-attr="title:resetTitle">↺</button>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+  </div>
+
+  <main id="main"></main>
+
+  <footer class="app-footer">
+    <p>TriageHub · Open Source · <a href="https://github.com/pezzaliapp/TriageHub" target="_blank" rel="noopener">GitHub</a> · <a href="https://www.alessandropezzali.it" target="_blank" rel="noopener">pezzaliapp</a></p>
+    <p style="margin-top:6px"><span data-i18n="footerNote">Privacy by design — i tuoi dati non lasciano mai il tuo dispositivo.</span></p>
+  </footer>
+</div>
+
+<!-- DIALOG: Template gallery -->
+<dialog id="dlg-templates">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="templatesTitle">Scegli un template</h2>
+    <button class="dialog-close" data-close="dlg-templates">×</button>
+  </div>
+  <div class="dialog-body">
+    <p class="small" style="margin-bottom:14px" data-i18n="templatesIntro">
+      Inizia con un set di categorie e stati preconfigurato per il tuo flusso, oppure parti da zero.
+    </p>
+    <div class="template-grid" id="template-grid"></div>
+    <p class="small" style="margin-top:14px" data-i18n="templatesNote">
+      ⚠️ Selezionare un template aggiungerà categorie e stati alla tua configurazione attuale. Gli item esistenti non verranno toccati.
+    </p>
+  </div>
+</dialog>
+
+<!-- DIALOG: Item editor -->
+<dialog id="dlg-item">
+  <div class="dialog-header">
+    <h2 class="dialog-title" id="dlg-item-title" data-i18n="newItem">Nuovo item</h2>
+    <button class="dialog-close" data-close="dlg-item">×</button>
+  </div>
+  <form id="form-item">
+    <div class="dialog-body">
+      <div class="field">
+        <label data-i18n="name">Nome</label>
+        <input type="text" id="f-name" required maxlength="200" data-i18n-attr="placeholder:namePlaceholder">
+      </div>
+      <div class="field">
+        <label data-i18n="description">Descrizione (opzionale)</label>
+        <textarea id="f-desc" maxlength="2000" data-i18n-attr="placeholder:descPlaceholder"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label data-i18n="category">Categoria</label>
+          <select id="f-cat">
+            <option value="" data-i18n="none">— Nessuna —</option>
+          </select>
+        </div>
+        <div class="field" style="flex: 0 0 140px">
+          <label data-i18n="value">Valore</label>
+          <input type="number" id="f-value" step="any" data-i18n-attr="placeholder:valuePlaceholder">
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="links">Link (opzionali)</label>
+        <div id="links-editor"></div>
+        <button type="button" class="btn" id="btn-add-link" style="margin-top:8px">+ <span data-i18n="addLink">Aggiungi link</span></button>
+      </div>
+      <div class="field">
+        <label data-i18n="tag">Tag / etichetta breve (opzionale)</label>
+        <input type="text" id="f-tag" maxlength="50" data-i18n-attr="placeholder:tagPlaceholder">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button type="button" class="btn danger" id="btn-delete-item" style="margin-right:auto" data-i18n="delete">Elimina</button>
+      <button type="button" class="btn" data-close="dlg-item" data-i18n="cancel">Annulla</button>
+      <button type="submit" class="btn primary" data-i18n="save">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- DIALOG: Import -->
+<dialog id="dlg-import">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="importTitle">Importa dati</h2>
+    <button class="dialog-close" data-close="dlg-import">×</button>
+  </div>
+  <div class="dialog-body">
+    <div class="tabs">
+      <button class="tab active" data-tab="csv">CSV</button>
+      <button class="tab" data-tab="json">JSON</button>
+    </div>
+
+    <div class="tab-panel active" data-panel="csv">
+      <p class="small" style="margin-bottom:10px" data-i18n="csvIntro">Carica un CSV (con intestazioni). Potrai mappare le colonne dopo.</p>
+      <div class="drop-zone" id="csv-drop">
+        <span class="drop-zone-emoji">📄</span>
+        <div><span data-i18n="dropCsv">Trascina qui un file CSV</span><br><span class="small" data-i18n="orClick">oppure clicca per selezionarlo</span></div>
+        <input type="file" id="csv-file" accept=".csv,text/csv" hidden>
+      </div>
+      <div id="csv-preview" class="hidden">
+        <div class="preview-area" id="csv-preview-text"></div>
+        <h3 style="font-family:var(--serif); font-size:20px; font-weight:400; margin:18px 0 8px" data-i18n="mapColumns">Mappa le colonne</h3>
+        <div class="mapping-grid" id="csv-mapping"></div>
+        <div class="row-end">
+          <button class="btn" id="csv-cancel" data-i18n="cancel">Annulla</button>
+          <button class="btn primary" id="csv-confirm" data-i18n="import">Importa</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-panel="json">
+      <p class="small" style="margin-bottom:10px" data-i18n="jsonIntro">Carica un JSON esportato da TriageHub o un array di oggetti con i campi name, desc, cat, value, links.</p>
+      <div class="drop-zone" id="json-drop">
+        <span class="drop-zone-emoji">{ }</span>
+        <div><span data-i18n="dropJson">Trascina qui un file JSON</span><br><span class="small" data-i18n="orClick">oppure clicca per selezionarlo</span></div>
+        <input type="file" id="json-file" accept=".json,application/json" hidden>
+      </div>
+      <div id="json-preview" class="hidden">
+        <div class="preview-area" id="json-preview-text"></div>
+        <div class="field" style="margin-top:12px">
+          <label><input type="checkbox" id="json-replace"> <span data-i18n="jsonReplace">Sostituisci tutti i dati esistenti (altrimenti aggiunge)</span></label>
+        </div>
+        <div class="row-end">
+          <button class="btn" id="json-cancel" data-i18n="cancel">Annulla</button>
+          <button class="btn primary" id="json-confirm" data-i18n="import">Importa</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- DIALOG: Export -->
+<dialog id="dlg-export">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="exportTitle">Esporta</h2>
+    <button class="dialog-close" data-close="dlg-export">×</button>
+  </div>
+  <div class="dialog-body">
+    <p class="small" style="margin-bottom:14px" data-i18n="exportIntro">Salva i tuoi dati in un file. Il backup JSON è completo. Markdown e CSV sono leggibili da chiunque.</p>
+    <div class="row-end" style="justify-content:flex-start; flex-wrap:wrap">
+      <button class="btn primary" id="exp-json">📦 <span data-i18n="exportJson">Backup completo (JSON)</span></button>
+      <button class="btn" id="exp-md">📝 <span data-i18n="exportMd">Report (Markdown)</span></button>
+      <button class="btn" id="exp-csv">📊 <span data-i18n="exportCsv">Tabella (CSV)</span></button>
+    </div>
+  </div>
+</dialog>
+
+<!-- DIALOG: Categories -->
+<dialog id="dlg-categories">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="categoriesTitle">Gestisci categorie</h2>
+    <button class="dialog-close" data-close="dlg-categories">×</button>
+  </div>
+  <div class="dialog-body">
+    <p class="small" style="margin-bottom:10px" data-i18n="categoriesIntro">Le categorie raggruppano i tuoi item. Eliminandone una, gli item resteranno ma senza categoria.</p>
+    <ul class="editor-list" id="cat-editor"></ul>
+    <button class="btn" id="cat-add" style="margin-top:10px">+ <span data-i18n="addCategory">Aggiungi categoria</span></button>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn primary" data-close="dlg-categories" data-i18n="done">Fatto</button>
+  </div>
+</dialog>
+
+<!-- DIALOG: Statuses -->
+<dialog id="dlg-statuses">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="statusesTitle">Personalizza i 3 stati</h2>
+    <button class="dialog-close" data-close="dlg-statuses">×</button>
+  </div>
+  <div class="dialog-body">
+    <p class="small" style="margin-bottom:10px" data-i18n="statusesIntro">Modifica nome, emoji e colore dei 3 stati. La struttura a 3 stati è la firma di TriageHub.</p>
+    <ul class="editor-list" id="status-editor"></ul>
+    <div style="margin-top:14px">
+      <label style="font-size:13px; color:var(--text-secondary)" data-i18n="valueLabel">Etichetta del campo Valore (es. €, pz, score)</label>
+      <input type="text" id="value-unit" maxlength="10" style="width:100%; margin-top:6px; padding:9px 10px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; background:var(--card)">
+    </div>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn primary" data-close="dlg-statuses" data-i18n="done">Fatto</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+// ============================================
+// I18N
+// ============================================
+const I18N = {
+  it: {
+    subtitle: "Smista qualsiasi cosa in tre stati. Item, categorie e stati totalmente personalizzabili.",
+    privacy: "I dati restano sul tuo dispositivo",
+    searchPlaceholder: "Cerca item, descrizione, link…",
+    new: "Nuovo", templates: "Template", import: "Importa", export: "Esporta",
+    categories: "Categorie", statuses: "Stati",
+    resetTitle: "Reset totale",
+    totalItems: "Totale item", noChoice: "Senza scelta", noCategory: "Senza categoria",
+    items: "item",
+    newItem: "Nuovo item", editItem: "Modifica item",
+    name: "Nome", description: "Descrizione (opzionale)", category: "Categoria",
+    value: "Valore", none: "— Nessuna —", links: "Link (opzionali)", addLink: "Aggiungi link",
+    tag: "Tag / etichetta breve (opzionale)", delete: "Elimina", cancel: "Annulla", save: "Salva",
+    namePlaceholder: "Es. Cliente ACME, Equilibratrice EM-100, Preventivo #42…",
+    descPlaceholder: "Note, contesto, dettagli…",
+    valuePlaceholder: "Numero",
+    tagPlaceholder: "Es. urgente, 2026, top…",
+    importTitle: "Importa dati",
+    csvIntro: "Carica un CSV (con intestazioni). Potrai mappare le colonne dopo.",
+    dropCsv: "Trascina qui un file CSV", orClick: "oppure clicca per selezionarlo",
+    mapColumns: "Mappa le colonne", import: "Importa",
+    jsonIntro: "Carica un JSON esportato da TriageHub o un array di oggetti con i campi name, desc, cat, value, links.",
+    dropJson: "Trascina qui un file JSON",
+    jsonReplace: "Sostituisci tutti i dati esistenti (altrimenti aggiunge)",
+    exportTitle: "Esporta",
+    exportIntro: "Salva i tuoi dati in un file. Il backup JSON è completo. Markdown e CSV sono leggibili da chiunque.",
+    exportJson: "Backup completo (JSON)", exportMd: "Report (Markdown)", exportCsv: "Tabella (CSV)",
+    categoriesTitle: "Gestisci categorie",
+    categoriesIntro: "Le categorie raggruppano i tuoi item. Eliminandone una, gli item resteranno ma senza categoria.",
+    addCategory: "Aggiungi categoria", done: "Fatto",
+    statusesTitle: "Personalizza i 3 stati",
+    statusesIntro: "Modifica nome, emoji e colore dei 3 stati. La struttura a 3 stati è la firma di TriageHub.",
+    valueLabel: "Etichetta del campo Valore (es. €, pz, score)",
+    templatesTitle: "Scegli un template",
+    templatesIntro: "Inizia con un set di categorie e stati preconfigurato per il tuo flusso, oppure parti da zero.",
+    templatesNote: "⚠️ Selezionare un template aggiungerà categorie e stati alla tua configurazione attuale. Gli item esistenti non verranno toccati.",
+    emptyTitle: "Inizia <em>qui</em>",
+    emptyText: "Aggiungi il primo item, importa un CSV/JSON, o scegli un template per il tuo flusso. Tutto resta sul tuo dispositivo.",
+    emptyAddBtn: "＋ Crea il primo item", emptyImportBtn: "↓ Importa CSV/JSON", emptyTemplateBtn: "✨ Scegli un template",
+    noResultTitle: "Nessun <em>risultato</em>", noResultText: "Prova a modificare i filtri o la ricerca.",
+    addedItem: "✓ Item aggiunto", updatedItem: "✓ Item aggiornato", deletedItem: "✓ Item eliminato",
+    confirmDelete: "Eliminare questo item? Non si può annullare.",
+    confirmCatDelete: "Eliminare questa categoria? Gli item resteranno ma senza categoria.",
+    confirmReset: "Cancellare TUTTI i dati (item, categorie, scelte)? Gli stati torneranno ai default.\n\nQuesta azione non si può annullare.",
+    confirmEmpty: "Già vuoto", csvEmpty: "CSV vuoto o senza intestazioni", csvNoName: "⚠️ Mappa almeno la colonna Nome",
+    jsonInvalid: "⚠️ JSON non valido", jsonUnknown: "⚠️ Formato JSON non riconosciuto",
+    csvImported: itm => `✓ ${itm} item importati dal CSV`, jsonImported: "✓ Import JSON completato",
+    backupSaved: "✓ Backup JSON scaricato", mdSaved: "✓ Report markdown scaricato", csvSaved: "✓ Tabella CSV scaricata",
+    nothingToExport: "Nessun dato da esportare", allCleared: "✓ Tutto cancellato",
+    storageFull: "⚠️ Spazio esaurito sul dispositivo",
+    catManageHint: "Gestisci le categorie dal pulsante 🗂 in toolbar.",
+    addedCount: cnt => `${cnt} item`,
+    fieldName: "Nome (obbligatorio)", fieldDesc: "Descrizione", fieldCat: "Categoria",
+    fieldTag: "Tag", fieldUrl: "Link (URL)", fieldValue: "Valore numerico",
+    fieldIgnore: "— ignora —",
+    addedDate: d => `Aggiunto ${d}`,
+    footerNote: "Privacy by design — i tuoi dati non lasciano mai il tuo dispositivo."
+  },
+  en: {
+    subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
+    privacy: "Your data stays on your device",
+    searchPlaceholder: "Search items, descriptions, links…",
+    new: "New", templates: "Templates", import: "Import", export: "Export",
+    categories: "Categories", statuses: "States",
+    resetTitle: "Full reset",
+    totalItems: "Total items", noChoice: "Unsorted", noCategory: "No category",
+    items: "items",
+    newItem: "New item", editItem: "Edit item",
+    name: "Name", description: "Description (optional)", category: "Category",
+    value: "Value", none: "— None —", links: "Links (optional)", addLink: "Add link",
+    tag: "Tag / short label (optional)", delete: "Delete", cancel: "Cancel", save: "Save",
+    namePlaceholder: "E.g. ACME Client, Balancer EM-100, Quote #42…",
+    descPlaceholder: "Notes, context, details…",
+    valuePlaceholder: "Number",
+    tagPlaceholder: "E.g. urgent, 2026, top…",
+    importTitle: "Import data",
+    csvIntro: "Upload a CSV (with headers). You'll map the columns afterwards.",
+    dropCsv: "Drop a CSV file here", orClick: "or click to select",
+    mapColumns: "Map the columns", import: "Import",
+    jsonIntro: "Upload a TriageHub JSON export, or an array of objects with fields name, desc, cat, value, links.",
+    dropJson: "Drop a JSON file here",
+    jsonReplace: "Replace all existing data (otherwise append)",
+    exportTitle: "Export",
+    exportIntro: "Save your data to a file. The JSON backup is complete. Markdown and CSV are universally readable.",
+    exportJson: "Full backup (JSON)", exportMd: "Report (Markdown)", exportCsv: "Table (CSV)",
+    categoriesTitle: "Manage categories",
+    categoriesIntro: "Categories group your items. If you delete one, items stay but become uncategorized.",
+    addCategory: "Add category", done: "Done",
+    statusesTitle: "Customize the 3 states",
+    statusesIntro: "Edit name, emoji and color of the 3 states. The 3-state structure is TriageHub's signature.",
+    valueLabel: "Value field label (e.g. €, pcs, score)",
+    templatesTitle: "Pick a template",
+    templatesIntro: "Start with a preset of categories and states tuned for your workflow, or start from scratch.",
+    templatesNote: "⚠️ Choosing a template will add categories and states to your current setup. Existing items won't be touched.",
+    emptyTitle: "Start <em>here</em>",
+    emptyText: "Add the first item, import a CSV/JSON, or pick a template for your workflow. Everything stays on your device.",
+    emptyAddBtn: "＋ Create your first item", emptyImportBtn: "↓ Import CSV/JSON", emptyTemplateBtn: "✨ Pick a template",
+    noResultTitle: "No <em>results</em>", noResultText: "Try changing your filters or search.",
+    addedItem: "✓ Item added", updatedItem: "✓ Item updated", deletedItem: "✓ Item deleted",
+    confirmDelete: "Delete this item? This can't be undone.",
+    confirmCatDelete: "Delete this category? Items will stay but become uncategorized.",
+    confirmReset: "Clear ALL data (items, categories, choices)? States will go back to defaults.\n\nThis can't be undone.",
+    confirmEmpty: "Already empty", csvEmpty: "Empty CSV or missing headers", csvNoName: "⚠️ Map at least the Name column",
+    jsonInvalid: "⚠️ Invalid JSON", jsonUnknown: "⚠️ Unrecognized JSON format",
+    csvImported: itm => `✓ ${itm} items imported from CSV`, jsonImported: "✓ JSON import complete",
+    backupSaved: "✓ JSON backup downloaded", mdSaved: "✓ Markdown report downloaded", csvSaved: "✓ CSV table downloaded",
+    nothingToExport: "Nothing to export", allCleared: "✓ All cleared",
+    storageFull: "⚠️ Device storage full",
+    catManageHint: "Manage categories from the 🗂 toolbar button.",
+    addedCount: cnt => `${cnt} items`,
+    fieldName: "Name (required)", fieldDesc: "Description", fieldCat: "Category",
+    fieldTag: "Tag", fieldUrl: "Link (URL)", fieldValue: "Numeric value",
+    fieldIgnore: "— ignore —",
+    addedDate: d => `Added ${d}`,
+    footerNote: "Privacy by design — your data never leaves your device."
+  }
+};
+
+let currentLang = localStorage.getItem('triagehub-lang') ||
+  (navigator.language && navigator.language.toLowerCase().startsWith('en') ? 'en' : 'it');
+
+function t(key, ...args) {
+  const v = I18N[currentLang][key];
+  if (typeof v === 'function') return v(...args);
+  return v ?? key;
+}
+
+function applyI18n() {
+  document.documentElement.lang = currentLang;
+  document.documentElement.dataset.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    el.innerHTML = t(key);
+  });
+  document.querySelectorAll('[data-i18n-attr]').forEach(el => {
+    const [attr, key] = el.dataset.i18nAttr.split(':');
+    el.setAttribute(attr, t(key));
+  });
+  document.querySelectorAll('[data-lang-btn]').forEach(b => {
+    b.classList.toggle('active', b.dataset.langBtn === currentLang);
+  });
+  document.title = currentLang === 'it'
+    ? 'TriageHub — Smista qualsiasi cosa'
+    : 'TriageHub — Triage anything';
+}
+
+document.querySelectorAll('[data-lang-btn]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentLang = btn.dataset.langBtn;
+    localStorage.setItem('triagehub-lang', currentLang);
+    applyI18n();
+    renderAll();
+  });
+});
+
+// ============================================
+// TEMPLATES
+// ============================================
+const TEMPLATES = [
+  {
+    id: 'blank', emoji: '⚪',
+    name: { it: 'Vuoto', en: 'Blank' },
+    desc: { it: 'Parti da zero, costruisci il tuo flusso.', en: 'Start from scratch, build your own.' },
+    blank: true
+  },
+  {
+    id: 'email', emoji: '📧',
+    name: { it: 'Email', en: 'Email' },
+    desc: { it: 'Triage della casella di posta. Esporta CSV da Outlook/Gmail e importa.', en: 'Inbox triage. Export CSV from Outlook/Gmail then import.' },
+    statuses: [
+      { label: { it: 'Da rispondere', en: 'To reply' }, emoji: '✉️', color: '#34c759' },
+      { label: { it: 'In attesa', en: 'Waiting' }, emoji: '⏳', color: '#ff9500' },
+      { label: { it: 'Archiviata', en: 'Archived' }, emoji: '📦', color: '#86868b' }
+    ],
+    categories: [
+      { name: { it: 'Da clienti', en: 'From clients' }, emoji: '👥' },
+      { name: { it: 'Da fornitori', en: 'From suppliers' }, emoji: '🏢' },
+      { name: { it: 'Team interno', en: 'Internal team' }, emoji: '🧑‍💻' },
+      { name: { it: 'Newsletter', en: 'Newsletter' }, emoji: '📰' },
+      { name: { it: 'Urgenti', en: 'Urgent' }, emoji: '⚠️' },
+      { name: { it: 'Riferimento', en: 'Reference' }, emoji: '🗒' }
+    ],
+    valueUnit: ''
+  },
+  {
+    id: 'leads', emoji: '💼',
+    name: { it: 'Lead commerciali', en: 'Sales leads' },
+    desc: { it: 'Pipeline vendite. Caldo/tiepido/freddo per ogni lead.', en: 'Sales pipeline. Hot/warm/cold for each lead.' },
+    statuses: [
+      { label: { it: 'Caldo', en: 'Hot' }, emoji: '🔥', color: '#ff3b30' },
+      { label: { it: 'Tiepido', en: 'Warm' }, emoji: '☀️', color: '#ff9500' },
+      { label: { it: 'Freddo', en: 'Cold' }, emoji: '❄️', color: '#0071e3' }
+    ],
+    categories: [
+      { name: { it: 'Nord Italia', en: 'North Italy' }, emoji: '⛰️' },
+      { name: { it: 'Centro Italia', en: 'Central Italy' }, emoji: '🏛️' },
+      { name: { it: 'Sud Italia', en: 'South Italy' }, emoji: '🌅' },
+      { name: { it: 'Estero', en: 'International' }, emoji: '🌍' },
+      { name: { it: 'Nuovi', en: 'New' }, emoji: '✨' },
+      { name: { it: 'Da richiamare', en: 'Follow-up' }, emoji: '📞' }
+    ],
+    valueUnit: '€'
+  },
+  {
+    id: 'tickets', emoji: '🔧',
+    name: { it: 'Ticket assistenza', en: 'Support tickets' },
+    desc: { it: 'Smista chiamate di assistenza tecnica per tipo macchina.', en: 'Sort technical support requests by machine type.' },
+    statuses: [
+      { label: { it: 'Aperto', en: 'Open' }, emoji: '🔴', color: '#ff3b30' },
+      { label: { it: 'In lavorazione', en: 'In progress' }, emoji: '🟡', color: '#ff9500' },
+      { label: { it: 'Risolto', en: 'Resolved' }, emoji: '🟢', color: '#34c759' }
+    ],
+    categories: [
+      { name: { it: 'Equilibratrici', en: 'Wheel balancers' }, emoji: '⚙️' },
+      { name: { it: 'Smontagomme', en: 'Tyre changers' }, emoji: '🛞' },
+      { name: { it: 'Sollevatori', en: 'Lifts' }, emoji: '🚗' },
+      { name: { it: 'Allineamento', en: 'Alignment' }, emoji: '📐' },
+      { name: { it: 'Compressori', en: 'Compressors' }, emoji: '🌬️' },
+      { name: { it: 'Altro', en: 'Other' }, emoji: '🛠️' }
+    ],
+    valueUnit: ''
+  },
+  {
+    id: 'catalog', emoji: '📦',
+    name: { it: 'Listino prodotti', en: 'Product catalog' },
+    desc: { it: 'Decide cosa pubblicare nel prossimo catalogo. Importa CSV listino.', en: 'Decide what to publish in your next catalog. Import a price-list CSV.' },
+    statuses: [
+      { label: { it: 'Spingere', en: 'Promote' }, emoji: '🚀', color: '#34c759' },
+      { label: { it: 'Da valutare', en: 'Review' }, emoji: '🔍', color: '#ff9500' },
+      { label: { it: 'Out', en: 'Out' }, emoji: '📦', color: '#86868b' }
+    ],
+    categories: [
+      { name: { it: 'Bestseller', en: 'Bestsellers' }, emoji: '⭐' },
+      { name: { it: 'Novità', en: 'New' }, emoji: '✨' },
+      { name: { it: 'Promozione', en: 'On sale' }, emoji: '🏷️' },
+      { name: { it: 'Stock alto', en: 'High stock' }, emoji: '📊' },
+      { name: { it: 'Margine basso', en: 'Low margin' }, emoji: '⚠️' },
+      { name: { it: 'Da rivedere prezzo', en: 'Reprice' }, emoji: '💸' }
+    ],
+    valueUnit: '€'
+  },
+  {
+    id: 'hr', emoji: '👥',
+    name: { it: 'Candidature', en: 'Job applications' },
+    desc: { it: 'Selezione personale. Considerare/intervistare/scartare.', en: 'HR screening. Consider/interview/reject.' },
+    statuses: [
+      { label: { it: 'Considerare', en: 'Consider' }, emoji: '👀', color: '#0071e3' },
+      { label: { it: 'Intervistare', en: 'Interview' }, emoji: '💬', color: '#34c759' },
+      { label: { it: 'Scartare', en: 'Reject' }, emoji: '🚫', color: '#86868b' }
+    ],
+    categories: [
+      { name: { it: 'Tecnico', en: 'Technical' }, emoji: '🔧' },
+      { name: { it: 'Commerciale', en: 'Sales' }, emoji: '💼' },
+      { name: { it: 'Amministrativo', en: 'Admin' }, emoji: '📋' },
+      { name: { it: 'Stage', en: 'Internship' }, emoji: '🎓' }
+    ],
+    valueUnit: ''
+  },
+  {
+    id: 'ideas', emoji: '💡',
+    name: { it: 'Idee progetto', en: 'Project ideas' },
+    desc: { it: 'Backlog di idee. Sviluppare/parcheggiare/scartare.', en: 'Idea backlog. Develop/park/drop.' },
+    statuses: [
+      { label: { it: 'Sviluppare', en: 'Develop' }, emoji: '🚀', color: '#34c759' },
+      { label: { it: 'Parcheggio', en: 'Parking' }, emoji: '🅿️', color: '#ff9500' },
+      { label: { it: 'Scartare', en: 'Drop' }, emoji: '🗑', color: '#86868b' }
+    ],
+    categories: [
+      { name: { it: 'Prodotto', en: 'Product' }, emoji: '📦' },
+      { name: { it: 'Marketing', en: 'Marketing' }, emoji: '📣' },
+      { name: { it: 'Tecnologia', en: 'Tech' }, emoji: '⚙️' },
+      { name: { it: 'Processo', en: 'Process' }, emoji: '🔄' },
+      { name: { it: 'Esperimenti', en: 'Experiments' }, emoji: '🧪' }
+    ],
+    valueUnit: ''
+  }
+];
+
+// ============================================
+// STATE
+// ============================================
+const STORAGE_KEY = 'triagehub-v1';
+
+const DEFAULT_STATUSES = [
+  { id: 's1', label: { it: 'Approvato', en: 'Approved' },   emoji: '⭐', color: '#34c759' },
+  { id: 's2', label: { it: 'Da rivedere', en: 'To review' }, emoji: '🔄', color: '#ff9500' },
+  { id: 's3', label: { it: 'Archiviato', en: 'Archived' },   emoji: '📦', color: '#86868b' }
+];
+
+let state = {
+  items: [],
+  categories: [],
+  statuses: structuredClone(DEFAULT_STATUSES),
+  itemStatus: {},
+  valueUnit: '',
+  filter: { search: '', cat: 'all', status: 'all' }
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const p = JSON.parse(saved);
+      if (Array.isArray(p.items))      state.items = p.items;
+      if (Array.isArray(p.categories)) state.categories = p.categories;
+      if (Array.isArray(p.statuses) && p.statuses.length === 3) state.statuses = p.statuses;
+      if (p.itemStatus)                state.itemStatus = p.itemStatus;
+      if (typeof p.valueUnit === 'string') state.valueUnit = p.valueUnit;
+    }
+  } catch (e) { console.warn('Load error:', e); }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      items: state.items, categories: state.categories,
+      statuses: state.statuses, itemStatus: state.itemStatus,
+      valueUnit: state.valueUnit
+    }));
+  } catch (e) { toast(t('storageFull')); }
+}
+
+// ============================================
+// HELPERS
+// ============================================
+function uid() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'x' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]
+  ));
+}
+function toast(msg, ms = 2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), ms);
+}
+function findCat(id) { return state.categories.find(c => c.id === id); }
+function findStatus(id) { return state.statuses.find(s => s.id === id); }
+
+// Per oggetti label che possono essere {it,en} o stringa semplice
+function localized(v) {
+  if (v && typeof v === 'object' && (v.it || v.en)) return v[currentLang] || v.it || v.en;
+  return v;
+}
+
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function fmtNumber(n) {
+  if (n === null || n === undefined || n === '') return '';
+  const num = Number(n);
+  if (!isFinite(num)) return '';
+  return num.toLocaleString(currentLang === 'it' ? 'it-IT' : 'en-US', {
+    maximumFractionDigits: 2
+  });
+}
+
+// ============================================
+// RENDER: stats
+// ============================================
+function renderStats() {
+  const grid = document.getElementById('stat-grid');
+  const total = state.items.length;
+  const counts = state.statuses.map(s =>
+    Object.values(state.itemStatus).filter(v => v === s.id).length
+  );
+  const unassigned = total - counts.reduce((a, b) => a + b, 0);
+
+  let html = `<div class="stat-card">
+    <div class="stat-num">${total}</div>
+    <div class="stat-label">${escapeHtml(t('totalItems'))}</div>
+  </div>`;
+  state.statuses.forEach((s, i) => {
+    html += `<div class="stat-card" style="--stat-color:${escapeHtml(s.color)}">
+      <div class="stat-num">${counts[i]}</div>
+      <div class="stat-label">${escapeHtml(s.emoji)} ${escapeHtml(localized(s.label))}</div>
+    </div>`;
+  });
+  if (total > 0) {
+    html += `<div class="stat-card">
+      <div class="stat-num" style="color:var(--text-tertiary)">${unassigned}</div>
+      <div class="stat-label">⚪ ${escapeHtml(t('noChoice'))}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+// ============================================
+// RENDER: chips
+// ============================================
+function renderChips() {
+  const chipsEl = document.getElementById('chips');
+  const counts = { all: state.items.length };
+  state.items.forEach(it => {
+    const k = it.cat || '__none__';
+    counts[k] = (counts[k] || 0) + 1;
+  });
+
+  let html = `<div class="chip ${state.filter.cat === 'all' ? 'active' : ''}" data-cat="all">${currentLang === 'it' ? 'Tutte' : 'All'}<span class="chip-count">${counts.all}</span></div>`;
+  state.categories.forEach(c => {
+    if (counts[c.id]) {
+      html += `<div class="chip ${state.filter.cat === c.id ? 'active' : ''}" data-cat="${c.id}">${escapeHtml(c.emoji || '📁')} ${escapeHtml(localized(c.name))}<span class="chip-count">${counts[c.id]}</span></div>`;
+    }
+  });
+  if (counts.__none__) {
+    html += `<div class="chip ${state.filter.cat === '__none__' ? 'active' : ''}" data-cat="__none__">📂 ${escapeHtml(t('noCategory'))}<span class="chip-count">${counts.__none__}</span></div>`;
+  }
+
+  if (state.items.length > 0) {
+    html += `<div class="chip divider">|</div>`;
+    state.statuses.forEach(s => {
+      html += `<div class="chip ${state.filter.status === s.id ? 'active' : ''}" data-status="${s.id}">${escapeHtml(s.emoji)} ${escapeHtml(localized(s.label))}</div>`;
+    });
+    html += `<div class="chip ${state.filter.status === '__none__' ? 'active' : ''}" data-status="__none__">⚪ ${escapeHtml(t('noChoice'))}</div>`;
+  }
+  chipsEl.innerHTML = html;
+
+  chipsEl.querySelectorAll('[data-cat]').forEach(el => {
+    el.addEventListener('click', () => {
+      state.filter.cat = el.dataset.cat;
+      renderChips(); renderItems();
+    });
+  });
+  chipsEl.querySelectorAll('[data-status]').forEach(el => {
+    el.addEventListener('click', () => {
+      state.filter.status = state.filter.status === el.dataset.status ? 'all' : el.dataset.status;
+      renderChips(); renderItems();
+    });
+  });
+}
+
+// ============================================
+// RENDER: items
+// ============================================
+function renderItems() {
+  const main = document.getElementById('main');
+
+  if (state.items.length === 0) {
+    main.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-state-emoji">🎯</span>
+        <h2>${t('emptyTitle')}</h2>
+        <p>${escapeHtml(t('emptyText'))}</p>
+        <div class="empty-actions">
+          <button class="btn primary" onclick="document.getElementById('btn-add').click()">${escapeHtml(t('emptyAddBtn'))}</button>
+          <button class="btn" onclick="document.getElementById('btn-templates').click()">${escapeHtml(t('emptyTemplateBtn'))}</button>
+          <button class="btn" onclick="document.getElementById('btn-import').click()">${escapeHtml(t('emptyImportBtn'))}</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const search = state.filter.search.trim().toLowerCase();
+  const filtered = state.items.filter(it => {
+    if (state.filter.cat === '__none__' && it.cat) return false;
+    if (state.filter.cat !== 'all' && state.filter.cat !== '__none__' && it.cat !== state.filter.cat) return false;
+    const st = state.itemStatus[it.id];
+    if (state.filter.status === '__none__' && st) return false;
+    if (state.filter.status !== 'all' && state.filter.status !== '__none__' && st !== state.filter.status) return false;
+    if (search) {
+      const linksText = (it.links || []).map(l => l.url + ' ' + l.label).join(' ');
+      const hay = (it.name + ' ' + (it.desc || '') + ' ' + (it.tag || '') + ' ' + linksText).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    main.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-state-emoji">🔍</span>
+        <h2>${t('noResultTitle')}</h2>
+        <p>${escapeHtml(t('noResultText'))}</p>
+      </div>`;
+    return;
+  }
+
+  const groups = new Map();
+  filtered.forEach(it => {
+    const key = it.cat || '__none__';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(it);
+  });
+
+  const orderedKeys = [];
+  state.categories.forEach(c => { if (groups.has(c.id)) orderedKeys.push(c.id); });
+  if (groups.has('__none__')) orderedKeys.push('__none__');
+
+  let html = '';
+  orderedKeys.forEach(key => {
+    const items = groups.get(key);
+    const cat = key === '__none__'
+      ? { name: t('noCategory'), emoji: '📂' }
+      : findCat(key);
+    if (!cat) return;
+    const catName = key === '__none__' ? cat.name : localized(cat.name);
+
+    html += `<section class="cat-section">
+      <div class="cat-header">
+        <span class="cat-emoji">${escapeHtml(cat.emoji || '📁')}</span>
+        <h2 class="cat-title">${escapeHtml(catName)}</h2>
+        <span class="cat-count">${items.length} ${escapeHtml(t('items'))}</span>
+      </div>
+      <div class="item-grid">`;
+
+    items.forEach(it => {
+      const st = state.itemStatus[it.id];
+      const status = st ? findStatus(st) : null;
+      const cardClass = status ? 'has-status' : '';
+      const cardStyle = status ? `--status-color:${escapeHtml(status.color)}` : '';
+
+      html += `<div class="item-card ${cardClass}" style="${cardStyle}">`;
+
+      // Head: nome + value (right) + edit
+      html += `<div class="item-head">
+        <div class="item-name">${escapeHtml(it.name)}${it.tag ? ` <span class="item-link-label" style="vertical-align:2px">${escapeHtml(it.tag)}</span>` : ''}</div>`;
+      if (it.value !== undefined && it.value !== null && it.value !== '') {
+        html += `<div class="item-value">${fmtNumber(it.value)}${state.valueUnit ? `<span class="item-value-unit">${escapeHtml(state.valueUnit)}</span>` : ''}</div>`;
+      }
+      html += `<button class="item-edit-btn" data-edit="${it.id}" title="${escapeHtml(t('editItem'))}">✎</button>
+      </div>`;
+
+      if (it.desc) html += `<div class="item-desc">${escapeHtml(it.desc)}</div>`;
+
+      if (it.links && it.links.length) {
+        html += `<div class="item-links">`;
+        it.links.forEach(l => {
+          html += `<div><span class="item-link-label">${escapeHtml(l.label || 'link')}</span> <a class="item-link" href="${escapeHtml(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.url)}</a></div>`;
+        });
+        html += `</div>`;
+      }
+
+      if (it.created) {
+        const d = new Date(it.created).toLocaleDateString(currentLang === 'it' ? 'it-IT' : 'en-US');
+        html += `<div class="item-meta">${escapeHtml(t('addedDate', d))}</div>`;
+      }
+
+      html += `<div class="actions">`;
+      state.statuses.forEach(s => {
+        const isActive = st === s.id;
+        html += `<button class="action-btn ${isActive ? 'active' : ''}" data-set-status="${it.id}|${s.id}" style="--status-color:${escapeHtml(s.color)}">${escapeHtml(s.emoji)} ${escapeHtml(localized(s.label))}</button>`;
+      });
+      html += `</div></div>`;
+    });
+
+    html += `</div></section>`;
+  });
+
+  main.innerHTML = html;
+
+  main.querySelectorAll('[data-set-status]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [itemId, statusId] = btn.dataset.setStatus.split('|');
+      if (state.itemStatus[itemId] === statusId) delete state.itemStatus[itemId];
+      else state.itemStatus[itemId] = statusId;
+      saveState(); renderStats(); renderItems();
+    });
+  });
+  main.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openItemDialog(btn.dataset.edit));
+  });
+}
+
+function renderAll() { renderStats(); renderChips(); renderItems(); }
+
+// ============================================
+// DIALOG helpers
+// ============================================
+function openDialog(id) {
+  const d = document.getElementById(id);
+  if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', '');
+}
+function closeDialog(id) {
+  const d = document.getElementById(id);
+  if (typeof d.close === 'function') d.close(); else d.removeAttribute('open');
+}
+document.addEventListener('click', e => {
+  const target = e.target.closest('[data-close]');
+  if (target) closeDialog(target.dataset.close);
+});
+
+// ============================================
+// TEMPLATES DIALOG
+// ============================================
+function renderTemplateGallery() {
+  const grid = document.getElementById('template-grid');
+  grid.innerHTML = TEMPLATES.map(tpl => `
+    <button class="template-card ${tpl.blank ? 'template-blank' : ''}" data-template="${tpl.id}">
+      <span class="template-emoji">${tpl.emoji}</span>
+      <div class="template-name">${escapeHtml(tpl.name[currentLang])}</div>
+      <div class="template-desc">${escapeHtml(tpl.desc[currentLang])}</div>
+    </button>
+  `).join('');
+  grid.querySelectorAll('[data-template]').forEach(btn => {
+    btn.addEventListener('click', () => applyTemplate(btn.dataset.template));
+  });
+}
+
+function applyTemplate(tplId) {
+  const tpl = TEMPLATES.find(x => x.id === tplId);
+  if (!tpl) return;
+  if (tpl.blank) {
+    closeDialog('dlg-templates');
+    return;
+  }
+  // Sostituisce statuses (sempre 3) e aggiunge categorie nuove
+  state.statuses = tpl.statuses.map((s, i) => ({
+    id: 's' + (i + 1), label: s.label, emoji: s.emoji, color: s.color
+  }));
+  const existing = new Set(state.categories.map(c => localized(c.name).toLowerCase()));
+  tpl.categories.forEach(c => {
+    const localName = c.name[currentLang].toLowerCase();
+    if (!existing.has(localName)) {
+      state.categories.push({ id: uid(), name: c.name, emoji: c.emoji });
+    }
+  });
+  if (tpl.valueUnit !== undefined) state.valueUnit = tpl.valueUnit;
+  saveState();
+  renderAll();
+  closeDialog('dlg-templates');
+  toast(`✓ Template "${tpl.name[currentLang]}" ${currentLang === 'it' ? 'applicato' : 'applied'}`);
+}
+
+document.getElementById('btn-templates').addEventListener('click', () => {
+  renderTemplateGallery();
+  openDialog('dlg-templates');
+});
+
+// ============================================
+// ITEM DIALOG
+// ============================================
+let editingItemId = null;
+
+function openItemDialog(id = null) {
+  editingItemId = id;
+  const item = id ? state.items.find(i => i.id === id) : null;
+  document.getElementById('dlg-item-title').textContent = item ? t('editItem') : t('newItem');
+  document.getElementById('f-name').value = item?.name || '';
+  document.getElementById('f-desc').value = item?.desc || '';
+  document.getElementById('f-tag').value  = item?.tag || '';
+  document.getElementById('f-value').value = (item?.value !== undefined && item?.value !== null) ? item.value : '';
+
+  const sel = document.getElementById('f-cat');
+  sel.innerHTML = `<option value="">${escapeHtml(t('none'))}</option>` +
+    state.categories.map(c => `<option value="${c.id}" ${item?.cat === c.id ? 'selected':''}>${escapeHtml(c.emoji || '📁')} ${escapeHtml(localized(c.name))}</option>`).join('');
+
+  renderLinksEditor(item?.links || []);
+  document.getElementById('btn-delete-item').style.display = item ? '' : 'none';
+  openDialog('dlg-item');
+  setTimeout(() => document.getElementById('f-name').focus(), 50);
+}
+
+function renderLinksEditor(links) {
+  const wrap = document.getElementById('links-editor');
+  wrap.innerHTML = '';
+  links.forEach(l => addLinkRow(l.label, l.url));
+}
+
+function addLinkRow(label = '', url = '') {
+  const wrap = document.getElementById('links-editor');
+  const div = document.createElement('div');
+  div.className = 'field-row';
+  div.style.marginBottom = '6px';
+  div.innerHTML = `
+    <div class="field" style="flex:0 0 110px"><input type="text" class="lnk-label" placeholder="Label" value="${escapeHtml(label)}" maxlength="20"></div>
+    <div class="field"><input type="url" class="lnk-url" placeholder="https://…" value="${escapeHtml(url)}"></div>
+    <button type="button" class="editor-del" title="Remove">×</button>`;
+  div.querySelector('.editor-del').addEventListener('click', () => div.remove());
+  wrap.appendChild(div);
+}
+document.getElementById('btn-add-link').addEventListener('click', () => addLinkRow());
+
+document.getElementById('form-item').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) return;
+  const desc = document.getElementById('f-desc').value.trim();
+  const cat  = document.getElementById('f-cat').value || null;
+  const tag  = document.getElementById('f-tag').value.trim();
+  const valueRaw = document.getElementById('f-value').value;
+  const value = valueRaw === '' ? null : Number(valueRaw);
+  const links = [];
+  document.querySelectorAll('#links-editor .field-row').forEach(row => {
+    const label = row.querySelector('.lnk-label').value.trim();
+    const url   = row.querySelector('.lnk-url').value.trim();
+    if (url) links.push({ label: label || 'link', url });
+  });
+
+  if (editingItemId) {
+    const it = state.items.find(i => i.id === editingItemId);
+    if (it) Object.assign(it, { name, desc, cat, tag, value, links });
+  } else {
+    state.items.unshift({
+      id: uid(), name, desc, cat, tag, value, links,
+      created: new Date().toISOString()
+    });
+  }
+  saveState(); renderAll(); closeDialog('dlg-item');
+  toast(editingItemId ? t('updatedItem') : t('addedItem'));
+  editingItemId = null;
+});
+
+document.getElementById('btn-delete-item').addEventListener('click', () => {
+  if (!editingItemId) return;
+  if (!confirm(t('confirmDelete'))) return;
+  state.items = state.items.filter(i => i.id !== editingItemId);
+  delete state.itemStatus[editingItemId];
+  saveState(); renderAll(); closeDialog('dlg-item');
+  toast(t('deletedItem'));
+  editingItemId = null;
+});
+
+document.getElementById('btn-add').addEventListener('click', () => openItemDialog());
+
+// ============================================
+// CATEGORIES DIALOG
+// ============================================
+function renderCatEditor() {
+  const ul = document.getElementById('cat-editor');
+  if (state.categories.length === 0) {
+    ul.innerHTML = `<li class="small" style="padding:14px 0">${currentLang === 'it' ? 'Nessuna categoria. Aggiungine una qui sotto.' : 'No categories. Add one below.'}</li>`;
+    return;
+  }
+  ul.innerHTML = state.categories.map(c => `
+    <li class="editor-row" data-cat-id="${c.id}">
+      <input class="editor-emoji" maxlength="2" value="${escapeHtml(c.emoji || '')}" data-field="emoji">
+      <input class="editor-name" value="${escapeHtml(localized(c.name))}" maxlength="40" data-field="name">
+      <button class="editor-del" data-del="${c.id}" title="Delete">🗑</button>
+    </li>`).join('');
+
+  ul.querySelectorAll('[data-field]').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const row = inp.closest('[data-cat-id]');
+      const cat = findCat(row.dataset.catId);
+      if (cat) {
+        // Se il name era un oggetto {it,en}, lo trasformiamo in stringa singola
+        if (inp.dataset.field === 'name') cat.name = inp.value.trim();
+        else cat[inp.dataset.field] = inp.value.trim();
+        saveState(); renderAll();
+      }
+    });
+  });
+  ul.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.del;
+      if (!confirm(t('confirmCatDelete'))) return;
+      state.categories = state.categories.filter(c => c.id !== id);
+      state.items.forEach(it => { if (it.cat === id) it.cat = null; });
+      saveState(); renderCatEditor(); renderAll();
+    });
+  });
+}
+document.getElementById('btn-categories').addEventListener('click', () => {
+  renderCatEditor(); openDialog('dlg-categories');
+});
+document.getElementById('cat-add').addEventListener('click', () => {
+  state.categories.push({
+    id: uid(),
+    name: currentLang === 'it' ? 'Nuova categoria' : 'New category',
+    emoji: '📁'
+  });
+  saveState(); renderCatEditor(); renderAll();
+});
+
+// ============================================
+// STATUSES DIALOG
+// ============================================
+function renderStatusEditor() {
+  const ul = document.getElementById('status-editor');
+  ul.innerHTML = state.statuses.map(s => `
+    <li class="editor-row" data-status-id="${s.id}">
+      <input class="editor-emoji" maxlength="2" value="${escapeHtml(s.emoji)}" data-field="emoji">
+      <input class="editor-name" value="${escapeHtml(localized(s.label))}" maxlength="30" data-field="label">
+      <input type="color" class="editor-color" value="${escapeHtml(s.color)}" data-field="color">
+    </li>`).join('');
+
+  ul.querySelectorAll('[data-field]').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const row = inp.closest('[data-status-id]');
+      const st = findStatus(row.dataset.statusId);
+      if (st) {
+        if (inp.dataset.field === 'label') st.label = inp.value.trim() || st.label;
+        else st[inp.dataset.field] = inp.value.trim() || st[inp.dataset.field];
+        saveState(); renderAll();
+      }
+    });
+  });
+  document.getElementById('value-unit').value = state.valueUnit || '';
+}
+document.getElementById('btn-statuses').addEventListener('click', () => {
+  renderStatusEditor(); openDialog('dlg-statuses');
+});
+document.getElementById('value-unit').addEventListener('change', e => {
+  state.valueUnit = e.target.value.trim();
+  saveState(); renderItems();
+});
+
+// ============================================
+// SEARCH
+// ============================================
+document.getElementById('search').addEventListener('input', e => {
+  state.filter.search = e.target.value;
+  renderItems();
+});
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('search').focus();
+  }
+  if (e.key === 'Escape' && document.activeElement.id === 'search') {
+    document.getElementById('search').value = '';
+    state.filter.search = '';
+    renderItems();
+  }
+});
+
+// ============================================
+// IMPORT — CSV
+// ============================================
+function parseCSV(text) {
+  const rows = [];
+  let cur = [], cell = '', inQuote = false, i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    if (inQuote) {
+      if (ch === '"') {
+        if (text[i+1] === '"') { cell += '"'; i += 2; continue; }
+        inQuote = false; i++; continue;
+      }
+      cell += ch; i++;
+    } else {
+      if (ch === '"') { inQuote = true; i++; continue; }
+      if (ch === ',' || ch === ';') { cur.push(cell); cell = ''; i++; continue; }
+      if (ch === '\r') { i++; continue; }
+      if (ch === '\n') { cur.push(cell); rows.push(cur); cur = []; cell = ''; i++; continue; }
+      cell += ch; i++;
+    }
+  }
+  if (cell.length || cur.length) { cur.push(cell); rows.push(cur); }
+  return rows.filter(r => r.length > 0 && !(r.length === 1 && r[0] === ''));
+}
+
+let csvData = null;
+
+function showCSVPreview(text) {
+  const rows = parseCSV(text);
+  if (rows.length < 2) { toast(t('csvEmpty')); return; }
+  csvData = { headers: rows[0], rows: rows.slice(1) };
+
+  const preview = rows.slice(0, 6).map(r => r.join(' | ')).join('\n');
+  document.getElementById('csv-preview-text').textContent =
+    preview + (rows.length > 6 ? `\n… (+${rows.length - 6} ${currentLang === 'it' ? 'righe' : 'rows'})` : '');
+
+  const fields = ['name', 'desc', 'cat', 'tag', 'value', 'url'];
+  const labels = {
+    name: t('fieldName'), desc: t('fieldDesc'), cat: t('fieldCat'),
+    tag: t('fieldTag'), value: t('fieldValue'), url: t('fieldUrl')
+  };
+  const opts = `<option value="">${escapeHtml(t('fieldIgnore'))}</option>` +
+    csvData.headers.map((h, i) => `<option value="${i}">${escapeHtml(h)}</option>`).join('');
+  document.getElementById('csv-mapping').innerHTML = fields.map(f => {
+    let guess = '';
+    csvData.headers.forEach((h, i) => {
+      const hl = h.toLowerCase();
+      if (f === 'name'  && (hl.includes('nome') || hl.includes('name') || hl.includes('titolo') || hl === 'title' || hl.includes('oggetto') || hl.includes('subject') || hl.includes('descrizione'))) guess = i;
+      if (f === 'desc'  && (hl.includes('desc') || hl.includes('note') || hl.includes('body') || hl.includes('corpo'))) guess = i;
+      if (f === 'cat'   && (hl.includes('categ') || hl === 'cat' || hl.includes('gruppo') || hl.includes('tipo') || hl.includes('famiglia') || hl.includes('group') || hl.includes('family'))) guess = i;
+      if (f === 'tag'   && (hl === 'tag' || hl.includes('etich') || hl.includes('mittente') || hl.includes('from') || hl.includes('codice') || hl.includes('sku') || hl === 'cod')) guess = i;
+      if (f === 'value' && (hl.includes('prezzo') || hl.includes('price') || hl.includes('importo') || hl.includes('amount') || hl.includes('valore') || hl === 'value' || hl.includes('totale') || hl.includes('total'))) guess = i;
+      if (f === 'url'   && (hl.includes('link') || hl.includes('url') || hl.includes('web'))) guess = i;
+    });
+    let optsHtml = opts;
+    if (guess !== '') optsHtml = optsHtml.replace(`value="${guess}"`, `value="${guess}" selected`);
+    return `<label>${labels[f]}</label><select data-csv-field="${f}">${optsHtml}</select>`;
+  }).join('');
+
+  document.getElementById('csv-preview').classList.remove('hidden');
+}
+
+function handleCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => showCSVPreview(ev.target.result);
+  reader.readAsText(file);
+}
+
+document.getElementById('csv-drop').addEventListener('click', () => document.getElementById('csv-file').click());
+document.getElementById('csv-file').addEventListener('change', e => { if (e.target.files[0]) handleCSVFile(e.target.files[0]); });
+['dragenter','dragover'].forEach(ev =>
+  document.getElementById('csv-drop').addEventListener(ev, e => { e.preventDefault(); e.currentTarget.classList.add('dragover'); })
+);
+['dragleave','drop'].forEach(ev =>
+  document.getElementById('csv-drop').addEventListener(ev, e => {
+    e.preventDefault(); e.currentTarget.classList.remove('dragover');
+    if (ev === 'drop' && e.dataTransfer.files[0]) handleCSVFile(e.dataTransfer.files[0]);
+  })
+);
+document.getElementById('csv-cancel').addEventListener('click', () => {
+  csvData = null;
+  document.getElementById('csv-preview').classList.add('hidden');
+  document.getElementById('csv-file').value = '';
+});
+document.getElementById('csv-confirm').addEventListener('click', () => {
+  if (!csvData) return;
+  const map = {};
+  document.querySelectorAll('[data-csv-field]').forEach(sel => {
+    if (sel.value !== '') map[sel.dataset.csvField] = parseInt(sel.value, 10);
+  });
+  if (map.name === undefined) { toast(t('csvNoName')); return; }
+
+  const catMap = new Map();
+  state.categories.forEach(c => catMap.set(localized(c.name).toLowerCase(), c.id));
+
+  let added = 0;
+  csvData.rows.forEach(row => {
+    const name = (row[map.name] || '').trim();
+    if (!name) return;
+    let catId = null;
+    if (map.cat !== undefined) {
+      const catName = (row[map.cat] || '').trim();
+      if (catName) {
+        const key = catName.toLowerCase();
+        if (catMap.has(key)) catId = catMap.get(key);
+        else {
+          const newCat = { id: uid(), name: catName, emoji: '📁' };
+          state.categories.push(newCat);
+          catMap.set(key, newCat.id);
+          catId = newCat.id;
+        }
+      }
+    }
+    const links = [];
+    if (map.url !== undefined && row[map.url]) {
+      links.push({ label: 'link', url: (row[map.url] || '').trim() });
+    }
+    let value = null;
+    if (map.value !== undefined && row[map.value]) {
+      const raw = String(row[map.value]).replace(/[^\d.,-]/g, '').replace(',', '.');
+      const n = parseFloat(raw);
+      if (isFinite(n)) value = n;
+    }
+    state.items.push({
+      id: uid(), name,
+      desc: map.desc !== undefined ? (row[map.desc] || '').trim() : '',
+      cat: catId,
+      tag: map.tag !== undefined ? (row[map.tag] || '').trim() : '',
+      value, links,
+      created: new Date().toISOString()
+    });
+    added++;
+  });
+  saveState(); renderAll(); closeDialog('dlg-import');
+  toast(t('csvImported', added));
+  csvData = null;
+  document.getElementById('csv-preview').classList.add('hidden');
+  document.getElementById('csv-file').value = '';
+});
+
+// ============================================
+// IMPORT — JSON
+// ============================================
+let jsonData = null;
+
+function showJSONPreview(text) {
+  try {
+    const data = JSON.parse(text);
+    jsonData = data;
+    document.getElementById('json-preview-text').textContent =
+      JSON.stringify(data, null, 2).slice(0, 800) + (text.length > 800 ? '\n…' : '');
+    document.getElementById('json-preview').classList.remove('hidden');
+  } catch (e) { toast(t('jsonInvalid')); }
+}
+
+function handleJSONFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => showJSONPreview(ev.target.result);
+  reader.readAsText(file);
+}
+
+document.getElementById('json-drop').addEventListener('click', () => document.getElementById('json-file').click());
+document.getElementById('json-file').addEventListener('change', e => { if (e.target.files[0]) handleJSONFile(e.target.files[0]); });
+['dragenter','dragover'].forEach(ev =>
+  document.getElementById('json-drop').addEventListener(ev, e => { e.preventDefault(); e.currentTarget.classList.add('dragover'); })
+);
+['dragleave','drop'].forEach(ev =>
+  document.getElementById('json-drop').addEventListener(ev, e => {
+    e.preventDefault(); e.currentTarget.classList.remove('dragover');
+    if (ev === 'drop' && e.dataTransfer.files[0]) handleJSONFile(e.dataTransfer.files[0]);
+  })
+);
+document.getElementById('json-cancel').addEventListener('click', () => {
+  jsonData = null;
+  document.getElementById('json-preview').classList.add('hidden');
+  document.getElementById('json-file').value = '';
+});
+document.getElementById('json-confirm').addEventListener('click', () => {
+  if (!jsonData) return;
+  const replace = document.getElementById('json-replace').checked;
+
+  if (jsonData.items && Array.isArray(jsonData.items)) {
+    if (replace) { state.items = []; state.categories = []; state.itemStatus = {}; }
+    if (Array.isArray(jsonData.categories)) {
+      const existingIds = new Set(state.categories.map(c => c.id));
+      jsonData.categories.forEach(c => { if (!existingIds.has(c.id)) state.categories.push(c); });
+    }
+    if (Array.isArray(jsonData.statuses) && jsonData.statuses.length === 3 && replace) {
+      state.statuses = jsonData.statuses;
+    }
+    if (typeof jsonData.valueUnit === 'string' && replace) state.valueUnit = jsonData.valueUnit;
+    jsonData.items.forEach(it => state.items.push({ ...it, id: it.id || uid() }));
+    if (jsonData.itemStatus) Object.assign(state.itemStatus, jsonData.itemStatus);
+  }
+  else if (Array.isArray(jsonData)) {
+    if (replace) { state.items = []; state.itemStatus = {}; }
+    const catMap = new Map(state.categories.map(c => [localized(c.name).toLowerCase(), c.id]));
+    jsonData.forEach(o => {
+      if (!o.name) return;
+      let catId = null;
+      if (o.cat) {
+        const key = String(o.cat).toLowerCase();
+        if (catMap.has(key)) catId = catMap.get(key);
+        else {
+          const nc = { id: uid(), name: String(o.cat), emoji: '📁' };
+          state.categories.push(nc); catMap.set(key, nc.id); catId = nc.id;
+        }
+      }
+      state.items.push({
+        id: uid(), name: String(o.name),
+        desc: o.desc || '', cat: catId, tag: o.tag || '',
+        value: (o.value !== undefined && o.value !== null && o.value !== '') ? Number(o.value) : null,
+        links: Array.isArray(o.links) ? o.links : [],
+        created: o.created || new Date().toISOString()
+      });
+    });
+  } else { toast(t('jsonUnknown')); return; }
+
+  saveState(); renderAll(); closeDialog('dlg-import');
+  toast(t('jsonImported'));
+  jsonData = null;
+  document.getElementById('json-preview').classList.add('hidden');
+  document.getElementById('json-file').value = '';
+  document.getElementById('json-replace').checked = false;
+});
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector(`.tab-panel[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+  });
+});
+
+document.getElementById('btn-import').addEventListener('click', () => openDialog('dlg-import'));
+
+// ============================================
+// EXPORT
+// ============================================
+document.getElementById('btn-export').addEventListener('click', () => {
+  if (state.items.length === 0) { toast(t('nothingToExport')); return; }
+  openDialog('dlg-export');
+});
+
+document.getElementById('exp-json').addEventListener('click', () => {
+  const data = {
+    version: 1, exportedAt: new Date().toISOString(),
+    items: state.items, categories: state.categories,
+    statuses: state.statuses, itemStatus: state.itemStatus,
+    valueUnit: state.valueUnit
+  };
+  downloadFile(JSON.stringify(data, null, 2),
+    `triagehub-${new Date().toISOString().slice(0,10)}.json`,
+    'application/json');
+  toast(t('backupSaved')); closeDialog('dlg-export');
+});
+
+document.getElementById('exp-md').addEventListener('click', () => {
+  const groups = {};
+  state.statuses.forEach(s => groups[s.id] = []);
+  groups['__none__'] = [];
+  state.items.forEach(it => {
+    const st = state.itemStatus[it.id] || '__none__';
+    if (groups[st]) groups[st].push(it);
+  });
+
+  let md = `# TriageHub — ${currentLang === 'it' ? 'Report' : 'Report'}\n\n_${currentLang === 'it' ? 'Esportato il' : 'Exported on'} ${new Date().toLocaleString(currentLang === 'it' ? 'it-IT' : 'en-US')}_\n\n`;
+  md += `**${currentLang === 'it' ? 'Totale' : 'Total'}**: ${state.items.length} ${t('items')}\n\n`;
+  state.statuses.forEach(s => {
+    md += `## ${s.emoji} ${localized(s.label)} (${groups[s.id].length})\n\n`;
+    if (groups[s.id].length === 0) { md += `_${currentLang === 'it' ? 'Nessuno' : 'None'}._\n\n`; return; }
+    groups[s.id].forEach(it => {
+      const cat = findCat(it.cat);
+      md += `### ${it.name}\n`;
+      if (it.desc) md += `${it.desc}\n\n`;
+      if (cat) md += `- ${currentLang === 'it' ? 'Categoria' : 'Category'}: ${cat.emoji || ''} ${localized(cat.name)}\n`;
+      if (it.tag) md += `- ${currentLang === 'it' ? 'Tag' : 'Tag'}: ${it.tag}\n`;
+      if (it.value !== null && it.value !== undefined && it.value !== '') md += `- ${currentLang === 'it' ? 'Valore' : 'Value'}: ${fmtNumber(it.value)} ${state.valueUnit}\n`;
+      (it.links || []).forEach(l => md += `- ${l.label}: ${l.url}\n`);
+      md += '\n';
+    });
+  });
+  if (groups['__none__'].length) {
+    md += `## ⚪ ${t('noChoice')} (${groups['__none__'].length})\n\n`;
+    groups['__none__'].forEach(it => md += `- ${it.name}\n`);
+  }
+
+  downloadFile(md, `triagehub-${new Date().toISOString().slice(0,10)}.md`, 'text/markdown');
+  toast(t('mdSaved')); closeDialog('dlg-export');
+});
+
+document.getElementById('exp-csv').addEventListener('click', () => {
+  const esc = v => {
+    const s = String(v ?? '');
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  let csv = 'name,description,category,status,tag,value,links,created\n';
+  state.items.forEach(it => {
+    const cat = findCat(it.cat);
+    const st = findStatus(state.itemStatus[it.id]);
+    const links = (it.links || []).map(l => `${l.label}=${l.url}`).join(' | ');
+    csv += [
+      esc(it.name), esc(it.desc), esc(cat ? localized(cat.name) : ''),
+      esc(st ? localized(st.label) : ''), esc(it.tag || ''),
+      esc(it.value ?? ''), esc(links), esc(it.created || '')
+    ].join(',') + '\n';
+  });
+  downloadFile(csv, `triagehub-${new Date().toISOString().slice(0,10)}.csv`, 'text/csv');
+  toast(t('csvSaved')); closeDialog('dlg-export');
+});
+
+// ============================================
+// CLEAR
+// ============================================
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if (state.items.length === 0 && state.categories.length === 0) { toast(t('confirmEmpty')); return; }
+  if (!confirm(t('confirmReset'))) return;
+  state.items = [];
+  state.categories = [];
+  state.statuses = structuredClone(DEFAULT_STATUSES);
+  state.itemStatus = {};
+  state.valueUnit = '';
+  state.filter = { search: '', cat: 'all', status: 'all' };
+  document.getElementById('search').value = '';
+  saveState(); renderAll();
+  toast(t('allCleared'));
+});
+
+// ============================================
+// SERVICE WORKER
+// ============================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.warn('SW registration failed:', err);
+    });
+  });
+}
+
+// ============================================
+// INIT
+// ============================================
+applyI18n();
+loadState();
+renderAll();
+
+// Mostra template gallery automaticamente al primo avvio (se vuoto)
+if (state.items.length === 0 && state.categories.length === 0 && !localStorage.getItem('triagehub-onboarded')) {
+  setTimeout(() => {
+    renderTemplateGallery();
+    openDialog('dlg-templates');
+    localStorage.setItem('triagehub-onboarded', '1');
+  }, 400);
+}
+</script>
+
+</body>
+</html>
