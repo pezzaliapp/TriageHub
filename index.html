@@ -3935,19 +3935,11 @@ document.getElementById('exp-json').addEventListener('click', () => {
   toast(t('backupSaved')); closeDialog('dlg-export');
 });
 
-// Detect OS per il report multi-piattaforma del template cleanup (v1.2.4).
-function detectOS() {
-  const ua = (navigator.userAgent || '').toLowerCase();
-  if (ua.includes('mac')) return 'mac';
-  if (ua.includes('win')) return 'windows';
-  if (ua.includes('linux')) return 'linux';
-  return 'mac';
-}
-
 // Costruisce il report Markdown specifico per il workspace cleanup.
-// Multi-OS: macOS / Windows / Linux. Multi-lingua: IT / EN.
+// v1.2.6: documento auto-sufficiente, contiene SEMPRE le istruzioni per tutti
+// e tre i sistemi operativi (macOS / Windows / Linux). Nessun branching basato
+// su navigator.userAgent: il report è condivisibile cross-platform.
 function buildCleanupMarkdown(ws) {
-  const os = detectOS();
   const isIT = currentLang === 'it';
   const date = new Date().toLocaleString(isIT ? 'it-IT' : 'en-US');
   const dateShort = new Date().toISOString().slice(0, 10);
@@ -3966,10 +3958,6 @@ function buildCleanupMarkdown(ws) {
   const totalSize = arr => arr.reduce((sum, it) => sum + (Number(it.value) || 0), 0);
   const trashMB = totalSize(byStatus.trash);
 
-  // Helper per testo OS-specifico.
-  const tx = (mac, win, linux) => os === 'mac' ? mac : os === 'windows' ? win : linux;
-  const osLabel = tx('macOS', 'Windows', 'Linux');
-
   // Categorie del workspace (per la sezione "Da archiviare", divise per categoria).
   const archiveByCategory = new Map();
   byStatus.archive.forEach(it => {
@@ -3986,8 +3974,8 @@ function buildCleanupMarkdown(ws) {
     return `- ${it.name}${sizePart}${tagPart}`;
   };
 
-  // -------- Suggerimenti destinazione per categoria --------
-  // mac/win/linux paths per le categorie di default del template cleanup.
+  // Suggerimenti destinazione per categoria. Mantengono i path per ogni OS:
+  // ora vengono emessi tutti e tre invece di sceglierne uno via UA detection.
   const dest = {
     Documenti: {
       mac: '`~/Documenti` (sotto la home, icona 📁)',
@@ -4054,6 +4042,40 @@ function buildCleanupMarkdown(ws) {
     }
   };
 
+  // -------- Block IT --------
+  const QUICK_WAY_IT = {
+    mac:     `### Modo veloce — macOS\n\n1. Apri il **Finder** (icona della faccia sorridente nel Dock)\n2. Vai sul **Desktop**: Cmd+Shift+D oppure menu Vai → Scrivania\n3. Imposta vista a lista: menu Vista → come elenco (o Cmd+2)\n4. Tieni il report aperto in una finestra accanto al Finder\n\n`,
+    windows: `### Modo veloce — Windows\n\n1. Apri **Esplora File** (icona della cartella nella taskbar)\n2. Vai sul **Desktop**: Win+D oppure click sull'icona Desktop\n3. Imposta vista dettagli: menu Visualizza → Dettagli\n4. Tieni il report aperto in una finestra accanto a Esplora File\n\n`,
+    linux:   `### Modo veloce — Linux\n\n1. Apri il file manager (Files / Nautilus / Dolphin / Thunar)\n2. Vai sul **Desktop**: tipicamente in \`~/Desktop\` o \`~/Scrivania\`\n3. Imposta vista a lista: menu Visualizza → Vista a lista\n4. Tieni il report aperto in una finestra accanto al file manager\n\n`
+  };
+  const MOVE_HOWTO_IT = {
+    mac:     `**Su macOS**:\n1. Apri il Finder nella destinazione\n2. Lascia aperta una seconda finestra sul Desktop\n3. Trascina i file dal Desktop alla cartella destinazione (Cmd+click per selezione multipla)\n\n`,
+    windows: `**Su Windows**:\n1. Apri Esplora File nella destinazione\n2. Lascia aperta una seconda finestra sul Desktop\n3. Trascina i file dal Desktop alla cartella destinazione (Ctrl+click per selezione multipla)\n\n`,
+    linux:   `**Su Linux**:\n1. Apri il file manager nella destinazione\n2. Lascia aperta una seconda finestra sul Desktop\n3. Trascina i file dal Desktop alla cartella destinazione (Ctrl+click per selezione multipla)\n\n`
+  };
+  const TRASH_HOWTO_IT = {
+    mac:     `#### Su macOS\n\n**Modo 1 — Uno per uno**:\n1. Apri Finder, vai sul Desktop\n2. Click su un file della lista qui sotto\n3. Premi \`Cmd + Backspace\`: il file va nel Cestino\n4. Ripeti per ogni file\n\n**Modo 2 — Tutti insieme**:\n1. Apri Finder, vai sul Desktop, vista a lista (Cmd+2)\n2. Tieni Cmd premuto e clicca su ogni file della lista\n3. Tutti selezionati, premi \`Cmd + Backspace\`\n4. Vanno nel Cestino tutti insieme\n\n**Per svuotare il Cestino**:\n- Click destro sull'icona Cestino nel Dock → Svuota Cestino\n- Oppure menu Finder → Svuota Cestino\n\n`,
+    windows: `#### Su Windows\n\n**Modo 1 — Uno per uno**:\n1. Apri Esplora File, vai sul Desktop\n2. Click su un file della lista qui sotto\n3. Premi \`Canc\` (o \`Del\`): il file va nel Cestino\n4. Ripeti per ogni file\n\n**Modo 2 — Tutti insieme**:\n1. Apri Esplora File, vai sul Desktop\n2. Tieni Ctrl premuto e clicca su ogni file della lista\n3. Tutti selezionati, premi \`Canc\`\n4. Vanno nel Cestino tutti insieme\n\n**Per svuotare il Cestino**:\n- Click destro sull'icona **Cestino** sul Desktop → Svuota Cestino\n\n`,
+    linux:   `#### Su Linux\n\n**Modo 1 — Uno per uno**:\n1. Apri il file manager, vai sul Desktop\n2. Click su un file della lista qui sotto\n3. Premi \`Canc\` o tasto destro → Sposta nel Cestino\n4. Ripeti per ogni file\n\n**Modo 2 — Tutti insieme**:\n1. Apri il file manager, vai sul Desktop\n2. Tieni Ctrl premuto e clicca su ogni file della lista\n3. Tutti selezionati, premi \`Canc\`\n\n**Per svuotare il Cestino**:\n- Apri il file manager, vai nel Cestino (di solito a sinistra)\n- Click su "Svuota Cestino"\n\n`
+  };
+
+  // -------- Block EN --------
+  const QUICK_WAY_EN = {
+    mac:     `### Quick way — macOS\n\n1. Open the **Finder** (smiley icon in the Dock)\n2. Go to **Desktop**: Cmd+Shift+D or Go → Desktop\n3. Switch to list view: View → as List (Cmd+2)\n4. Keep the report open in a window next to Finder\n\n`,
+    windows: `### Quick way — Windows\n\n1. Open **File Explorer** (folder icon in the taskbar)\n2. Go to **Desktop**: Win+D or click the Desktop icon\n3. Set details view: View → Details\n4. Keep the report open in a window next to File Explorer\n\n`,
+    linux:   `### Quick way — Linux\n\n1. Open your file manager (Files / Nautilus / Dolphin / Thunar)\n2. Go to **Desktop**: usually \`~/Desktop\`\n3. Set list view: View → List view\n4. Keep the report open in a window next to your file manager\n\n`
+  };
+  const MOVE_HOWTO_EN = {
+    mac:     `**On macOS**:\n1. Open Finder at the destination\n2. Keep a second window on the Desktop\n3. Drag files from Desktop to the destination folder (Cmd+click for multi-selection)\n\n`,
+    windows: `**On Windows**:\n1. Open File Explorer at the destination\n2. Keep a second window on the Desktop\n3. Drag files from Desktop to the destination folder (Ctrl+click for multi-selection)\n\n`,
+    linux:   `**On Linux**:\n1. Open the file manager at the destination\n2. Keep a second window on the Desktop\n3. Drag files from Desktop to the destination folder (Ctrl+click for multi-selection)\n\n`
+  };
+  const TRASH_HOWTO_EN = {
+    mac:     `#### On macOS\n\n**Way 1 — One by one**:\n1. Open Finder, go to Desktop\n2. Click a file in the list below\n3. Press \`Cmd + Backspace\`: file goes to Trash\n4. Repeat for each file\n\n**Way 2 — All together**:\n1. Open Finder, Desktop, list view (Cmd+2)\n2. Hold Cmd and click each file in the list\n3. With all selected, press \`Cmd + Backspace\`\n4. They go to Trash together\n\n**To empty the Trash**:\n- Right-click Trash icon in Dock → Empty Trash\n- Or Finder menu → Empty Trash\n\n`,
+    windows: `#### On Windows\n\n**Way 1 — One by one**:\n1. Open File Explorer, go to Desktop\n2. Click a file in the list below\n3. Press \`Del\`: file goes to Recycle Bin\n4. Repeat for each file\n\n**Way 2 — All together**:\n1. Open File Explorer, Desktop\n2. Hold Ctrl and click each file in the list\n3. With all selected, press \`Del\`\n4. They go to Bin together\n\n**To empty the Recycle Bin**:\n- Right-click **Recycle Bin** on Desktop → Empty Recycle Bin\n\n`,
+    linux:   `#### On Linux\n\n**Way 1 — One by one**:\n1. Open file manager, go to Desktop\n2. Click a file in the list below\n3. Press \`Del\` or right-click → Move to Trash\n4. Repeat for each file\n\n**Way 2 — All together**:\n1. Open file manager, Desktop\n2. Hold Ctrl and click each file in the list\n3. With all selected, press \`Del\`\n\n**To empty the Trash**:\n- Open the file manager, go to Trash (usually on the left)\n- Click "Empty Trash"\n\n`
+  };
+
   // -------- Markdown construction --------
   let md = '';
   if (isIT) {
@@ -4066,14 +4088,8 @@ function buildCleanupMarkdown(ws) {
     md += `Spazio recuperabile (cestinando): ~${fmtNumber(trashMB)} MB\n\n---\n\n`;
 
     md += `## ⚙️ Come usare questo report\n\n`;
-    md += `Hai 3 sezioni qui sotto, una per ogni scelta. Per ognuna ci sono istruzioni passo-passo per il tuo sistema operativo.\n\n`;
-    md += `**OS rilevato**: ${osLabel}\n\n### Modo veloce (consigliato)\n\n`;
-
-    md += tx(
-      `1. Apri il **Finder** (icona della faccia sorridente nel Dock)\n2. Vai sul **Desktop**: Cmd+Shift+D oppure menu Vai → Scrivania\n3. Imposta vista a lista: menu Vista → come elenco (o Cmd+2)\n4. Tieni il report aperto in una finestra accanto al Finder\n\n---\n\n`,
-      `1. Apri **Esplora File** (icona della cartella nella taskbar)\n2. Vai sul **Desktop**: Win+D oppure click sull'icona Desktop\n3. Imposta vista dettagli: menu Visualizza → Dettagli\n4. Tieni il report aperto in una finestra accanto a Esplora File\n\n---\n\n`,
-      `1. Apri il file manager (Files / Nautilus / Dolphin / Thunar)\n2. Vai sul **Desktop**: tipicamente in \`~/Desktop\` o \`~/Scrivania\`\n3. Imposta vista a lista: menu Visualizza → Vista a lista\n4. Tieni il report aperto in una finestra accanto al file manager\n\n---\n\n`
-    );
+    md += `Hai 3 sezioni qui sotto, una per ogni scelta. Le istruzioni sono complete per **macOS, Windows e Linux**: vai direttamente alla sezione del tuo sistema.\n\n`;
+    md += QUICK_WAY_IT.mac + QUICK_WAY_IT.windows + QUICK_WAY_IT.linux + `---\n\n`;
 
     // Da tenere
     md += `## 📌 Da tenere (${byStatus.keep.length} file)\n\n`;
@@ -4097,15 +4113,16 @@ function buildCleanupMarkdown(ws) {
         const catLabel = cat ? localized(cat.name) : 'Senza categoria';
         const catEmoji = cat ? (cat.emoji || '📁') : '📂';
         const items = archiveByCategory.get(catId);
-        const destInfo = dest[catLabel] && dest[catLabel][os];
+        const destInfo = dest[catLabel];
         md += `### ${catEmoji} ${catLabel} (${items.length} file)\n\n`;
-        if (destInfo) md += `**Destinazione consigliata** (${osLabel}): ${destInfo}\n\n`;
-        md += `**Come spostarli**:\n`;
-        md += tx(
-          `1. Apri il Finder nella destinazione\n2. Lascia aperta una seconda finestra sul Desktop\n3. Trascina i file dal Desktop alla cartella destinazione (Cmd+click per selezione multipla)\n\n`,
-          `1. Apri Esplora File nella destinazione\n2. Lascia aperta una seconda finestra sul Desktop\n3. Trascina i file dal Desktop alla cartella destinazione (Ctrl+click per selezione multipla)\n\n`,
-          `1. Apri il file manager nella destinazione\n2. Lascia aperta una seconda finestra sul Desktop\n3. Trascina i file dal Desktop alla cartella destinazione (Ctrl+click per selezione multipla)\n\n`
-        );
+        if (destInfo) {
+          md += `**Destinazione consigliata**:\n`;
+          md += `- macOS: ${destInfo.mac}\n`;
+          md += `- Windows: ${destInfo.windows}\n`;
+          md += `- Linux: ${destInfo.linux}\n\n`;
+        }
+        md += `**Come spostarli**:\n\n`;
+        md += MOVE_HOWTO_IT.mac + MOVE_HOWTO_IT.windows + MOVE_HOWTO_IT.linux;
         md += items.map(formatItem).join('\n') + '\n\n';
       });
     }
@@ -4118,11 +4135,8 @@ function buildCleanupMarkdown(ws) {
       md += `Questi file possono essere eliminati. **Spazio liberato**: ~${fmtNumber(trashMB)} MB.\n\n`;
       md += `⚠️ **Importante prima di cestinare**:\n- Leggi i nomi qui sotto. Se hai dubbi su un file, NON cestinarlo.\n- I file vanno nel **Cestino**: puoi recuperarli prima di svuotarlo.\n- Solo svuotando il Cestino i file sono persi davvero.\n\n`;
       md += `### Come cestinare velocemente\n\n`;
-      md += tx(
-        `**Modo 1 — Uno per uno**:\n1. Apri Finder, vai sul Desktop\n2. Click su un file della lista qui sotto\n3. Premi \`Cmd + Backspace\`: il file va nel Cestino\n4. Ripeti per ogni file\n\n**Modo 2 — Tutti insieme**:\n1. Apri Finder, vai sul Desktop, vista a lista (Cmd+2)\n2. Tieni Cmd premuto e clicca su ogni file della lista\n3. Tutti selezionati, premi \`Cmd + Backspace\`\n4. Vanno nel Cestino tutti insieme\n\n**Per svuotare il Cestino**:\n- Click destro sull'icona Cestino nel Dock → Svuota Cestino\n- Oppure menu Finder → Svuota Cestino\n\n`,
-        `**Modo 1 — Uno per uno**:\n1. Apri Esplora File, vai sul Desktop\n2. Click su un file della lista qui sotto\n3. Premi \`Canc\` (o \`Del\`): il file va nel Cestino\n4. Ripeti per ogni file\n\n**Modo 2 — Tutti insieme**:\n1. Apri Esplora File, vai sul Desktop\n2. Tieni Ctrl premuto e clicca su ogni file della lista\n3. Tutti selezionati, premi \`Canc\`\n4. Vanno nel Cestino tutti insieme\n\n**Per svuotare il Cestino**:\n- Click destro sull'icona **Cestino** sul Desktop → Svuota Cestino\n\n`,
-        `**Modo 1 — Uno per uno**:\n1. Apri il file manager, vai sul Desktop\n2. Click su un file della lista qui sotto\n3. Premi \`Canc\` o tasto destro → Sposta nel Cestino\n4. Ripeti per ogni file\n\n**Modo 2 — Tutti insieme**:\n1. Apri il file manager, vai sul Desktop\n2. Tieni Ctrl premuto e clicca su ogni file della lista\n3. Tutti selezionati, premi \`Canc\`\n\n**Per svuotare il Cestino**:\n- Apri il file manager, vai nel Cestino (di solito a sinistra)\n- Click su "Svuota Cestino"\n\n`
-      );
+      md += TRASH_HOWTO_IT.mac + TRASH_HOWTO_IT.windows + TRASH_HOWTO_IT.linux;
+      md += `**File da cestinare**:\n\n`;
       md += byStatus.trash.map(formatItem).join('\n') + '\n\n';
     }
     md += `---\n\n`;
@@ -4134,7 +4148,7 @@ function buildCleanupMarkdown(ws) {
     }
 
     md += `## ✅ Quando hai finito\n\n1. Verifica che i file "Da tenere" siano ancora sul Desktop\n2. Verifica che le cartelle di archivio abbiano i file giusti\n3. Svuota il Cestino per liberare spazio\n4. Torna su TriageHub se vuoi smistare un'altra cartella\n\n---\n\n`;
-    md += `🔒 **Privacy**: TriageHub ha letto solo i metadata dei tuoi file (nome, dimensione, tipo). Niente è stato caricato online, niente è stato letto del contenuto.\n\nGenerato da TriageHub v1.2.5 il ${date}\nhttps://www.alessandropezzali.it/TriageHub/\n`;
+    md += `🔒 **Privacy**: TriageHub ha letto solo i metadata dei tuoi file (nome, dimensione, tipo). Niente è stato caricato online, niente è stato letto del contenuto.\n\nGenerato da TriageHub v1.2.6 il ${date}\nhttps://www.alessandropezzali.it/TriageHub/\n`;
   } else {
     // EN
     md += `# File & Desktop cleanup — ${date}\n\n`;
@@ -4145,12 +4159,8 @@ function buildCleanupMarkdown(ws) {
     md += `- **Total**: ${ws.items.length} files\n\n`;
     md += `Reclaimable space (by trashing): ~${fmtNumber(trashMB)} MB\n\n---\n\n`;
 
-    md += `## ⚙️ How to use this report\n\nThree sections below, one per choice. Each one has step-by-step instructions for your operating system.\n\n**Detected OS**: ${osLabel}\n\n### Quick way (recommended)\n\n`;
-    md += tx(
-      `1. Open the **Finder** (smiley icon in the Dock)\n2. Go to **Desktop**: Cmd+Shift+D or Go → Desktop\n3. Switch to list view: View → as List (Cmd+2)\n4. Keep the report open in a window next to Finder\n\n---\n\n`,
-      `1. Open **File Explorer** (folder icon in the taskbar)\n2. Go to **Desktop**: Win+D or click the Desktop icon\n3. Set details view: View → Details\n4. Keep the report open in a window next to File Explorer\n\n---\n\n`,
-      `1. Open your file manager (Files / Nautilus / Dolphin / Thunar)\n2. Go to **Desktop**: usually \`~/Desktop\`\n3. Set list view: View → List view\n4. Keep the report open in a window next to your file manager\n\n---\n\n`
-    );
+    md += `## ⚙️ How to use this report\n\nThree sections below, one per choice. Instructions are complete for **macOS, Windows and Linux**: jump straight to your system's section.\n\n`;
+    md += QUICK_WAY_EN.mac + QUICK_WAY_EN.windows + QUICK_WAY_EN.linux + `---\n\n`;
 
     md += `## 📌 To keep (${byStatus.keep.length} files)\n\n`;
     if (byStatus.keep.length === 0) md += `_None._\n\n`;
@@ -4172,15 +4182,16 @@ function buildCleanupMarkdown(ws) {
         const catLabel = cat ? localized(cat.name) : 'No category';
         const catEmoji = cat ? (cat.emoji || '📁') : '📂';
         const items = archiveByCategory.get(catId);
-        const destInfo = dest[catLabel] && dest[catLabel][os];
+        const destInfo = dest[catLabel];
         md += `### ${catEmoji} ${catLabel} (${items.length} files)\n\n`;
-        if (destInfo) md += `**Recommended destination** (${osLabel}): ${destInfo}\n\n`;
-        md += `**How to move them**:\n`;
-        md += tx(
-          `1. Open Finder at the destination\n2. Keep a second window on the Desktop\n3. Drag files from Desktop to the destination folder (Cmd+click for multi-selection)\n\n`,
-          `1. Open File Explorer at the destination\n2. Keep a second window on the Desktop\n3. Drag files from Desktop to the destination folder (Ctrl+click for multi-selection)\n\n`,
-          `1. Open the file manager at the destination\n2. Keep a second window on the Desktop\n3. Drag files from Desktop to the destination folder (Ctrl+click for multi-selection)\n\n`
-        );
+        if (destInfo) {
+          md += `**Recommended destination**:\n`;
+          md += `- macOS: ${destInfo.mac}\n`;
+          md += `- Windows: ${destInfo.windows}\n`;
+          md += `- Linux: ${destInfo.linux}\n\n`;
+        }
+        md += `**How to move them**:\n\n`;
+        md += MOVE_HOWTO_EN.mac + MOVE_HOWTO_EN.windows + MOVE_HOWTO_EN.linux;
         md += items.map(formatItem).join('\n') + '\n\n';
       });
     }
@@ -4192,11 +4203,8 @@ function buildCleanupMarkdown(ws) {
       md += `These files can be deleted. **Space freed**: ~${fmtNumber(trashMB)} MB.\n\n`;
       md += `⚠️ **Before trashing**:\n- Read the names below. If unsure, do NOT trash.\n- Files go to the **Bin/Trash**: you can recover them before emptying.\n- Only emptying the Bin permanently removes them.\n\n`;
       md += `### How to trash quickly\n\n`;
-      md += tx(
-        `**Way 1 — One by one**:\n1. Open Finder, go to Desktop\n2. Click a file in the list below\n3. Press \`Cmd + Backspace\`: file goes to Trash\n4. Repeat for each file\n\n**Way 2 — All together**:\n1. Open Finder, Desktop, list view (Cmd+2)\n2. Hold Cmd and click each file in the list\n3. With all selected, press \`Cmd + Backspace\`\n4. They go to Trash together\n\n**To empty the Trash**:\n- Right-click Trash icon in Dock → Empty Trash\n- Or Finder menu → Empty Trash\n\n`,
-        `**Way 1 — One by one**:\n1. Open File Explorer, go to Desktop\n2. Click a file in the list below\n3. Press \`Del\`: file goes to Recycle Bin\n4. Repeat for each file\n\n**Way 2 — All together**:\n1. Open File Explorer, Desktop\n2. Hold Ctrl and click each file in the list\n3. With all selected, press \`Del\`\n4. They go to Bin together\n\n**To empty the Recycle Bin**:\n- Right-click **Recycle Bin** on Desktop → Empty Recycle Bin\n\n`,
-        `**Way 1 — One by one**:\n1. Open file manager, go to Desktop\n2. Click a file in the list below\n3. Press \`Del\` or right-click → Move to Trash\n4. Repeat for each file\n\n**Way 2 — All together**:\n1. Open file manager, Desktop\n2. Hold Ctrl and click each file in the list\n3. With all selected, press \`Del\`\n\n**To empty the Trash**:\n- Open the file manager, go to Trash (usually on the left)\n- Click "Empty Trash"\n\n`
-      );
+      md += TRASH_HOWTO_EN.mac + TRASH_HOWTO_EN.windows + TRASH_HOWTO_EN.linux;
+      md += `**Files to trash**:\n\n`;
       md += byStatus.trash.map(formatItem).join('\n') + '\n\n';
     }
     md += `---\n\n`;
@@ -4207,7 +4215,7 @@ function buildCleanupMarkdown(ws) {
     }
 
     md += `## ✅ When you're done\n\n1. Check that "To keep" files are still on the Desktop\n2. Check that archive folders received the right files\n3. Empty the Trash to reclaim space\n4. Come back to TriageHub for another folder\n\n---\n\n`;
-    md += `🔒 **Privacy**: TriageHub only read the metadata of your files (name, size, type). Nothing was uploaded, nothing was read of the content.\n\nGenerated by TriageHub v1.2.5 on ${date}\nhttps://www.alessandropezzali.it/TriageHub/\n`;
+    md += `🔒 **Privacy**: TriageHub only read the metadata of your files (name, size, type). Nothing was uploaded, nothing was read of the content.\n\nGenerated by TriageHub v1.2.6 on ${date}\nhttps://www.alessandropezzali.it/TriageHub/\n`;
   }
   return { md, dateShort };
 }
@@ -4255,7 +4263,26 @@ function buildMarkdownReport(ws) {
     groups['__none__'].forEach(it => md += `- ${it.name}\n`);
     md += '\n';
   }
-  md += `---\n\n${isIT ? 'Generato da' : 'Generated by'} TriageHub v1.2.5 — https://www.alessandropezzali.it/TriageHub/\n`;
+
+  // Append per-template tips. Cross-platform: gli shortcut sono elencati per tutti
+  // gli OS, il documento resta condivisibile.
+  if (ws.templateId === 'email') {
+    if (isIT) {
+      md += `---\n\n## 💡 Suggerimenti operativi\n\n`;
+      md += `Le azioni concrete sulle email (rispondere, archiviare, cancellare) si fanno nel tuo client mail (Gmail, Outlook, Apple Mail, Thunderbird).\n\n`;
+      md += `**Shortcut utili**:\n`;
+      md += `- macOS: \`Cmd + R\` rispondi, \`Cmd + Shift + R\` rispondi a tutti\n`;
+      md += `- Windows e Linux: \`Ctrl + R\` rispondi, \`Ctrl + Shift + R\` rispondi a tutti\n\n`;
+    } else {
+      md += `---\n\n## 💡 Operational tips\n\n`;
+      md += `Concrete actions on emails (replying, archiving, deleting) happen in your mail client (Gmail, Outlook, Apple Mail, Thunderbird).\n\n`;
+      md += `**Useful shortcuts**:\n`;
+      md += `- macOS: \`Cmd + R\` reply, \`Cmd + Shift + R\` reply all\n`;
+      md += `- Windows and Linux: \`Ctrl + R\` reply, \`Ctrl + Shift + R\` reply all\n\n`;
+    }
+  }
+
+  md += `---\n\n${isIT ? 'Generato da' : 'Generated by'} TriageHub v1.2.6 — https://www.alessandropezzali.it/TriageHub/\n`;
   return { md, filename: `triagehub-${dateShort}` };
 }
 
