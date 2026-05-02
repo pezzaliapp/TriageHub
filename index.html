@@ -709,7 +709,8 @@ const I18N = {
     fieldTag: "Tag", fieldUrl: "Link (URL)", fieldValue: "Valore numerico",
     fieldIgnore: "— ignora —",
     addedDate: d => `Aggiunto ${d}`,
-    footerNote: "Privacy by design — i tuoi dati non lasciano mai il tuo dispositivo."
+    footerNote: "Privacy by design — i tuoi dati non lasciano mai il tuo dispositivo.",
+    migratedToV12: "✓ I tuoi dati sono stati migrati al formato Workspace"
   },
   en: {
     subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
@@ -767,7 +768,8 @@ const I18N = {
     fieldTag: "Tag", fieldUrl: "Link (URL)", fieldValue: "Numeric value",
     fieldIgnore: "— ignore —",
     addedDate: d => `Added ${d}`,
-    footerNote: "Privacy by design — your data never leaves your device."
+    footerNote: "Privacy by design — your data never leaves your device.",
+    migratedToV12: "✓ Your data has been migrated to the Workspace format"
   }
 };
 
@@ -932,8 +934,10 @@ const TEMPLATES = [
 ];
 
 // ============================================
-// STATE
+// STATE — v1.2 schema (workspaces)
 // ============================================
+// Storage key resta 'triagehub-v1' ma il formato interno è v1.2.
+// La migrazione dal vecchio formato avviene in loadState() al primo carico.
 const STORAGE_KEY = 'triagehub-v1';
 
 const DEFAULT_STATUSES = [
@@ -943,34 +947,92 @@ const DEFAULT_STATUSES = [
 ];
 
 let state = {
-  items: [],
-  categories: [],
-  statuses: structuredClone(DEFAULT_STATUSES),
-  itemStatus: {},
-  valueUnit: '',
-  filter: { search: '', cat: 'all', status: 'all' }
+  workspaces: {},
+  activeWorkspaceId: null,
+  filter: { search: '', cat: 'all', status: 'all' },
+  ui: { galleryOpen: false, galleryPos: { x: null, y: null }, galleryCollapsed: false }
 };
 
+// Restituisce il workspace attivo. Tutta la lettura/scrittura dei dati
+// (items/categorie/stati/itemStatus/valueUnit) passa da qui.
+function activeWorkspace() {
+  return state.workspaces[state.activeWorkspaceId] || null;
+}
+
+// Crea un workspace nuovo con i default. Non lo salva: chi chiama decide.
+function makeWorkspace({ name, emoji = '📋', templateId = null, items = [], categories = [], statuses = null, itemStatus = {}, valueUnit = '' } = {}) {
+  return {
+    id: 'ws_' + uid(),
+    name: name || 'Default',
+    emoji,
+    templateId,
+    createdAt: new Date().toISOString(),
+    items,
+    categories,
+    statuses: statuses || structuredClone(DEFAULT_STATUSES),
+    itemStatus,
+    valueUnit
+  };
+}
+
 function loadState() {
+  let saved = null;
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const p = JSON.parse(saved);
-      if (Array.isArray(p.items))      state.items = p.items;
-      if (Array.isArray(p.categories)) state.categories = p.categories;
-      if (Array.isArray(p.statuses) && p.statuses.length === 3) state.statuses = p.statuses;
-      if (p.itemStatus)                state.itemStatus = p.itemStatus;
-      if (typeof p.valueUnit === 'string') state.valueUnit = p.valueUnit;
-    }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) saved = JSON.parse(raw);
   } catch (e) { console.warn('Load error:', e); }
+
+  // Caso 1 — dati v1.1: hanno "items" al top level e niente "workspaces".
+  // Migriamo subito in un singolo workspace "Default" senza perdere nulla.
+  if (saved && Array.isArray(saved.items) && !saved.workspaces) {
+    const ws = makeWorkspace({
+      name: 'Default',
+      emoji: '📋',
+      templateId: null,
+      items: saved.items || [],
+      categories: Array.isArray(saved.categories) ? saved.categories : [],
+      statuses: (Array.isArray(saved.statuses) && saved.statuses.length === 3) ? saved.statuses : structuredClone(DEFAULT_STATUSES),
+      itemStatus: saved.itemStatus || {},
+      valueUnit: typeof saved.valueUnit === 'string' ? saved.valueUnit : ''
+    });
+    state.workspaces = { [ws.id]: ws };
+    state.activeWorkspaceId = ws.id;
+    saveState();
+    setTimeout(() => toast(t('migratedToV12')), 600);
+    return;
+  }
+
+  // Caso 2 — dati v1.2: già in formato workspace.
+  if (saved && saved.workspaces && typeof saved.workspaces === 'object') {
+    state.workspaces = saved.workspaces;
+    state.activeWorkspaceId = saved.activeWorkspaceId && saved.workspaces[saved.activeWorkspaceId]
+      ? saved.activeWorkspaceId
+      : (Object.keys(saved.workspaces)[0] || null);
+    if (saved.ui && typeof saved.ui === 'object') {
+      state.ui = {
+        galleryOpen: !!saved.ui.galleryOpen,
+        galleryPos: saved.ui.galleryPos || { x: null, y: null },
+        galleryCollapsed: !!saved.ui.galleryCollapsed
+      };
+    }
+  }
+
+  // Caso 3 — niente dati o workspaces vuoto: crea un Default.
+  // (la galleria al primo avvio arriverà in un commit successivo)
+  if (!state.activeWorkspaceId || Object.keys(state.workspaces).length === 0) {
+    const ws = makeWorkspace({ name: 'Default', emoji: '📋' });
+    state.workspaces = { [ws.id]: ws };
+    state.activeWorkspaceId = ws.id;
+    saveState();
+  }
 }
 
 function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      items: state.items, categories: state.categories,
-      statuses: state.statuses, itemStatus: state.itemStatus,
-      valueUnit: state.valueUnit
+      workspaces: state.workspaces,
+      activeWorkspaceId: state.activeWorkspaceId,
+      ui: state.ui
     }));
   } catch (e) { toast(t('storageFull')); }
 }
@@ -994,8 +1056,8 @@ function toast(msg, ms = 2200) {
   clearTimeout(toast._t);
   toast._t = setTimeout(() => t.classList.remove('show'), ms);
 }
-function findCat(id) { return state.categories.find(c => c.id === id); }
-function findStatus(id) { return state.statuses.find(s => s.id === id); }
+function findCat(id) { const ws = activeWorkspace(); return ws ? ws.categories.find(c => c.id === id) : null; }
+function findStatus(id) { const ws = activeWorkspace(); return ws ? ws.statuses.find(s => s.id === id) : null; }
 
 // Per oggetti label che possono essere {it,en} o stringa semplice
 function localized(v) {
@@ -1028,9 +1090,11 @@ function fmtNumber(n) {
 // ============================================
 function renderStats() {
   const grid = document.getElementById('stat-grid');
-  const total = state.items.length;
-  const counts = state.statuses.map(s =>
-    Object.values(state.itemStatus).filter(v => v === s.id).length
+  const ws = activeWorkspace();
+  if (!ws) { grid.innerHTML = ''; return; }
+  const total = ws.items.length;
+  const counts = ws.statuses.map(s =>
+    Object.values(ws.itemStatus).filter(v => v === s.id).length
   );
   const unassigned = total - counts.reduce((a, b) => a + b, 0);
 
@@ -1038,7 +1102,7 @@ function renderStats() {
     <div class="stat-num">${total}</div>
     <div class="stat-label">${escapeHtml(t('totalItems'))}</div>
   </div>`;
-  state.statuses.forEach((s, i) => {
+  ws.statuses.forEach((s, i) => {
     html += `<div class="stat-card" style="--stat-color:${escapeHtml(s.color)}">
       <div class="stat-num">${counts[i]}</div>
       <div class="stat-label">${escapeHtml(s.emoji)} ${escapeHtml(localized(s.label))}</div>
@@ -1058,14 +1122,16 @@ function renderStats() {
 // ============================================
 function renderChips() {
   const chipsEl = document.getElementById('chips');
-  const counts = { all: state.items.length };
-  state.items.forEach(it => {
+  const ws = activeWorkspace();
+  if (!ws) { chipsEl.innerHTML = ''; return; }
+  const counts = { all: ws.items.length };
+  ws.items.forEach(it => {
     const k = it.cat || '__none__';
     counts[k] = (counts[k] || 0) + 1;
   });
 
   let html = `<div class="chip ${state.filter.cat === 'all' ? 'active' : ''}" data-cat="all">${currentLang === 'it' ? 'Tutte' : 'All'}<span class="chip-count">${counts.all}</span></div>`;
-  state.categories.forEach(c => {
+  ws.categories.forEach(c => {
     if (counts[c.id]) {
       html += `<div class="chip ${state.filter.cat === c.id ? 'active' : ''}" data-cat="${c.id}">${escapeHtml(c.emoji || '📁')} ${escapeHtml(localized(c.name))}<span class="chip-count">${counts[c.id]}</span></div>`;
     }
@@ -1074,9 +1140,9 @@ function renderChips() {
     html += `<div class="chip ${state.filter.cat === '__none__' ? 'active' : ''}" data-cat="__none__">📂 ${escapeHtml(t('noCategory'))}<span class="chip-count">${counts.__none__}</span></div>`;
   }
 
-  if (state.items.length > 0) {
+  if (ws.items.length > 0) {
     html += `<div class="chip divider">|</div>`;
-    state.statuses.forEach(s => {
+    ws.statuses.forEach(s => {
       html += `<div class="chip ${state.filter.status === s.id ? 'active' : ''}" data-status="${s.id}">${escapeHtml(s.emoji)} ${escapeHtml(localized(s.label))}</div>`;
     });
     html += `<div class="chip ${state.filter.status === '__none__' ? 'active' : ''}" data-status="__none__">⚪ ${escapeHtml(t('noChoice'))}</div>`;
@@ -1102,8 +1168,10 @@ function renderChips() {
 // ============================================
 function renderItems() {
   const main = document.getElementById('main');
+  const ws = activeWorkspace();
+  if (!ws) { main.innerHTML = ''; return; }
 
-  if (state.items.length === 0) {
+  if (ws.items.length === 0) {
     main.innerHTML = `
       <div class="empty-state">
         <span class="empty-state-emoji">🎯</span>
@@ -1119,10 +1187,10 @@ function renderItems() {
   }
 
   const search = state.filter.search.trim().toLowerCase();
-  const filtered = state.items.filter(it => {
+  const filtered = ws.items.filter(it => {
     if (state.filter.cat === '__none__' && it.cat) return false;
     if (state.filter.cat !== 'all' && state.filter.cat !== '__none__' && it.cat !== state.filter.cat) return false;
-    const st = state.itemStatus[it.id];
+    const st = ws.itemStatus[it.id];
     if (state.filter.status === '__none__' && st) return false;
     if (state.filter.status !== 'all' && state.filter.status !== '__none__' && st !== state.filter.status) return false;
     if (search) {
@@ -1151,7 +1219,7 @@ function renderItems() {
   });
 
   const orderedKeys = [];
-  state.categories.forEach(c => { if (groups.has(c.id)) orderedKeys.push(c.id); });
+  ws.categories.forEach(c => { if (groups.has(c.id)) orderedKeys.push(c.id); });
   if (groups.has('__none__')) orderedKeys.push('__none__');
 
   let html = '';
@@ -1172,7 +1240,7 @@ function renderItems() {
       <div class="item-grid">`;
 
     items.forEach(it => {
-      const st = state.itemStatus[it.id];
+      const st = ws.itemStatus[it.id];
       const status = st ? findStatus(st) : null;
       const cardClass = status ? 'has-status' : '';
       const cardStyle = status ? `--status-color:${escapeHtml(status.color)}` : '';
@@ -1183,7 +1251,7 @@ function renderItems() {
       html += `<div class="item-head">
         <div class="item-name">${escapeHtml(it.name)}${it.tag ? ` <span class="item-link-label" style="vertical-align:2px">${escapeHtml(it.tag)}</span>` : ''}</div>`;
       if (it.value !== undefined && it.value !== null && it.value !== '') {
-        html += `<div class="item-value">${fmtNumber(it.value)}${state.valueUnit ? `<span class="item-value-unit">${escapeHtml(state.valueUnit)}</span>` : ''}</div>`;
+        html += `<div class="item-value">${fmtNumber(it.value)}${ws.valueUnit ? `<span class="item-value-unit">${escapeHtml(ws.valueUnit)}</span>` : ''}</div>`;
       }
       html += `<button class="item-edit-btn" data-edit="${it.id}" title="${escapeHtml(t('editItem'))}">✎</button>
       </div>`;
@@ -1204,7 +1272,7 @@ function renderItems() {
       }
 
       html += `<div class="actions">`;
-      state.statuses.forEach(s => {
+      ws.statuses.forEach(s => {
         const isActive = st === s.id;
         html += `<button class="action-btn ${isActive ? 'active' : ''}" data-set-status="${it.id}|${s.id}" style="--status-color:${escapeHtml(s.color)}">${escapeHtml(s.emoji)} ${escapeHtml(localized(s.label))}</button>`;
       });
@@ -1218,9 +1286,11 @@ function renderItems() {
 
   main.querySelectorAll('[data-set-status]').forEach(btn => {
     btn.addEventListener('click', () => {
+      const w = activeWorkspace();
+      if (!w) return;
       const [itemId, statusId] = btn.dataset.setStatus.split('|');
-      if (state.itemStatus[itemId] === statusId) delete state.itemStatus[itemId];
-      else state.itemStatus[itemId] = statusId;
+      if (w.itemStatus[itemId] === statusId) delete w.itemStatus[itemId];
+      else w.itemStatus[itemId] = statusId;
       saveState(); renderStats(); renderItems();
     });
   });
@@ -1271,18 +1341,22 @@ function applyTemplate(tplId) {
     closeDialog('dlg-templates');
     return;
   }
-  // Sostituisce statuses (sempre 3) e aggiunge categorie nuove
-  state.statuses = tpl.statuses.map((s, i) => ({
+  // v1.2: il template applica ancora al workspace attivo (al commit 2 diventerà
+  // "crea un nuovo workspace per il template"). Sostituisce gli statuses (3)
+  // e aggiunge le categorie mancanti.
+  const ws = activeWorkspace();
+  if (!ws) return;
+  ws.statuses = tpl.statuses.map((s, i) => ({
     id: 's' + (i + 1), label: s.label, emoji: s.emoji, color: s.color
   }));
-  const existing = new Set(state.categories.map(c => localized(c.name).toLowerCase()));
+  const existing = new Set(ws.categories.map(c => localized(c.name).toLowerCase()));
   tpl.categories.forEach(c => {
     const localName = c.name[currentLang].toLowerCase();
     if (!existing.has(localName)) {
-      state.categories.push({ id: uid(), name: c.name, emoji: c.emoji });
+      ws.categories.push({ id: uid(), name: c.name, emoji: c.emoji });
     }
   });
-  if (tpl.valueUnit !== undefined) state.valueUnit = tpl.valueUnit;
+  if (tpl.valueUnit !== undefined) ws.valueUnit = tpl.valueUnit;
   saveState();
   renderAll();
   closeDialog('dlg-templates');
@@ -1301,7 +1375,9 @@ let editingItemId = null;
 
 function openItemDialog(id = null) {
   editingItemId = id;
-  const item = id ? state.items.find(i => i.id === id) : null;
+  const ws = activeWorkspace();
+  if (!ws) return;
+  const item = id ? ws.items.find(i => i.id === id) : null;
   document.getElementById('dlg-item-title').textContent = item ? t('editItem') : t('newItem');
   document.getElementById('f-name').value = item?.name || '';
   document.getElementById('f-desc').value = item?.desc || '';
@@ -1310,7 +1386,7 @@ function openItemDialog(id = null) {
 
   const sel = document.getElementById('f-cat');
   sel.innerHTML = `<option value="">${escapeHtml(t('none'))}</option>` +
-    state.categories.map(c => `<option value="${c.id}" ${item?.cat === c.id ? 'selected':''}>${escapeHtml(c.emoji || '📁')} ${escapeHtml(localized(c.name))}</option>`).join('');
+    ws.categories.map(c => `<option value="${c.id}" ${item?.cat === c.id ? 'selected':''}>${escapeHtml(c.emoji || '📁')} ${escapeHtml(localized(c.name))}</option>`).join('');
 
   renderLinksEditor(item?.links || []);
   document.getElementById('btn-delete-item').style.display = item ? '' : 'none';
@@ -1340,6 +1416,8 @@ document.getElementById('btn-add-link').addEventListener('click', () => addLinkR
 
 document.getElementById('form-item').addEventListener('submit', e => {
   e.preventDefault();
+  const ws = activeWorkspace();
+  if (!ws) return;
   const name = document.getElementById('f-name').value.trim();
   if (!name) return;
   const desc = document.getElementById('f-desc').value.trim();
@@ -1355,10 +1433,10 @@ document.getElementById('form-item').addEventListener('submit', e => {
   });
 
   if (editingItemId) {
-    const it = state.items.find(i => i.id === editingItemId);
+    const it = ws.items.find(i => i.id === editingItemId);
     if (it) Object.assign(it, { name, desc, cat, tag, value, links });
   } else {
-    state.items.unshift({
+    ws.items.unshift({
       id: uid(), name, desc, cat, tag, value, links,
       created: new Date().toISOString()
     });
@@ -1371,8 +1449,10 @@ document.getElementById('form-item').addEventListener('submit', e => {
 document.getElementById('btn-delete-item').addEventListener('click', () => {
   if (!editingItemId) return;
   if (!confirm(t('confirmDelete'))) return;
-  state.items = state.items.filter(i => i.id !== editingItemId);
-  delete state.itemStatus[editingItemId];
+  const ws = activeWorkspace();
+  if (!ws) return;
+  ws.items = ws.items.filter(i => i.id !== editingItemId);
+  delete ws.itemStatus[editingItemId];
   saveState(); renderAll(); closeDialog('dlg-item');
   toast(t('deletedItem'));
   editingItemId = null;
@@ -1385,11 +1465,13 @@ document.getElementById('btn-add').addEventListener('click', () => openItemDialo
 // ============================================
 function renderCatEditor() {
   const ul = document.getElementById('cat-editor');
-  if (state.categories.length === 0) {
+  const ws = activeWorkspace();
+  if (!ws) { ul.innerHTML = ''; return; }
+  if (ws.categories.length === 0) {
     ul.innerHTML = `<li class="small" style="padding:14px 0">${currentLang === 'it' ? 'Nessuna categoria. Aggiungine una qui sotto.' : 'No categories. Add one below.'}</li>`;
     return;
   }
-  ul.innerHTML = state.categories.map(c => `
+  ul.innerHTML = ws.categories.map(c => `
     <li class="editor-row" data-cat-id="${c.id}">
       <input class="editor-emoji" maxlength="2" value="${escapeHtml(c.emoji || '')}" data-field="emoji">
       <input class="editor-name" value="${escapeHtml(localized(c.name))}" maxlength="40" data-field="name">
@@ -1412,8 +1494,10 @@ function renderCatEditor() {
     btn.addEventListener('click', () => {
       const id = btn.dataset.del;
       if (!confirm(t('confirmCatDelete'))) return;
-      state.categories = state.categories.filter(c => c.id !== id);
-      state.items.forEach(it => { if (it.cat === id) it.cat = null; });
+      const w = activeWorkspace();
+      if (!w) return;
+      w.categories = w.categories.filter(c => c.id !== id);
+      w.items.forEach(it => { if (it.cat === id) it.cat = null; });
       saveState(); renderCatEditor(); renderAll();
     });
   });
@@ -1422,7 +1506,9 @@ document.getElementById('btn-categories').addEventListener('click', () => {
   renderCatEditor(); openDialog('dlg-categories');
 });
 document.getElementById('cat-add').addEventListener('click', () => {
-  state.categories.push({
+  const ws = activeWorkspace();
+  if (!ws) return;
+  ws.categories.push({
     id: uid(),
     name: currentLang === 'it' ? 'Nuova categoria' : 'New category',
     emoji: '📁'
@@ -1435,7 +1521,9 @@ document.getElementById('cat-add').addEventListener('click', () => {
 // ============================================
 function renderStatusEditor() {
   const ul = document.getElementById('status-editor');
-  ul.innerHTML = state.statuses.map(s => `
+  const ws = activeWorkspace();
+  if (!ws) { ul.innerHTML = ''; return; }
+  ul.innerHTML = ws.statuses.map(s => `
     <li class="editor-row" data-status-id="${s.id}">
       <input class="editor-emoji" maxlength="2" value="${escapeHtml(s.emoji)}" data-field="emoji">
       <input class="editor-name" value="${escapeHtml(localized(s.label))}" maxlength="30" data-field="label">
@@ -1453,13 +1541,15 @@ function renderStatusEditor() {
       }
     });
   });
-  document.getElementById('value-unit').value = state.valueUnit || '';
+  document.getElementById('value-unit').value = ws.valueUnit || '';
 }
 document.getElementById('btn-statuses').addEventListener('click', () => {
   renderStatusEditor(); openDialog('dlg-statuses');
 });
 document.getElementById('value-unit').addEventListener('change', e => {
-  state.valueUnit = e.target.value.trim();
+  const ws = activeWorkspace();
+  if (!ws) return;
+  ws.valueUnit = e.target.value.trim();
   saveState(); renderItems();
 });
 
@@ -1569,6 +1659,8 @@ document.getElementById('csv-cancel').addEventListener('click', () => {
 });
 document.getElementById('csv-confirm').addEventListener('click', () => {
   if (!csvData) return;
+  const ws = activeWorkspace();
+  if (!ws) return;
   const map = {};
   document.querySelectorAll('[data-csv-field]').forEach(sel => {
     if (sel.value !== '') map[sel.dataset.csvField] = parseInt(sel.value, 10);
@@ -1576,7 +1668,7 @@ document.getElementById('csv-confirm').addEventListener('click', () => {
   if (map.name === undefined) { toast(t('csvNoName')); return; }
 
   const catMap = new Map();
-  state.categories.forEach(c => catMap.set(localized(c.name).toLowerCase(), c.id));
+  ws.categories.forEach(c => catMap.set(localized(c.name).toLowerCase(), c.id));
 
   let added = 0;
   csvData.rows.forEach(row => {
@@ -1590,7 +1682,7 @@ document.getElementById('csv-confirm').addEventListener('click', () => {
         if (catMap.has(key)) catId = catMap.get(key);
         else {
           const newCat = { id: uid(), name: catName, emoji: '📁' };
-          state.categories.push(newCat);
+          ws.categories.push(newCat);
           catMap.set(key, newCat.id);
           catId = newCat.id;
         }
@@ -1606,7 +1698,7 @@ document.getElementById('csv-confirm').addEventListener('click', () => {
       const n = parseFloat(raw);
       if (isFinite(n)) value = n;
     }
-    state.items.push({
+    ws.items.push({
       id: uid(), name,
       desc: map.desc !== undefined ? (row[map.desc] || '').trim() : '',
       cat: catId,
@@ -1662,24 +1754,48 @@ document.getElementById('json-cancel').addEventListener('click', () => {
 });
 document.getElementById('json-confirm').addEventListener('click', () => {
   if (!jsonData) return;
+  const ws = activeWorkspace();
+  if (!ws) return;
   const replace = document.getElementById('json-replace').checked;
 
-  if (jsonData.items && Array.isArray(jsonData.items)) {
-    if (replace) { state.items = []; state.categories = []; state.itemStatus = {}; }
+  // Backup completo v1.2: contiene "workspaces". Per ora lo importiamo nel
+  // workspace attivo "appiattendo": prendiamo gli items/categorie/statuses
+  // del workspace attivo del backup. (La gestione multi-ws degli import
+  // arriverà in un commit successivo della v1.2.)
+  if (jsonData.workspaces && typeof jsonData.workspaces === 'object') {
+    const sourceId = jsonData.activeWorkspaceId && jsonData.workspaces[jsonData.activeWorkspaceId]
+      ? jsonData.activeWorkspaceId
+      : Object.keys(jsonData.workspaces)[0];
+    const src = sourceId ? jsonData.workspaces[sourceId] : null;
+    if (!src) { toast(t('jsonUnknown')); return; }
+    if (replace) { ws.items = []; ws.categories = []; ws.itemStatus = {}; }
+    if (Array.isArray(src.categories)) {
+      const existingIds = new Set(ws.categories.map(c => c.id));
+      src.categories.forEach(c => { if (!existingIds.has(c.id)) ws.categories.push(c); });
+    }
+    if (Array.isArray(src.statuses) && src.statuses.length === 3 && replace) ws.statuses = src.statuses;
+    if (typeof src.valueUnit === 'string' && replace) ws.valueUnit = src.valueUnit;
+    if (Array.isArray(src.items)) src.items.forEach(it => ws.items.push({ ...it, id: it.id || uid() }));
+    if (src.itemStatus) Object.assign(ws.itemStatus, src.itemStatus);
+  }
+  // Backup v1.1 / formato "flat" con items al top level.
+  else if (jsonData.items && Array.isArray(jsonData.items)) {
+    if (replace) { ws.items = []; ws.categories = []; ws.itemStatus = {}; }
     if (Array.isArray(jsonData.categories)) {
-      const existingIds = new Set(state.categories.map(c => c.id));
-      jsonData.categories.forEach(c => { if (!existingIds.has(c.id)) state.categories.push(c); });
+      const existingIds = new Set(ws.categories.map(c => c.id));
+      jsonData.categories.forEach(c => { if (!existingIds.has(c.id)) ws.categories.push(c); });
     }
     if (Array.isArray(jsonData.statuses) && jsonData.statuses.length === 3 && replace) {
-      state.statuses = jsonData.statuses;
+      ws.statuses = jsonData.statuses;
     }
-    if (typeof jsonData.valueUnit === 'string' && replace) state.valueUnit = jsonData.valueUnit;
-    jsonData.items.forEach(it => state.items.push({ ...it, id: it.id || uid() }));
-    if (jsonData.itemStatus) Object.assign(state.itemStatus, jsonData.itemStatus);
+    if (typeof jsonData.valueUnit === 'string' && replace) ws.valueUnit = jsonData.valueUnit;
+    jsonData.items.forEach(it => ws.items.push({ ...it, id: it.id || uid() }));
+    if (jsonData.itemStatus) Object.assign(ws.itemStatus, jsonData.itemStatus);
   }
+  // Array piatto di oggetti.
   else if (Array.isArray(jsonData)) {
-    if (replace) { state.items = []; state.itemStatus = {}; }
-    const catMap = new Map(state.categories.map(c => [localized(c.name).toLowerCase(), c.id]));
+    if (replace) { ws.items = []; ws.itemStatus = {}; }
+    const catMap = new Map(ws.categories.map(c => [localized(c.name).toLowerCase(), c.id]));
     jsonData.forEach(o => {
       if (!o.name) return;
       let catId = null;
@@ -1688,10 +1804,10 @@ document.getElementById('json-confirm').addEventListener('click', () => {
         if (catMap.has(key)) catId = catMap.get(key);
         else {
           const nc = { id: uid(), name: String(o.cat), emoji: '📁' };
-          state.categories.push(nc); catMap.set(key, nc.id); catId = nc.id;
+          ws.categories.push(nc); catMap.set(key, nc.id); catId = nc.id;
         }
       }
-      state.items.push({
+      ws.items.push({
         id: uid(), name: String(o.name),
         desc: o.desc || '', cat: catId, tag: o.tag || '',
         value: (o.value !== undefined && o.value !== null && o.value !== '') ? Number(o.value) : null,
@@ -1724,16 +1840,18 @@ document.getElementById('btn-import').addEventListener('click', () => openDialog
 // EXPORT
 // ============================================
 document.getElementById('btn-export').addEventListener('click', () => {
-  if (state.items.length === 0) { toast(t('nothingToExport')); return; }
+  const ws = activeWorkspace();
+  if (!ws || ws.items.length === 0) { toast(t('nothingToExport')); return; }
   openDialog('dlg-export');
 });
 
+// JSON = backup COMPLETO di tutti i workspace (formato v1.2).
 document.getElementById('exp-json').addEventListener('click', () => {
   const data = {
-    version: 1, exportedAt: new Date().toISOString(),
-    items: state.items, categories: state.categories,
-    statuses: state.statuses, itemStatus: state.itemStatus,
-    valueUnit: state.valueUnit
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    workspaces: state.workspaces,
+    activeWorkspaceId: state.activeWorkspaceId
   };
   downloadFile(JSON.stringify(data, null, 2),
     `triagehub-${new Date().toISOString().slice(0,10)}.json`,
@@ -1741,18 +1859,21 @@ document.getElementById('exp-json').addEventListener('click', () => {
   toast(t('backupSaved')); closeDialog('dlg-export');
 });
 
+// Markdown = report del solo workspace attivo.
 document.getElementById('exp-md').addEventListener('click', () => {
+  const ws = activeWorkspace();
+  if (!ws) return;
   const groups = {};
-  state.statuses.forEach(s => groups[s.id] = []);
+  ws.statuses.forEach(s => groups[s.id] = []);
   groups['__none__'] = [];
-  state.items.forEach(it => {
-    const st = state.itemStatus[it.id] || '__none__';
+  ws.items.forEach(it => {
+    const st = ws.itemStatus[it.id] || '__none__';
     if (groups[st]) groups[st].push(it);
   });
 
   let md = `# TriageHub — ${currentLang === 'it' ? 'Report' : 'Report'}\n\n_${currentLang === 'it' ? 'Esportato il' : 'Exported on'} ${new Date().toLocaleString(currentLang === 'it' ? 'it-IT' : 'en-US')}_\n\n`;
-  md += `**${currentLang === 'it' ? 'Totale' : 'Total'}**: ${state.items.length} ${t('items')}\n\n`;
-  state.statuses.forEach(s => {
+  md += `**${currentLang === 'it' ? 'Totale' : 'Total'}**: ${ws.items.length} ${t('items')}\n\n`;
+  ws.statuses.forEach(s => {
     md += `## ${s.emoji} ${localized(s.label)} (${groups[s.id].length})\n\n`;
     if (groups[s.id].length === 0) { md += `_${currentLang === 'it' ? 'Nessuno' : 'None'}._\n\n`; return; }
     groups[s.id].forEach(it => {
@@ -1761,7 +1882,7 @@ document.getElementById('exp-md').addEventListener('click', () => {
       if (it.desc) md += `${it.desc}\n\n`;
       if (cat) md += `- ${currentLang === 'it' ? 'Categoria' : 'Category'}: ${cat.emoji || ''} ${localized(cat.name)}\n`;
       if (it.tag) md += `- ${currentLang === 'it' ? 'Tag' : 'Tag'}: ${it.tag}\n`;
-      if (it.value !== null && it.value !== undefined && it.value !== '') md += `- ${currentLang === 'it' ? 'Valore' : 'Value'}: ${fmtNumber(it.value)} ${state.valueUnit}\n`;
+      if (it.value !== null && it.value !== undefined && it.value !== '') md += `- ${currentLang === 'it' ? 'Valore' : 'Value'}: ${fmtNumber(it.value)} ${ws.valueUnit}\n`;
       (it.links || []).forEach(l => md += `- ${l.label}: ${l.url}\n`);
       md += '\n';
     });
@@ -1775,15 +1896,18 @@ document.getElementById('exp-md').addEventListener('click', () => {
   toast(t('mdSaved')); closeDialog('dlg-export');
 });
 
+// CSV = tabella del solo workspace attivo.
 document.getElementById('exp-csv').addEventListener('click', () => {
+  const ws = activeWorkspace();
+  if (!ws) return;
   const esc = v => {
     const s = String(v ?? '');
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   let csv = 'name,description,category,status,tag,value,links,created\n';
-  state.items.forEach(it => {
+  ws.items.forEach(it => {
     const cat = findCat(it.cat);
-    const st = findStatus(state.itemStatus[it.id]);
+    const st = findStatus(ws.itemStatus[it.id]);
     const links = (it.links || []).map(l => `${l.label}=${l.url}`).join(' | ');
     csv += [
       esc(it.name), esc(it.desc), esc(cat ? localized(cat.name) : ''),
@@ -1796,16 +1920,19 @@ document.getElementById('exp-csv').addEventListener('click', () => {
 });
 
 // ============================================
-// CLEAR
+// CLEAR — al commit 1 resetta solo il workspace attivo.
+// La doppia conferma "cancella tutti i workspace" arriverà col menu contestuale.
 // ============================================
 document.getElementById('btn-clear').addEventListener('click', () => {
-  if (state.items.length === 0 && state.categories.length === 0) { toast(t('confirmEmpty')); return; }
+  const ws = activeWorkspace();
+  if (!ws) return;
+  if (ws.items.length === 0 && ws.categories.length === 0) { toast(t('confirmEmpty')); return; }
   if (!confirm(t('confirmReset'))) return;
-  state.items = [];
-  state.categories = [];
-  state.statuses = structuredClone(DEFAULT_STATUSES);
-  state.itemStatus = {};
-  state.valueUnit = '';
+  ws.items = [];
+  ws.categories = [];
+  ws.statuses = structuredClone(DEFAULT_STATUSES);
+  ws.itemStatus = {};
+  ws.valueUnit = '';
   state.filter = { search: '', cat: 'all', status: 'all' };
   document.getElementById('search').value = '';
   saveState(); renderAll();
@@ -1830,8 +1957,10 @@ applyI18n();
 loadState();
 renderAll();
 
-// Mostra template gallery automaticamente al primo avvio (se vuoto)
-if (state.items.length === 0 && state.categories.length === 0 && !localStorage.getItem('triagehub-onboarded')) {
+// Mostra template gallery automaticamente al primo avvio (se workspace attivo è vuoto).
+// In v1.2 la galleria diventerà flottante; per ora resta il dialog esistente.
+const _ws = activeWorkspace();
+if (_ws && _ws.items.length === 0 && _ws.categories.length === 0 && !localStorage.getItem('triagehub-onboarded')) {
   setTimeout(() => {
     renderTemplateGallery();
     openDialog('dlg-templates');
