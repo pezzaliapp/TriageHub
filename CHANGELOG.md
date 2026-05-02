@@ -3,6 +3,11 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.2.3] — Unreleased
+
+### Fixed
+- 🪟 **Galleria template — testo troncato su desktop wide**: a viewport ≥ 1024px la galleria si allarga da 720px a 900px e le descrizioni delle card passano a 3 righe massime di clamp, così frasi come "Caldo/tiepido/freddo per ogni lead" non vengono più tagliate a metà parola. Tablet (768–1023px) e mobile invariati.
+
 ## [1.2.2] — Unreleased
 
 ### Added
