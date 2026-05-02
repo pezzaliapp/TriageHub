@@ -15,21 +15,24 @@
 
 ### Cos'è
 
-TriageHub è una **PWA generica per il triage** di qualsiasi tipo di item: email, lead commerciali, ticket di assistenza, prodotti di un listino, candidature, idee di progetto. Lo strumento ti aiuta a smistare ogni elemento in **uno dei tre stati** che decidi tu (es. "Fare / Rivedere / Scartare", "Caldo / Tiepido / Freddo", "Aperto / In lavorazione / Risolto").
+TriageHub è una **PWA per smistare** file del Desktop e righe di Excel/CSV in tre stati che decidi tu (es. *Da tenere / Da archiviare / Da cestinare*). Tre template focalizzati con automazione vera, niente filler.
 
-### A cosa serve davvero
+### Come funziona
 
-I gestionali sono pieni di filtri, ma quando hai una lista di 200 email, 150 lead, 800 prodotti, ti serve un **gesto decisionale rapido**: per ognuno scegli una delle 3 caselle, e poi esporti il risultato. TriageHub fa solo questo, ma lo fa molto bene.
+Hai una pila di **file sul Desktop** o un **foglio Excel di centinaia di righe**: ti serve un gesto decisionale rapido per ognuno. TriageHub ti dà tre caselle, tu scegli, lui produce un report (PDF, Word, Excel) che dice esattamente cosa fare dopo.
+
+### I 3 template
+
+- 📂 **Pulizia file & Desktop** — file picker nativo, MIME-detect automatico, report PDF con istruzioni concrete macOS/Windows/Linux per spostare e cestinare
+- 📊 **Lista Excel** — carica `.xlsx`/`.csv`/`.tsv`, smista riga per riga, scarica un nuovo Excel organizzato (foglio unico con colonna *Stato* o 3 fogli separati)
+- ⚪ **Vuoto** — workspace pulito, configurazione totalmente tua
 
 ### Caratteristiche
 
-- 🎯 **7 template precaricati**: Email, Lead commerciali, Ticket assistenza, Listino prodotti, Candidature HR, Idee progetto, **Pulizia file & Desktop**
 - 📚 **Micro-guide contestuali** per ogni template + manuale in-app dal bottone Aiuto
-- 📂 **File picker nativo** per il template Pulizia Desktop: niente Terminale, l'app legge nome e dimensione direttamente dal Finder
-- ✏️ **Tutto personalizzabile**: nome, emoji e colore di stati e categorie
-- 📥 **Import CSV** con auto-rilevamento delle colonne
-- 📤 **Import/Export JSON** per backup completi
-- 📊 **Export Markdown** (report leggibile) e CSV (per Excel)
+- 📥 **File picker nativo** sia per Desktop cleanup che per Excel: niente Terminale, niente upload
+- 📊 **Export multi-formato**: PDF (consigliato), Word (.rtf), Testo, Excel (.xlsx), JSON, CSV, Markdown
+- ✏️ **Tutto personalizzabile**: nome, emoji e colore di stati e categorie; mapping colonne Excel rinominabili
 - 🔍 **Ricerca full-text** + filtri per categoria e stato
 - 💾 **Tutto offline** dopo il primo caricamento
 - 🌐 **Bilingue** italiano / inglese
@@ -43,36 +46,27 @@ I gestionali sono pieni di filtri, ma quando hai una lista di 200 email, 150 lea
 
 **Da desktop**: nessuna installazione necessaria, funziona come sito web.
 
-### Workflow tipico — Listino prodotti
+### Workflow — Lista Excel
 
-1. Esporti il listino da Excel/Numbers/Google Sheets in CSV
-2. Apri TriageHub, scegli template "Listino prodotti"
-3. Importi il CSV: il mapping è automatico per colonne tipo "Codice", "Descrizione", "Prezzo", "Categoria"
-4. Smisti ogni prodotto in **Spingere / Da valutare / Out**
-5. Esporti il CSV finale → lo passi a marketing, gestionale, [CSVXpress](https://www.alessandropezzali.it/CSVXpress/)
+1. Apri TriageHub, scegli template "📊 Lista Excel"
+2. Click "📥 Carica file Excel/CSV", seleziona il tuo `.xlsx`/`.csv`/`.tsv`
+3. (Opzionale) Click "🔧 Mapping colonne" per scegliere quale colonna è il nome, quale è la categoria, rinominare o nascondere colonne
+4. Smisti ogni riga in **Da tenere / Da archiviare / Da cestinare**
+5. Click "↑ Esporta" → "📊 Excel organizzato" → scegli foglio unico con colonna *Stato* o 3 fogli separati
+6. Apri il file in Excel/Numbers/LibreOffice e usalo
 
-### Workflow tipico — Email Outlook
+### Workflow — Pulizia Desktop
 
-1. In Outlook desktop: File → Apri ed esporta → Esporta in CSV
-2. In TriageHub scegli template "Email", importi il CSV
-3. Mapping: Oggetto → Nome, Inizio corpo → Descrizione, Da → Tag
-4. Smisti in **Da rispondere / In attesa / Archiviata**
-5. Esporti report Markdown come tua to-do list
-
-### Workflow tipico — Pulizia Desktop
-
-1. Esporti la lista dei file dal terminale:
-   ```sh
-   cd ~/Desktop && ls -laS | awk 'NR>1 && $1!~/^d/ {print $9","$5","$6" "$7" "$8}' > ~/Desktop/cleanup.csv
-   ```
-2. Apri TriageHub, scegli template "Pulizia file & Desktop"
-3. Importi il CSV (mappa: nome → Nome, dimensione → Valore)
-4. Smisti ogni file in **Tieni / Archivia / Cestina**
-5. Esporti il report Markdown e segui le indicazioni nel Finder
+1. Apri TriageHub, scegli template "📂 Pulizia file & Desktop"
+2. Click "📥 Carica file da smistare", seleziona i file dal Desktop (Cmd+A per tutti)
+3. L'app categorizza automaticamente per tipo (immagini, audio, documenti, excel)
+4. Smisti ogni file in **Da tenere / Da archiviare / Da cestinare**
+5. Click "↑ Esporta" → "📄 PDF" → ottieni un manuale operativo cross-platform (macOS/Windows/Linux) con destinazioni consigliate, scorciatoie tastiera, calcolo spazio recuperabile
+6. Segui il PDF nel Finder/Esplora File/file manager
 
 ### Tecnologie
 
-Vanilla HTML/CSS/JavaScript. Zero dipendenze runtime. Service Worker per offline. localStorage per la persistenza. *Instrument Serif* via Google Fonts come unica risorsa esterna.
+Vanilla HTML/CSS/JavaScript. SheetJS (Apache 2.0, ~950KB) bundlato localmente per parsing Excel. Service Worker per offline. localStorage per la persistenza. *Instrument Serif* via Google Fonts.
 
 ---
 
@@ -80,21 +74,24 @@ Vanilla HTML/CSS/JavaScript. Zero dipendenze runtime. Service Worker per offline
 
 ### What it is
 
-TriageHub is a **generic triage PWA** for any kind of item: emails, sales leads, support tickets, product catalogs, job applications, project ideas. It helps you sort each element into **one of three states** that you define (e.g. "Do / Review / Drop", "Hot / Warm / Cold", "Open / In progress / Resolved").
+TriageHub is a **PWA to sort** Desktop files and Excel/CSV rows into three states you define (e.g. *To keep / To archive / To trash*). Three focused templates with real automation, no filler.
 
-### Why it exists
+### How it works
 
-CRMs and inboxes are full of filters, but when you have a list of 200 emails, 150 leads, 800 products, what you really need is a **fast decisional gesture**: pick one of three boxes per item, then export the result. TriageHub does just this, very well.
+You have a stack of **files on your Desktop** or a **spreadsheet with hundreds of rows**: you need a fast decisional gesture for each item. TriageHub gives you three boxes, you pick, it produces a report (PDF, Word, Excel) telling you exactly what to do next.
+
+### The 3 templates
+
+- 📂 **File & Desktop cleanup** — native file picker, automatic MIME detection, PDF report with concrete macOS/Windows/Linux instructions for moving and trashing
+- 📊 **Excel List** — upload `.xlsx`/`.csv`/`.tsv`, sort row by row, download a new organized Excel (single sheet with *Status* column or 3 separate sheets)
+- ⚪ **Blank** — clean workspace, fully customizable
 
 ### Features
 
-- 🎯 **7 ready-made templates**: Email, Sales Leads, Support Tickets, Product Catalog, HR Applications, Project Ideas, **File & Desktop cleanup**
 - 📚 **Contextual micro-guides** for every template + in-app manual via the Help button
-- 📂 **Native file picker** for the Desktop cleanup template: no Terminal needed, the app reads name and size from Finder directly
-- ✏️ **Fully customizable**: names, emoji and colors for states and categories
-- 📥 **CSV import** with column auto-detection
-- 📤 **JSON import/export** for full backups
-- 📊 **Markdown export** (readable report) and CSV (for Excel)
+- 📥 **Native file picker** for both Desktop cleanup and Excel: no Terminal, no uploads
+- 📊 **Multi-format export**: PDF (recommended), Word (.rtf), Text, Excel (.xlsx), JSON, CSV, Markdown
+- ✏️ **Fully customizable**: names, emoji and colors for states and categories; renamable Excel column mapping
 - 🔍 **Full-text search** + category & status filters
 - 💾 **Fully offline** after first load
 - 🌐 **Bilingual** Italian / English
@@ -108,20 +105,27 @@ CRMs and inboxes are full of filters, but when you have a list of 200 emails, 15
 
 **From desktop**: no installation needed, works as a regular website.
 
+### Workflow — Excel List
+
+1. Open TriageHub, pick the "📊 Excel List" template
+2. Click "📥 Load Excel/CSV file", pick your `.xlsx`/`.csv`/`.tsv`
+3. (Optional) Click "🔧 Column mapping" to choose which column is the name, which is the category, rename or hide columns
+4. Sort each row into **To keep / To archive / To trash**
+5. Click "↑ Export" → "📊 Organized Excel" → pick single sheet with *Status* column or 3 separate sheets
+6. Open the file in Excel/Numbers/LibreOffice and use it
+
 ### Workflow — Desktop Cleanup
 
-1. Export the file list from a terminal:
-   ```sh
-   cd ~/Desktop && ls -laS | awk 'NR>1 && $1!~/^d/ {print $9","$5","$6" "$7" "$8}' > ~/Desktop/cleanup.csv
-   ```
-2. Open TriageHub, pick the "File & Desktop cleanup" template
-3. Import the CSV (map: name → Name, size → Value)
-4. Triage every file into **Keep / Archive / Trash**
-5. Export the Markdown report and act in Finder
+1. Open TriageHub, pick the "📂 File & Desktop cleanup" template
+2. Click "📥 Load files to triage", select files from your Desktop (Cmd+A for all)
+3. The app auto-categorizes by type (images, audio, documents, spreadsheets)
+4. Sort each file into **To keep / To archive / To trash**
+5. Click "↑ Export" → "📄 PDF" → get a cross-platform (macOS/Windows/Linux) operations manual with recommended destinations, keyboard shortcuts, reclaimable space estimate
+6. Follow the PDF in Finder/File Explorer/file manager
 
 ### Tech
 
-Vanilla HTML/CSS/JS. Zero runtime dependencies. Service Worker for offline. localStorage for persistence. *Instrument Serif* via Google Fonts is the only external resource.
+Vanilla HTML/CSS/JS. SheetJS (Apache 2.0, ~950KB) bundled locally for Excel parsing. Service Worker for offline. localStorage for persistence. *Instrument Serif* via Google Fonts.
 
 ---
 
@@ -141,10 +145,11 @@ The only network request, after the first load, is for Google Fonts — and even
 
 ## Roadmap
 
-- **v1.2** *(in corso / in progress)* — Workspaces multipli, galleria flottante draggabile, workspace cards, template Pulizia file & Desktop
-- **v1.3** — Web Share Target API (mobile: "Share to TriageHub" from any app)
-- **v1.4** — IndexedDB for large datasets (>5,000 items per workspace)
-- **v1.5** — Optional manual sync via JSON file on Drive/Dropbox/iCloud
+- **v1.2** ✅ — Workspaces multipli, galleria flottante, workspace cards, template Pulizia file & Desktop, export multi-formato
+- **v1.3** ✅ — Major refocus: 8 → 3 template focalizzati (Cleanup, Excel, Blank); SheetJS integration; export Excel organizzato
+- **v1.4** — Web Share Target API (mobile: "Share to TriageHub" from any app)
+- **v1.5** — IndexedDB for large datasets (>5,000 items per workspace)
+- **v1.6** — Optional manual sync via JSON file on Drive/Dropbox/iCloud
 - **v2.0** — Drag & drop reordering, custom fields beyond `value`
 
 ---

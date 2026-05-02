@@ -3,6 +3,38 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] — Unreleased
+
+> **Major refocus**: da 8 a 3 template. Sembra una perdita, non lo è — il valore di un prodotto si misura dalle feature che funzionano davvero, non da quante ce ne sono. Cf. `FACT_CHECK_v1.2.6.md`.
+
+### BREAKING
+
+- 🗑 **Rimossi 6 template senza automazione vera**: `email`, `leads`, `tickets`, `catalog`, `hr`, `ideas`. Erano shell ben presentate (config + micro-guida) ma sostituibili da `blank` + 5 minuti di setup. Il template `tickets` aveva inoltre categorie hardcoded sull'attività dell'autore (equilibratrici, smontagomme): un domain-leak inservibile per il 99% degli utenti.
+- 📦 **Migration soft**: i workspace ESISTENTI dei 6 template rimossi NON vengono toccati. Restano nel localStorage e sono accessibili come workspace cards normali. Solo il template non è più creabile da zero dalla galleria.
+- 📋 **README riposizionato**: claim "7 template precaricati" → "3 template focalizzati con automazione vera". Meta description e `<title>` aggiornati.
+
+### Added
+
+- 📊 **Nuovo template Lista Excel** (`xlsx`) — l'unico nuovo template post-fact-check, scelto perché ha automazione vera (parser Excel reale, non solo config):
+  - 📥 **File picker nativo** per `.xlsx`, `.xls`, `.csv`, `.tsv`. Niente upload, file letto solo client-side.
+  - 🔧 **Parser SheetJS 0.20.3** (Apache 2.0, ~950KB), bundlato localmente in `xlsx.full.min.js` e precachato dal Service Worker per offline-first. Niente CDN.
+  - 🤖 **Auto-detect mapping**: la prima colonna diventa il nome dell'item. Tutte le altre colonne vengono salvate in `item.xlsxData` per la visualizzazione.
+  - 🔧 **Dialog "Mapping colonne"** (toolbar `🔧`): cambia colonna nome, scegli colonna categoria (raggruppa item per il valore), rinomina colonne, nascondi colonne. Persistito in `ws.xlsxMapping`.
+  - 📊 **Export Excel organizzato** in due modalità: foglio unico con colonna "Stato" aggiunta in coda, o 3 fogli separati (Da tenere / Da archiviare / Da cestinare). Workspace name → filename slug. Output `.xlsx` standard apribile in Excel/Numbers/LibreOffice.
+  - 🃏 **Item card con dettagli espandibili**: ogni riga mostra il nome dalla colonna mappata + un `<details>` con tutte le altre colonne visibili usando i nomi rinominati.
+  - 📚 Micro-guida `xlsx` IT + EN, sezione "Tutorial Excel" nel manuale in-app, badge dedicato nella galleria.
+
+### Changed
+
+- 🎯 **Galleria template ora mostra 3 entry** invece di 8. Una decisione editoriale, non una limitazione tecnica.
+- 🔄 **Service Worker `CORE_ASSETS`** include `xlsx.full.min.js` (precache, asset critico per il template xlsx).
+- 📖 **Manuale in-app**: sezione 5 "Gli 8 template" → "I 3 template"; nuova sezione 4b "Tutorial: smistare un Excel in 10 minuti" / "Tutorial: triage an Excel in 10 minutes".
+
+### Notes for users
+
+- I tuoi workspace Email/Lead/Ticket/Listino/HR/Idee esistenti continuano a funzionare. Non perdi nulla. Se vuoi crearne uno nuovo simile, parti da `⚪ Vuoto` e personalizza categorie e stati come preferisci.
+- Il file `FACT_CHECK_v1.2.6.md` (committato in v1.2.6) documenta il ragionamento dietro a questa riduzione.
+
 ## [1.2.6] — Unreleased
 
 ### Changed
