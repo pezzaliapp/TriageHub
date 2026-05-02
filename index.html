@@ -372,31 +372,147 @@
     font-family: inherit; font-size: 13px; background: var(--card);
   }
 
-  /* TEMPLATE GALLERY — responsive: bottom sheet on mobile, centered draggable dialog on desktop */
-
-  /* Pillola fissa "✨ Template" — visibile quando la galleria è chiusa.
-     Stesso comportamento mobile e desktop (alias del bottone toolbar). */
-  .fg-pill {
-    position: fixed;
-    top: calc(env(safe-area-inset-top) + 16px);
-    right: 16px;
-    z-index: 60;
-    padding: 8px 14px;
-    border-radius: 999px;
-    background: var(--card);
+  /* WORKSPACE CARDS — switcher tra workspace, sopra la toolbar */
+  .ws-cards-wrap { padding: 0 22px; margin-top: 8px; }
+  .ws-cards {
+    display: flex; gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    padding: 0 0 4px;
+  }
+  .ws-cards::-webkit-scrollbar { display: none; }
+  .ws-card {
+    flex-shrink: 0;
+    width: 180px; height: 100px;
+    background: var(--bg);
     border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    cursor: pointer;
+    scroll-snap-align: start;
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    transition: border-color 0.2s, opacity 0.15s, background 0.15s;
+    font-family: inherit; color: var(--text); text-align: left;
+    user-select: none;
+    overflow: hidden;
+  }
+  .ws-card:hover { opacity: 0.85; border-color: var(--border-strong); }
+  .ws-card.active {
+    background: var(--card);
+    border: 2px solid var(--accent);
+    padding: 11px 13px; /* compensate +1 border */
+    cursor: default;
+    opacity: 1;
     box-shadow: var(--shadow);
-    font-family: inherit; font-size: 14px; font-weight: 500;
-    color: var(--text); cursor: pointer;
-    display: inline-flex; align-items: center; gap: 4px;
-    transition: background 0.15s, border-color 0.15s, transform 0.15s;
   }
-  .fg-pill:hover { background: var(--card-hover); border-color: var(--border-strong); }
-  .fg-pill:active { transform: scale(0.97); }
-  .fg-pill.hidden { display: none; }
+  .ws-card.active:hover { opacity: 1; }
+  .ws-card-head {
+    display: flex; align-items: center; gap: 6px; min-width: 0;
+  }
+  .ws-card-emoji { font-size: 18px; line-height: 1; flex-shrink: 0; }
+  .ws-card-name {
+    font-family: var(--serif); font-style: italic; font-size: 16px;
+    letter-spacing: -0.01em; line-height: 1.1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex: 1;
+  }
+  .ws-card-count { font-size: 12px; color: var(--text-tertiary); line-height: 1; }
+  .ws-card-stats {
+    font-size: 11px; color: var(--text-tertiary);
+    display: flex; gap: 6px; flex-wrap: nowrap;
+    white-space: nowrap; overflow: hidden;
+  }
+  .ws-card-stat { display: inline-flex; gap: 2px; }
+  .ws-card-add {
+    flex-shrink: 0;
+    width: 60px; height: 100px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    color: var(--text-tertiary);
+    transition: border-color 0.15s, color 0.15s, border-style 0.15s;
+    font-family: inherit;
+    scroll-snap-align: start;
+  }
+  .ws-card-add:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
+  .ws-card-add-plus { font-size: 24px; line-height: 1; font-weight: 300; }
+  .ws-card-add-label { font-size: 11px; }
+  @media (max-width: 767px) {
+    .ws-cards-wrap { padding: 0; margin-top: 6px; }
+    .ws-cards { padding: 0 16px 6px; gap: 10px; }
+    .ws-card { width: 160px; }
+  }
+
+  /* CONTEXT MENU — desktop dropdown / mobile action sheet */
+  .ctx-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 199;
+  }
+  .ctx-backdrop.hidden { display: none; }
+  .ctx-menu {
+    position: fixed; z-index: 200;
+    background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    min-width: 220px;
+    padding: 4px;
+    font-family: inherit;
+  }
+  .ctx-menu.hidden { display: none; }
+  .ctx-item {
+    display: block; width: 100%;
+    background: transparent; border: none;
+    padding: 10px 14px;
+    font-family: inherit; font-size: 14px;
+    color: var(--text);
+    cursor: pointer; text-align: left;
+    border-radius: 8px;
+    transition: background 0.1s;
+  }
+  .ctx-item:hover { background: var(--bg); }
+  .ctx-item.danger { color: #d70015; }
+  .ctx-item.danger:hover { background: rgba(255, 59, 48, 0.08); }
+  .ctx-cancel-btn { display: none; }
+  @media (max-width: 767px) {
+    .ctx-menu {
+      top: auto !important; left: 0 !important; right: 0 !important;
+      bottom: 0;
+      width: 100vw; min-width: 0;
+      border-radius: 16px 16px 0 0;
+      padding: 8px 8px 0;
+      padding-bottom: calc(8px + env(safe-area-inset-bottom));
+      animation: ctxSlideUp 250ms ease-out;
+    }
+    @keyframes ctxSlideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .ctx-item {
+      min-height: 44px; padding: 12px 16px;
+      font-size: 16px;
+      display: flex; align-items: center;
+    }
+    .ctx-cancel-btn {
+      display: block;
+      margin-top: 8px;
+      width: 100%; min-height: 44px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px;
+      font-family: inherit; font-size: 16px; font-weight: 600;
+      color: var(--text); cursor: pointer;
+    }
+  }
   @media (min-width: 768px) {
-    .fg-pill { top: calc(env(safe-area-inset-top) + 20px); right: 20px; }
+    .ctx-backdrop { background: transparent; }
   }
+
+  /* TEMPLATE GALLERY — responsive: bottom sheet on mobile, centered draggable dialog on desktop */
 
   /* Container + backdrop */
   .floating-gallery {
@@ -645,6 +761,10 @@
     <div class="stat-grid" id="stat-grid"></div>
   </header>
 
+  <div class="ws-cards-wrap">
+    <div class="ws-cards" id="ws-cards"></div>
+  </div>
+
   <div class="toolbar">
     <div class="toolbar-inner">
       <div class="search-row">
@@ -820,11 +940,7 @@
   </div>
 </dialog>
 
-<!-- TEMPLATE GALLERY — pillola fissa quando chiusa, sheet/dialog quando aperta -->
-<button id="fg-pill" class="fg-pill hidden" data-i18n-attr="title:galleryOpen" aria-haspopup="dialog">
-  ✨ <span data-i18n="templates">Template</span>
-</button>
-
+<!-- TEMPLATE GALLERY — sheet/dialog quando aperta -->
 <div id="floating-gallery" class="floating-gallery hidden" role="dialog" aria-modal="true" aria-labelledby="fg-title">
   <div class="fg-backdrop" id="fg-backdrop"></div>
   <div class="fg-panel" id="fg-panel">
@@ -836,6 +952,58 @@
     </div>
     <div class="fg-body" id="fg-body"></div>
   </div>
+</div>
+
+<!-- DIALOG: Rinomina workspace (gestisce anche "Cambia emoji") -->
+<dialog id="dlg-ws-rename">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="renameWorkspaceTitle">Rinomina workspace</h2>
+    <button class="dialog-close" data-close="dlg-ws-rename">×</button>
+  </div>
+  <form id="form-ws-rename">
+    <div class="dialog-body">
+      <div class="field">
+        <label data-i18n="name">Nome</label>
+        <input type="text" id="ws-rename-name" required maxlength="40">
+      </div>
+      <div class="field">
+        <label data-i18n="changeEmoji">Cambia emoji</label>
+        <input type="text" id="ws-rename-emoji" maxlength="4">
+        <div class="hint" data-i18n="emojiHint">Tip: usa Cmd+Ctrl+Spazio (Mac) o l'emoji panel del sistema operativo per scegliere</div>
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button type="button" class="btn" data-close="dlg-ws-rename" data-i18n="cancel">Annulla</button>
+      <button type="submit" class="btn primary" data-i18n="save">Salva</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- DIALOG: Elimina workspace -->
+<dialog id="dlg-ws-delete">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="deleteWorkspaceConfirmTitle">Eliminare workspace?</h2>
+    <button class="dialog-close" data-close="dlg-ws-delete">×</button>
+  </div>
+  <div class="dialog-body">
+    <p class="small" id="dlg-ws-delete-msg"></p>
+  </div>
+  <div class="dialog-footer">
+    <button type="button" class="btn" data-close="dlg-ws-delete" data-i18n="cancel">Annulla</button>
+    <button type="button" class="btn" id="btn-ws-export-first" data-i18n="exportBeforeDelete">Esporta prima</button>
+    <button type="button" class="btn danger" id="btn-ws-delete-confirm" data-i18n="deleteWorkspace">Elimina</button>
+  </div>
+</dialog>
+
+<!-- CONTEXT MENU per workspace cards -->
+<div id="ctx-backdrop" class="ctx-backdrop hidden"></div>
+<div id="ctx-menu" class="ctx-menu hidden" role="menu">
+  <button class="ctx-item" data-ctx="rename" data-i18n="renameWorkspace">Rinomina</button>
+  <button class="ctx-item" data-ctx="emoji" data-i18n="changeEmoji">Cambia emoji</button>
+  <button class="ctx-item" data-ctx="duplicate" data-i18n="duplicateTemplate">Duplica template</button>
+  <button class="ctx-item" data-ctx="export" data-i18n="exportThisOnly">Esporta solo questo</button>
+  <button class="ctx-item danger" data-ctx="delete" data-i18n="deleteWorkspace">Elimina</button>
+  <button class="ctx-cancel-btn" data-ctx="cancel" data-i18n="contextMenuCancel">Annulla</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -906,12 +1074,27 @@ const I18N = {
     footerNote: "Privacy by design — i tuoi dati non lasciano mai il tuo dispositivo.",
     migratedToV12: "✓ I tuoi dati sono stati migrati al formato Workspace",
     tplBadgeActive: "● Attivo",
-    tplBadgeGo: "↗ Vai",
     wsCreated: name => `✓ Workspace "${name}" creato`,
     wsActive: name => `✓ Sei nel workspace "${name}"`,
+    wsRenamed: name => `✓ Workspace rinominato in "${name}"`,
+    wsDeleted: name => `✓ Workspace "${name}" eliminato`,
     galleryClose: "Chiudi",
-    galleryOpen: "Apri galleria template",
-    dragToMove: "Trascina per spostare"
+    dragToMove: "Trascina per spostare",
+    newWorkspaceCard: "Nuovo",
+    itemCount: n => n === 1 ? "1 item" : `${n} item`,
+    renameWorkspace: "Rinomina",
+    renameWorkspaceTitle: "Rinomina workspace",
+    changeEmoji: "Cambia emoji",
+    emojiHint: "Tip: usa Cmd+Ctrl+Spazio (Mac) o l'emoji panel del sistema operativo per scegliere",
+    duplicateTemplate: "Duplica template",
+    exportThisOnly: "Esporta solo questo",
+    deleteWorkspace: "Elimina",
+    deleteWorkspaceConfirmTitle: "Eliminare workspace?",
+    deleteWorkspaceConfirmBody: (name, count) => `Eliminare "${name}"? Contiene ${count} item che andranno persi. L'azione non è reversibile.`,
+    exportBeforeDelete: "Esporta prima",
+    exportedBeforeDelete: "✓ Backup scaricato. Conferma per eliminare.",
+    workspaceContextHint: "Click destro o long-press per opzioni",
+    contextMenuCancel: "Annulla"
   },
   en: {
     subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
@@ -972,12 +1155,27 @@ const I18N = {
     footerNote: "Privacy by design — your data never leaves your device.",
     migratedToV12: "✓ Your data has been migrated to the Workspace format",
     tplBadgeActive: "● Active",
-    tplBadgeGo: "↗ Go",
     wsCreated: name => `✓ Workspace "${name}" created`,
     wsActive: name => `✓ Switched to workspace "${name}"`,
+    wsRenamed: name => `✓ Workspace renamed to "${name}"`,
+    wsDeleted: name => `✓ Workspace "${name}" deleted`,
     galleryClose: "Close",
-    galleryOpen: "Open template gallery",
-    dragToMove: "Drag to move"
+    dragToMove: "Drag to move",
+    newWorkspaceCard: "New",
+    itemCount: n => n === 1 ? "1 item" : `${n} items`,
+    renameWorkspace: "Rename",
+    renameWorkspaceTitle: "Rename workspace",
+    changeEmoji: "Change emoji",
+    emojiHint: "Tip: use Cmd+Ctrl+Space (Mac) or your OS emoji panel",
+    duplicateTemplate: "Duplicate template",
+    exportThisOnly: "Export this only",
+    deleteWorkspace: "Delete",
+    deleteWorkspaceConfirmTitle: "Delete workspace?",
+    deleteWorkspaceConfirmBody: (name, count) => `Delete "${name}"? It contains ${count} items that will be lost. This can't be undone.`,
+    exportBeforeDelete: "Export first",
+    exportedBeforeDelete: "✓ Backup downloaded. Confirm to delete.",
+    workspaceContextHint: "Right-click or long-press for options",
+    contextMenuCancel: "Cancel"
   }
 };
 
@@ -1530,7 +1728,7 @@ function renderItems() {
   });
 }
 
-function renderAll() { renderStats(); renderChips(); renderItems(); renderFloatingGallery(); }
+function renderAll() { renderStats(); renderWorkspaceCards(); renderChips(); renderItems(); renderFloatingGallery(); }
 
 // ============================================
 // DIALOG helpers
@@ -1578,18 +1776,21 @@ function isMobile() { return window.innerWidth <= MOBILE_MAX; }
 // mobile e desktop — è il CSS responsive a cambiare layout.
 function renderGalleryCards() {
   const body = document.getElementById('fg-body');
+  // v1.2.1: nessun "↗ Vai" — lo switch tra workspace si fa dalle ws cards.
+  // Mostriamo solo "● Attivo" sui template che hanno almeno un workspace.
+  // Click su qualsiasi card = sempre crea nuovo workspace (con numerazione
+  // automatica se esiste già un omonimo).
   body.innerHTML = TEMPLATES.map(tpl => {
     const existingWs = findWsByTemplate(tpl.id);
     const isActive = existingWs && existingWs.id === state.activeWorkspaceId;
-    const isExisting = existingWs && !isActive;
     const cls = ['fg-card'];
     if (tpl.blank) cls.push('blank');
     if (isActive) cls.push('active');
-    let badge = '';
-    if (isActive) badge = `<span class="fg-badge active">${escapeHtml(t('tplBadgeActive'))}</span>`;
-    else if (isExisting) badge = `<span class="fg-badge">${escapeHtml(t('tplBadgeGo'))}</span>`;
+    const badge = isActive
+      ? `<span class="fg-badge active">${escapeHtml(t('tplBadgeActive'))}</span>`
+      : '';
     return `
-      <button class="${cls.join(' ')}" data-template="${tpl.id}" ${isActive ? 'aria-disabled="true"' : ''}>
+      <button class="${cls.join(' ')}" data-template="${tpl.id}">
         ${badge}
         <span class="fg-emoji">${tpl.emoji}</span>
         <span class="fg-text">
@@ -1600,10 +1801,7 @@ function renderGalleryCards() {
   }).join('');
 
   body.querySelectorAll('[data-template]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.getAttribute('aria-disabled') === 'true') return;
-      applyTemplate(btn.dataset.template);
-    });
+    btn.addEventListener('click', () => applyTemplate(btn.dataset.template));
   });
 }
 
@@ -1642,11 +1840,6 @@ function clampGalleryPos() {
   }
 }
 
-// Aggiorna pillola fissa esterna in funzione dello stato della galleria.
-function syncPillVisibility() {
-  document.getElementById('fg-pill').classList.toggle('hidden', !!state.ui.galleryOpen);
-}
-
 // Render principale della galleria — chiamato da renderAll() e dopo cambi UI.
 function renderFloatingGallery() {
   const root = document.getElementById('floating-gallery');
@@ -1657,7 +1850,6 @@ function renderFloatingGallery() {
     renderGalleryCards();
     applyGalleryPos();
   }
-  syncPillVisibility();
 }
 
 // Apre la galleria con animazione. Sul mobile la posizione persistita viene
@@ -1674,7 +1866,6 @@ function openGallery() {
   // di transitare allo stato finale (entry animation).
   requestAnimationFrame(() => requestAnimationFrame(() => {
     root.classList.add('open');
-    syncPillVisibility();
   }));
 }
 
@@ -1686,7 +1877,6 @@ function closeGallery() {
   saveState();
   root.classList.remove('open');
   root.classList.add('closing');
-  syncPillVisibility();
   const onDone = () => {
     root.classList.remove('closing');
     root.classList.add('hidden');
@@ -1698,7 +1888,19 @@ function closeGallery() {
   setTimeout(onDone, 350);
 }
 
-// Crea un nuovo workspace dal template (o "Vuoto N"), lo attiva, mostra toast.
+// Calcola il prossimo nome libero a partire da un nome base. Se "Email" esiste
+// già, restituisce "Email 2"; se anche "Email 2" esiste, "Email 3"; etc.
+// Confronta tramite localized() per lavorare con name string o {it,en}.
+function nextNumberedName(baseName) {
+  const all = Object.values(state.workspaces).map(w => localized(w.name));
+  if (!all.includes(baseName)) return baseName;
+  let n = 2;
+  while (all.includes(`${baseName} ${n}`)) n++;
+  return `${baseName} ${n}`;
+}
+
+// Crea un nuovo workspace dal template (sempre, anche se uno con lo stesso
+// templateId esiste già). Numera automaticamente il nome se necessario.
 function createWorkspaceFromTemplate(tpl) {
   if (tpl.blank) {
     const n = nextBlankNumber();
@@ -1716,8 +1918,13 @@ function createWorkspaceFromTemplate(tpl) {
     id: 's' + (i + 1), label: s.label, emoji: s.emoji, color: s.color
   }));
   const categories = tpl.categories.map(c => ({ id: uid(), name: c.name, emoji: c.emoji }));
+  // Se non esiste un workspace di questo template, usa il name oggetto {it,en}
+  // così segue il cambio lingua. Se esiste già, numera (Email 2) come stringa.
+  const baseName = tpl.name[currentLang];
+  const existing = findWsByTemplate(tpl.id);
+  const wsName = existing ? nextNumberedName(baseName) : tpl.name;
   const ws = makeWorkspace({
-    name: tpl.name,            // oggetto {it,en} per supportare lo switch lingua
+    name: wsName,
     emoji: tpl.emoji,
     templateId: tpl.id,
     statuses, categories,
@@ -1728,7 +1935,7 @@ function createWorkspaceFromTemplate(tpl) {
   state.filter = { search: '', cat: 'all', status: 'all' };
   saveState();
   renderAll();
-  toast(t('wsCreated', tpl.name[currentLang]));
+  toast(t('wsCreated', localized(wsName)));
 }
 
 function switchWorkspace(wsId) {
@@ -1743,37 +1950,23 @@ function switchWorkspace(wsId) {
   toast(t('wsActive', localized(w.name)));
 }
 
+// v1.2.1: click su card della galleria → SEMPRE crea un nuovo workspace.
+// Se ne esiste già uno con lo stesso templateId, il nuovo prende un suffisso
+// numerico (es. "Email 2"). Lo switch tra workspace si fa dalle ws cards.
 function applyTemplate(tplId) {
   const tpl = TEMPLATES.find(x => x.id === tplId);
   if (!tpl) return;
-  // Su tap card chiudiamo la galleria (UX: il task è completato).
   closeGallery();
-
-  // "Vuoto" è sempre duplicabile per design: niente conferma, crea N+1.
-  if (tpl.blank) {
-    createWorkspaceFromTemplate(tpl);
-    return;
-  }
-  const existing = findWsByTemplate(tpl.id);
-  if (!existing) {
-    createWorkspaceFromTemplate(tpl);
-    return;
-  }
-  // Workspace di quel template è già attivo: no-op.
-  if (existing.id === state.activeWorkspaceId) return;
-  // Esiste ma non è attivo: switch diretto.
-  // TODO (commit 3): l'azione "duplica template per averne due" sarà
-  // aggiunta al menu contestuale delle workspace cards.
-  switchWorkspace(existing.id);
+  createWorkspaceFromTemplate(tpl);
 }
 
 // ----- Wiring eventi -----
-// Aprono la galleria: bottone toolbar e pillola fissa esterna.
+// Apre/chiude la galleria: bottone toolbar (la card "+" delle ws cards
+// chiama openGallery() direttamente nel suo handler).
 document.getElementById('btn-templates').addEventListener('click', () => {
   if (state.ui.galleryOpen) closeGallery();
   else openGallery();
 });
-document.getElementById('fg-pill').addEventListener('click', openGallery);
 
 // Chiudono: bottone × nell'header, click sul backdrop, ESC.
 document.getElementById('fg-close').addEventListener('click', closeGallery);
@@ -1865,6 +2058,255 @@ window.addEventListener('resize', () => {
   } else {
     clampGalleryPos();
   }
+});
+
+// ============================================
+// WORKSPACE CARDS — switcher orizzontale + context menu
+// ============================================
+
+// Render della riga di workspace cards. Una card per workspace + card "+" finale.
+function renderWorkspaceCards() {
+  const wrap = document.getElementById('ws-cards');
+  const list = Object.values(state.workspaces);
+  const cards = list.map(ws => {
+    const isActive = ws.id === state.activeWorkspaceId;
+    const total = ws.items.length;
+    // Mini-stats: skip stati con count 0.
+    const stats = ws.statuses.map(s => {
+      const count = Object.values(ws.itemStatus).filter(v => v === s.id).length;
+      return count > 0
+        ? `<span class="ws-card-stat">${escapeHtml(s.emoji)}${count}</span>`
+        : '';
+    }).filter(Boolean).join('');
+    return `
+      <button class="ws-card ${isActive ? 'active' : ''}" data-ws-id="${ws.id}" title="${escapeHtml(t('workspaceContextHint'))}">
+        <div class="ws-card-head">
+          <span class="ws-card-emoji">${escapeHtml(ws.emoji || '📋')}</span>
+          <span class="ws-card-name">${escapeHtml(localized(ws.name))}</span>
+        </div>
+        <div class="ws-card-count">${escapeHtml(t('itemCount', total))}</div>
+        <div class="ws-card-stats">${stats}</div>
+      </button>`;
+  }).join('');
+  const addCard = `
+    <button class="ws-card-add" id="ws-card-add" type="button">
+      <span class="ws-card-add-plus">+</span>
+      <span class="ws-card-add-label">${escapeHtml(t('newWorkspaceCard'))}</span>
+    </button>`;
+  wrap.innerHTML = cards + addCard;
+
+  wrap.querySelectorAll('[data-ws-id]').forEach(card => {
+    const wsId = card.dataset.wsId;
+    card.addEventListener('click', e => {
+      // Se è in corso un long-press che ha aperto il context menu, non switchare.
+      if (card.dataset.suppressClick === '1') {
+        delete card.dataset.suppressClick;
+        return;
+      }
+      if (state.activeWorkspaceId === wsId) return;
+      switchWorkspace(wsId);
+    });
+    card.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      openContextMenu(wsId, e.clientX, e.clientY);
+    });
+    // Long-press mobile: 500ms touch fermo apre il menu.
+    let pressTimer = null;
+    let pressStart = null;
+    card.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'touch') return;
+      pressStart = { x: e.clientX, y: e.clientY };
+      pressTimer = setTimeout(() => {
+        card.dataset.suppressClick = '1';
+        openContextMenu(wsId, e.clientX, e.clientY);
+        pressTimer = null;
+      }, 500);
+    });
+    const cancelPress = e => {
+      if (pressTimer && pressStart && e.clientX !== undefined) {
+        // se l'utente si è mosso più di 8px, cancella il long-press
+        const dx = Math.abs(e.clientX - pressStart.x);
+        const dy = Math.abs(e.clientY - pressStart.y);
+        if (dx < 8 && dy < 8) return;
+      }
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    };
+    card.addEventListener('pointermove', cancelPress);
+    card.addEventListener('pointerup', cancelPress);
+    card.addEventListener('pointercancel', cancelPress);
+  });
+
+  document.getElementById('ws-card-add').addEventListener('click', () => {
+    if (state.ui.galleryOpen) closeGallery();
+    else openGallery();
+  });
+}
+
+// Stato del menu contestuale: workspace target + posizione.
+let ctxTargetWsId = null;
+
+function openContextMenu(wsId, x, y) {
+  ctxTargetWsId = wsId;
+  const menu = document.getElementById('ctx-menu');
+  const backdrop = document.getElementById('ctx-backdrop');
+  menu.classList.remove('hidden');
+  backdrop.classList.remove('hidden');
+  if (isMobile()) {
+    // Su mobile è action sheet, posizione gestita dal CSS.
+    menu.style.top = '';
+    menu.style.left = '';
+  } else {
+    // Su desktop: dropdown vicino al click, clamp dentro al viewport.
+    menu.style.left = '0px';
+    menu.style.top = '0px';
+    // Forza layout per leggere offsetWidth/Height post-display.
+    const w = menu.offsetWidth;
+    const h = menu.offsetHeight;
+    const nx = Math.min(x, window.innerWidth - w - 8);
+    const ny = Math.min(y, window.innerHeight - h - 8);
+    menu.style.left = Math.max(8, nx) + 'px';
+    menu.style.top = Math.max(8, ny) + 'px';
+  }
+}
+
+function closeContextMenu() {
+  document.getElementById('ctx-menu').classList.add('hidden');
+  document.getElementById('ctx-backdrop').classList.add('hidden');
+  ctxTargetWsId = null;
+}
+
+document.getElementById('ctx-backdrop').addEventListener('click', closeContextMenu);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !document.getElementById('ctx-menu').classList.contains('hidden')) {
+    closeContextMenu();
+  }
+});
+
+document.querySelectorAll('#ctx-menu [data-ctx]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const action = btn.dataset.ctx;
+    const wsId = ctxTargetWsId;
+    closeContextMenu();
+    if (!wsId || !state.workspaces[wsId]) return;
+    if (action === 'rename') openRenameDialog(wsId, 'name');
+    else if (action === 'emoji') openRenameDialog(wsId, 'emoji');
+    else if (action === 'duplicate') duplicateWorkspaceTemplate(wsId);
+    else if (action === 'export') exportSingleWorkspace(wsId);
+    else if (action === 'delete') openDeleteDialog(wsId);
+    // 'cancel' è solo dismissal (mobile)
+  });
+});
+
+// ----- Rinomina / Cambia emoji -----
+let renameTargetWsId = null;
+function openRenameDialog(wsId, focusField = 'name') {
+  const ws = state.workspaces[wsId];
+  if (!ws) return;
+  renameTargetWsId = wsId;
+  document.getElementById('ws-rename-name').value = localized(ws.name) || '';
+  document.getElementById('ws-rename-emoji').value = ws.emoji || '';
+  openDialog('dlg-ws-rename');
+  setTimeout(() => {
+    const el = document.getElementById(focusField === 'emoji' ? 'ws-rename-emoji' : 'ws-rename-name');
+    el.focus(); el.select?.();
+  }, 60);
+}
+document.getElementById('form-ws-rename').addEventListener('submit', e => {
+  e.preventDefault();
+  const ws = state.workspaces[renameTargetWsId];
+  if (!ws) { closeDialog('dlg-ws-rename'); return; }
+  const name = document.getElementById('ws-rename-name').value.trim();
+  const emoji = document.getElementById('ws-rename-emoji').value.trim();
+  if (!name) return;
+  ws.name = name;     // perde l'eventuale {it,en} originale: scelta dell'utente
+  ws.emoji = emoji || ws.emoji || '📋';
+  saveState();
+  renderAll();
+  closeDialog('dlg-ws-rename');
+  toast(t('wsRenamed', name));
+  renameTargetWsId = null;
+});
+
+// ----- Duplica template (crea un altro workspace dello stesso template) -----
+function duplicateWorkspaceTemplate(wsId) {
+  const ws = state.workspaces[wsId];
+  if (!ws) return;
+  // Se è un workspace nato da template (templateId presente), usiamo quel
+  // template per generare il nuovo workspace con numerazione automatica.
+  if (ws.templateId) {
+    const tpl = TEMPLATES.find(x => x.id === ws.templateId);
+    if (tpl) { createWorkspaceFromTemplate(tpl); return; }
+  }
+  // Workspace "Vuoto" (templateId null): clona usando il template blank.
+  const blank = TEMPLATES.find(x => x.blank);
+  if (blank) createWorkspaceFromTemplate(blank);
+}
+
+// ----- Esporta solo questo workspace (JSON) -----
+function exportSingleWorkspace(wsId) {
+  const ws = state.workspaces[wsId];
+  if (!ws) return;
+  const data = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    workspaces: { [ws.id]: ws },
+    activeWorkspaceId: ws.id
+  };
+  const safeName = localized(ws.name).replace(/[^\w\d-]+/g, '_').toLowerCase() || 'workspace';
+  downloadFile(JSON.stringify(data, null, 2),
+    `triagehub-${safeName}-${new Date().toISOString().slice(0,10)}.json`,
+    'application/json');
+  toast(t('backupSaved'));
+}
+
+// ----- Dialog elimina workspace -----
+let deleteTargetWsId = null;
+let deleteExportedFlag = false;
+function openDeleteDialog(wsId) {
+  const ws = state.workspaces[wsId];
+  if (!ws) return;
+  deleteTargetWsId = wsId;
+  deleteExportedFlag = false;
+  document.getElementById('dlg-ws-delete-msg').textContent =
+    t('deleteWorkspaceConfirmBody', localized(ws.name), ws.items.length);
+  // Reset bottone "Esporta prima" al testo originale.
+  const btnExport = document.getElementById('btn-ws-export-first');
+  btnExport.textContent = t('exportBeforeDelete');
+  btnExport.disabled = false;
+  openDialog('dlg-ws-delete');
+}
+document.getElementById('btn-ws-export-first').addEventListener('click', () => {
+  if (!deleteTargetWsId) return;
+  exportSingleWorkspace(deleteTargetWsId);
+  deleteExportedFlag = true;
+  const btn = document.getElementById('btn-ws-export-first');
+  btn.disabled = true;
+  btn.textContent = t('exportedBeforeDelete');
+});
+document.getElementById('btn-ws-delete-confirm').addEventListener('click', () => {
+  const wsId = deleteTargetWsId;
+  if (!wsId || !state.workspaces[wsId]) { closeDialog('dlg-ws-delete'); return; }
+  const removedName = localized(state.workspaces[wsId].name);
+  delete state.workspaces[wsId];
+  // Se era quello attivo, scegli un altro workspace come nuovo attivo.
+  if (state.activeWorkspaceId === wsId) {
+    const remaining = Object.keys(state.workspaces);
+    state.activeWorkspaceId = remaining[0] || null;
+    state.filter = { search: '', cat: 'all', status: 'all' };
+    document.getElementById('search').value = '';
+  }
+  // Se non rimane più nessun workspace, creane uno Default vuoto.
+  if (Object.keys(state.workspaces).length === 0) {
+    const ws = makeWorkspace({ name: 'Default', emoji: '📋' });
+    state.workspaces[ws.id] = ws;
+    state.activeWorkspaceId = ws.id;
+  }
+  saveState();
+  renderAll();
+  closeDialog('dlg-ws-delete');
+  toast(t('wsDeleted', removedName));
+  deleteTargetWsId = null;
+  deleteExportedFlag = false;
 });
 
 // ============================================
