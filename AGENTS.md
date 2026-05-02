@@ -138,9 +138,10 @@ TriageHub/
 
 | Versione | Feature | Note |
 |----------|---------|------|
-| v1.2 | Web Share Target API | "Condividi → TriageHub" da OS mobile |
-| v1.3 | IndexedDB per dataset > 5k item | Migration path da localStorage |
-| v1.4 | Sync manuale via JSON cloud | Drag&drop file da Drive/Dropbox |
+| v1.2 *(in corso)* | Workspaces multipli, galleria flottante draggabile, workspace cards, template Pulizia file & Desktop | Refactor schema → container per flusso |
+| v1.3 | Web Share Target API | "Condividi → TriageHub" da OS mobile |
+| v1.4 | IndexedDB per dataset > 5k item per workspace | Migration path da localStorage |
+| v1.5 | Sync manuale via JSON cloud | Drag&drop file da Drive/Dropbox/iCloud |
 | v2.0 | Custom fields, drag&drop reorder | Refactor schema item |
 
 ## Pubblicazione

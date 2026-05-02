@@ -23,7 +23,7 @@ I gestionali sono pieni di filtri, ma quando hai una lista di 200 email, 150 lea
 
 ### Caratteristiche
 
-- 🎯 **6 template precaricati**: Email, Lead commerciali, Ticket assistenza, Listino prodotti, Candidature HR, Idee progetto
+- 🎯 **7 template precaricati**: Email, Lead commerciali, Ticket assistenza, Listino prodotti, Candidature HR, Idee progetto, **Pulizia file & Desktop**
 - ✏️ **Tutto personalizzabile**: nome, emoji e colore di stati e categorie
 - 📥 **Import CSV** con auto-rilevamento delle colonne
 - 📤 **Import/Export JSON** per backup completi
@@ -57,6 +57,17 @@ I gestionali sono pieni di filtri, ma quando hai una lista di 200 email, 150 lea
 4. Smisti in **Da rispondere / In attesa / Archiviata**
 5. Esporti report Markdown come tua to-do list
 
+### Workflow tipico — Pulizia Desktop
+
+1. Esporti la lista dei file dal terminale:
+   ```sh
+   cd ~/Desktop && ls -laS | awk 'NR>1 && $1!~/^d/ {print $9","$5","$6" "$7" "$8}' > ~/Desktop/cleanup.csv
+   ```
+2. Apri TriageHub, scegli template "Pulizia file & Desktop"
+3. Importi il CSV (mappa: nome → Nome, dimensione → Valore)
+4. Smisti ogni file in **Tieni / Archivia / Cestina**
+5. Esporti il report Markdown e segui le indicazioni nel Finder
+
 ### Tecnologie
 
 Vanilla HTML/CSS/JavaScript. Zero dipendenze runtime. Service Worker per offline. localStorage per la persistenza. *Instrument Serif* via Google Fonts come unica risorsa esterna.
@@ -75,7 +86,7 @@ CRMs and inboxes are full of filters, but when you have a list of 200 emails, 15
 
 ### Features
 
-- 🎯 **6 ready-made templates**: Email, Sales Leads, Support Tickets, Product Catalog, HR Applications, Project Ideas
+- 🎯 **7 ready-made templates**: Email, Sales Leads, Support Tickets, Product Catalog, HR Applications, Project Ideas, **File & Desktop cleanup**
 - ✏️ **Fully customizable**: names, emoji and colors for states and categories
 - 📥 **CSV import** with column auto-detection
 - 📤 **JSON import/export** for full backups
@@ -92,6 +103,17 @@ CRMs and inboxes are full of filters, but when you have a list of 200 emails, 15
 **From iPhone**: Safari → Share → "Add to Home Screen".
 
 **From desktop**: no installation needed, works as a regular website.
+
+### Workflow — Desktop Cleanup
+
+1. Export the file list from a terminal:
+   ```sh
+   cd ~/Desktop && ls -laS | awk 'NR>1 && $1!~/^d/ {print $9","$5","$6" "$7" "$8}' > ~/Desktop/cleanup.csv
+   ```
+2. Open TriageHub, pick the "File & Desktop cleanup" template
+3. Import the CSV (map: name → Name, size → Value)
+4. Triage every file into **Keep / Archive / Trash**
+5. Export the Markdown report and act in Finder
 
 ### Tech
 
@@ -115,9 +137,10 @@ The only network request, after the first load, is for Google Fonts — and even
 
 ## Roadmap
 
-- **v1.2** — Web Share Target API (mobile: "Share to TriageHub" from any app)
-- **v1.3** — IndexedDB for large datasets (>5,000 items)
-- **v1.4** — Optional manual sync via JSON file on Drive/Dropbox/iCloud
+- **v1.2** *(in corso / in progress)* — Workspaces multipli, galleria flottante draggabile, workspace cards, template Pulizia file & Desktop
+- **v1.3** — Web Share Target API (mobile: "Share to TriageHub" from any app)
+- **v1.4** — IndexedDB for large datasets (>5,000 items per workspace)
+- **v1.5** — Optional manual sync via JSON file on Drive/Dropbox/iCloud
 - **v2.0** — Drag & drop reordering, custom fields beyond `value`
 
 ---

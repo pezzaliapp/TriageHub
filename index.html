@@ -287,28 +287,6 @@
     display: flex; justify-content: flex-end; gap: 8px; background: var(--bg);
   }
 
-  /* TEMPLATE GALLERY */
-  .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
-  .template-card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-    padding: 16px; cursor: pointer; transition: all 0.15s; text-align: left;
-    font-family: inherit;
-  }
-  .template-card:hover {
-    border-color: var(--accent); box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-  }
-  .template-emoji { font-size: 32px; display: block; margin-bottom: 8px; }
-  .template-name {
-    font-family: var(--serif); font-size: 22px; font-weight: 400;
-    letter-spacing: -0.01em; line-height: 1.1; margin-bottom: 4px;
-  }
-  .template-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.35; }
-  .template-blank {
-    background: var(--bg); border-style: dashed; color: var(--text-secondary);
-  }
-  .template-blank:hover { background: var(--card); }
-
   /* FORM */
   .field { margin-bottom: 16px; }
   .field label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
@@ -392,6 +370,221 @@
   .mapping-grid select {
     border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
     font-family: inherit; font-size: 13px; background: var(--card);
+  }
+
+  /* TEMPLATE GALLERY — responsive: bottom sheet on mobile, centered draggable dialog on desktop */
+
+  /* Pillola fissa "✨ Template" — visibile quando la galleria è chiusa.
+     Stesso comportamento mobile e desktop (alias del bottone toolbar). */
+  .fg-pill {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 16px);
+    right: 16px;
+    z-index: 60;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    color: var(--text); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .fg-pill:hover { background: var(--card-hover); border-color: var(--border-strong); }
+  .fg-pill:active { transform: scale(0.97); }
+  .fg-pill.hidden { display: none; }
+  @media (min-width: 768px) {
+    .fg-pill { top: calc(env(safe-area-inset-top) + 20px); right: 20px; }
+  }
+
+  /* Container + backdrop */
+  .floating-gallery {
+    position: fixed; inset: 0; z-index: 100;
+    pointer-events: none;
+  }
+  .floating-gallery.hidden { display: none !important; }
+  .fg-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+    pointer-events: auto;
+  }
+  .floating-gallery.open .fg-backdrop { opacity: 1; }
+
+  /* Pannello — default mobile (bottom sheet) */
+  .fg-panel {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100vw;
+    max-height: 88vh;
+    border-radius: 24px 24px 0 0;
+    background: var(--card);
+    box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.18);
+    pointer-events: auto;
+    display: flex; flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 300ms ease-out;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .floating-gallery.open .fg-panel { transform: translateY(0); }
+  .floating-gallery.closing .fg-panel {
+    transition: transform 250ms ease-in;
+    transform: translateY(100%);
+  }
+
+  /* Header del bottom sheet (mobile) */
+  .fg-header {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+    user-select: none;
+    touch-action: none;
+    border-radius: 24px 24px 0 0;
+  }
+  .fg-grabber {
+    position: absolute; top: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 40px; height: 4px;
+    border-radius: 2px;
+    background: var(--border-strong);
+  }
+  .fg-grab { display: none; } /* desktop only */
+  .fg-title {
+    font-family: var(--serif); font-style: italic;
+    font-size: 20px; font-weight: 400;
+    letter-spacing: -0.01em; line-height: 1.2;
+    margin-top: 8px;
+  }
+  .fg-close {
+    background: var(--bg); border: none;
+    width: 32px; height: 32px; border-radius: 50%;
+    color: var(--text-secondary); cursor: pointer;
+    font-size: 18px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-top: 8px;
+  }
+  .fg-close:hover { background: var(--border); color: var(--text); }
+
+  /* Body — 1 colonna su mobile */
+  .fg-body {
+    padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .fg-card {
+    position: relative;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    text-align: left; font-family: inherit; color: var(--text);
+    display: flex; gap: 14px; align-items: flex-start;
+    min-height: 76px;
+  }
+  .fg-card:hover { border-color: var(--accent); background: var(--card-hover); }
+  .fg-card:active { transform: scale(0.99); }
+  .fg-card.active {
+    border-color: var(--accent); border-width: 2px;
+    padding: 15px; /* compensate border */
+    background: rgba(0, 113, 227, 0.04);
+    cursor: default;
+  }
+  .fg-card.active:active { transform: none; }
+  .fg-card.blank { background: var(--bg); border-style: dashed; }
+  .fg-card.blank:hover { background: var(--card); border-style: dashed; }
+  .fg-emoji { font-size: 32px; line-height: 1; flex-shrink: 0; }
+  .fg-text { flex: 1; min-width: 0; }
+  .fg-name {
+    font-family: var(--serif); font-size: 18px; font-weight: 400;
+    letter-spacing: -0.01em; line-height: 1.15;
+  }
+  .fg-desc {
+    font-size: 14px; color: var(--text-secondary);
+    line-height: 1.5; margin-top: 4px;
+    display: -webkit-box; -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .fg-badge {
+    position: absolute; top: 10px; right: 12px;
+    font-size: 10px; font-weight: 600;
+    padding: 3px 8px; border-radius: 10px;
+    letter-spacing: 0.02em;
+    background: var(--bg); color: var(--text-secondary);
+  }
+  .fg-badge.active { background: var(--accent); color: white; }
+
+  /* DESKTOP — dialog centrato draggabile */
+  @media (min-width: 768px) {
+    .fg-panel {
+      bottom: auto;
+      top: 50%; left: 50%;
+      width: 720px;
+      max-width: calc(100vw - 32px);
+      max-height: 80vh;
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      transform: translate(-50%, -50%) scale(0.95);
+      opacity: 0;
+      transition: transform 200ms ease-out, opacity 200ms ease-out;
+      padding-bottom: 0;
+    }
+    .floating-gallery.open .fg-panel {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    .floating-gallery.closing .fg-panel {
+      transition: opacity 150ms ease-in;
+      opacity: 0;
+    }
+    /* Quando il pannello è stato trascinato, usa coordinate assolute (top/left
+       impostati inline da JS) e niente translate centrale. */
+    .fg-panel.positioned {
+      top: 0; left: 0;
+      transform: scale(0.95);
+    }
+    .floating-gallery.open .fg-panel.positioned { transform: scale(1); }
+    .floating-gallery.dragging .fg-panel { transition: none; }
+
+    .fg-header {
+      grid-template-columns: auto 1fr auto;
+      padding: 16px 24px;
+      border-radius: 20px 20px 0 0;
+      cursor: grab;
+    }
+    .fg-header:active { cursor: grabbing; }
+    .floating-gallery.dragging .fg-header { cursor: grabbing; }
+    .fg-grabber { display: none; }
+    .fg-grab {
+      display: inline-block;
+      color: var(--text-tertiary); font-size: 14px;
+      line-height: 1; user-select: none; flex-shrink: 0;
+      letter-spacing: -2px; padding-right: 2px;
+    }
+    .fg-title { font-size: 22px; margin-top: 0; }
+    .fg-close { margin-top: 0; touch-action: auto; }
+
+    .fg-body {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .fg-card { padding: 16px; min-height: 0; }
+    .fg-card.active { padding: 15px; }
+    .fg-emoji { font-size: 28px; }
+    .fg-desc {
+      font-size: 13px; line-height: 1.4;
+      -webkit-line-clamp: 2;
+    }
   }
 
   /* RESPONSIVE */
@@ -478,23 +671,6 @@
     <p style="margin-top:6px"><span data-i18n="footerNote">Privacy by design — i tuoi dati non lasciano mai il tuo dispositivo.</span></p>
   </footer>
 </div>
-
-<!-- DIALOG: Template gallery -->
-<dialog id="dlg-templates">
-  <div class="dialog-header">
-    <h2 class="dialog-title" data-i18n="templatesTitle">Scegli un template</h2>
-    <button class="dialog-close" data-close="dlg-templates">×</button>
-  </div>
-  <div class="dialog-body">
-    <p class="small" style="margin-bottom:14px" data-i18n="templatesIntro">
-      Inizia con un set di categorie e stati preconfigurato per il tuo flusso, oppure parti da zero.
-    </p>
-    <div class="template-grid" id="template-grid"></div>
-    <p class="small" style="margin-top:14px" data-i18n="templatesNote">
-      ⚠️ Selezionare un template aggiungerà categorie e stati alla tua configurazione attuale. Gli item esistenti non verranno toccati.
-    </p>
-  </div>
-</dialog>
 
 <!-- DIALOG: Item editor -->
 <dialog id="dlg-item">
@@ -644,6 +820,24 @@
   </div>
 </dialog>
 
+<!-- TEMPLATE GALLERY — pillola fissa quando chiusa, sheet/dialog quando aperta -->
+<button id="fg-pill" class="fg-pill hidden" data-i18n-attr="title:galleryOpen" aria-haspopup="dialog">
+  ✨ <span data-i18n="templates">Template</span>
+</button>
+
+<div id="floating-gallery" class="floating-gallery hidden" role="dialog" aria-modal="true" aria-labelledby="fg-title">
+  <div class="fg-backdrop" id="fg-backdrop"></div>
+  <div class="fg-panel" id="fg-panel">
+    <div class="fg-header" id="fg-header" data-i18n-attr="title:dragToMove">
+      <span class="fg-grabber" aria-hidden="true"></span>
+      <span class="fg-grab" aria-hidden="true">⋮⋮</span>
+      <h2 class="fg-title" id="fg-title" data-i18n="templatesTitle">Scegli un template</h2>
+      <button class="fg-close" id="fg-close" data-i18n-attr="title:galleryClose" aria-label="Close">×</button>
+    </div>
+    <div class="fg-body" id="fg-body"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -710,7 +904,14 @@ const I18N = {
     fieldIgnore: "— ignora —",
     addedDate: d => `Aggiunto ${d}`,
     footerNote: "Privacy by design — i tuoi dati non lasciano mai il tuo dispositivo.",
-    migratedToV12: "✓ I tuoi dati sono stati migrati al formato Workspace"
+    migratedToV12: "✓ I tuoi dati sono stati migrati al formato Workspace",
+    tplBadgeActive: "● Attivo",
+    tplBadgeGo: "↗ Vai",
+    wsCreated: name => `✓ Workspace "${name}" creato`,
+    wsActive: name => `✓ Sei nel workspace "${name}"`,
+    galleryClose: "Chiudi",
+    galleryOpen: "Apri galleria template",
+    dragToMove: "Trascina per spostare"
   },
   en: {
     subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
@@ -769,7 +970,14 @@ const I18N = {
     fieldIgnore: "— ignore —",
     addedDate: d => `Added ${d}`,
     footerNote: "Privacy by design — your data never leaves your device.",
-    migratedToV12: "✓ Your data has been migrated to the Workspace format"
+    migratedToV12: "✓ Your data has been migrated to the Workspace format",
+    tplBadgeActive: "● Active",
+    tplBadgeGo: "↗ Go",
+    wsCreated: name => `✓ Workspace "${name}" created`,
+    wsActive: name => `✓ Switched to workspace "${name}"`,
+    galleryClose: "Close",
+    galleryOpen: "Open template gallery",
+    dragToMove: "Drag to move"
   }
 };
 
@@ -930,6 +1138,29 @@ const TEMPLATES = [
       { name: { it: 'Esperimenti', en: 'Experiments' }, emoji: '🧪' }
     ],
     valueUnit: ''
+  },
+  {
+    id: 'cleanup', emoji: '📂',
+    name: { it: 'Pulizia file & Desktop', en: 'File & Desktop cleanup' },
+    desc: {
+      it: 'Smista file e cartelle del Desktop o di un disco. Esporta lista in CSV, triagia, esegui in batch nel Finder.',
+      en: 'Triage files from Desktop or any folder. Export list to CSV, triage, then act in Finder in batch.'
+    },
+    statuses: [
+      { label: { it: 'Tieni',    en: 'Keep'    }, emoji: '📌',  color: '#34c759' },
+      { label: { it: 'Archivia', en: 'Archive' }, emoji: '🗄️', color: '#ff9500' },
+      { label: { it: 'Cestina',  en: 'Trash'   }, emoji: '🗑️', color: '#86868b' }
+    ],
+    categories: [
+      { name: { it: 'Documenti',           en: 'Documents'                }, emoji: '📄'  },
+      { name: { it: 'Immagini',            en: 'Images'                   }, emoji: '🖼️' },
+      { name: { it: 'Audio',               en: 'Audio'                    }, emoji: '🎵'  },
+      { name: { it: 'Excel & Listini',     en: 'Spreadsheets & Pricelists'}, emoji: '📊'  },
+      { name: { it: 'Lavoro cliente',      en: 'Client work'              }, emoji: '💼'  },
+      { name: { it: 'Cartelle progetto',   en: 'Project folders'          }, emoji: '🗂️' },
+      { name: { it: 'Da capire',           en: 'Unknown'                  }, emoji: '❓'  }
+    ],
+    valueUnit: 'MB'
   }
 ];
 
@@ -950,7 +1181,8 @@ let state = {
   workspaces: {},
   activeWorkspaceId: null,
   filter: { search: '', cat: 'all', status: 'all' },
-  ui: { galleryOpen: false, galleryPos: { x: null, y: null }, galleryCollapsed: false }
+  // ui.galleryPos è usato solo su desktop (su mobile la galleria è sempre full-bottom).
+  ui: { galleryOpen: false, galleryPos: { x: null, y: null } }
 };
 
 // Restituisce il workspace attivo. Tutta la lettura/scrittura dei dati
@@ -1011,8 +1243,7 @@ function loadState() {
     if (saved.ui && typeof saved.ui === 'object') {
       state.ui = {
         galleryOpen: !!saved.ui.galleryOpen,
-        galleryPos: saved.ui.galleryPos || { x: null, y: null },
-        galleryCollapsed: !!saved.ui.galleryCollapsed
+        galleryPos: saved.ui.galleryPos || { x: null, y: null }
       };
     }
   }
@@ -1172,6 +1403,7 @@ function renderItems() {
   if (!ws) { main.innerHTML = ''; return; }
 
   if (ws.items.length === 0) {
+    // Galleria già visibile: niente bottone "Scegli un template" qui.
     main.innerHTML = `
       <div class="empty-state">
         <span class="empty-state-emoji">🎯</span>
@@ -1179,7 +1411,6 @@ function renderItems() {
         <p>${escapeHtml(t('emptyText'))}</p>
         <div class="empty-actions">
           <button class="btn primary" onclick="document.getElementById('btn-add').click()">${escapeHtml(t('emptyAddBtn'))}</button>
-          <button class="btn" onclick="document.getElementById('btn-templates').click()">${escapeHtml(t('emptyTemplateBtn'))}</button>
           <button class="btn" onclick="document.getElementById('btn-import').click()">${escapeHtml(t('emptyImportBtn'))}</button>
         </div>
       </div>`;
@@ -1299,7 +1530,7 @@ function renderItems() {
   });
 }
 
-function renderAll() { renderStats(); renderChips(); renderItems(); }
+function renderAll() { renderStats(); renderChips(); renderItems(); renderFloatingGallery(); }
 
 // ============================================
 // DIALOG helpers
@@ -1318,54 +1549,322 @@ document.addEventListener('click', e => {
 });
 
 // ============================================
-// TEMPLATES DIALOG
+// TEMPLATE GALLERY — responsive (bottom sheet on mobile, dialog on desktop)
 // ============================================
-function renderTemplateGallery() {
-  const grid = document.getElementById('template-grid');
-  grid.innerHTML = TEMPLATES.map(tpl => `
-    <button class="template-card ${tpl.blank ? 'template-blank' : ''}" data-template="${tpl.id}">
-      <span class="template-emoji">${tpl.emoji}</span>
-      <div class="template-name">${escapeHtml(tpl.name[currentLang])}</div>
-      <div class="template-desc">${escapeHtml(tpl.desc[currentLang])}</div>
-    </button>
-  `).join('');
-  grid.querySelectorAll('[data-template]').forEach(btn => {
-    btn.addEventListener('click', () => applyTemplate(btn.dataset.template));
+
+// Trova il workspace esistente che è stato creato da un dato template
+// (templateId è null per i workspace "Vuoto" — quelli sono sempre duplicabili).
+function findWsByTemplate(tplId) {
+  if (!tplId || tplId === 'blank') return null;
+  return Object.values(state.workspaces).find(w => w.templateId === tplId) || null;
+}
+
+// Calcola il prossimo numero per un workspace "Vuoto N" (es. "Vuoto 3" se 1 e 2 esistono).
+function nextBlankNumber() {
+  let max = 0;
+  Object.values(state.workspaces).forEach(w => {
+    if (w.templateId !== null) return;
+    const name = typeof w.name === 'string' ? w.name : (w.name?.[currentLang] || w.name?.it || '');
+    const m = name.match(/^(?:Vuoto|Blank)\s+(\d+)$/);
+    if (m) max = Math.max(max, parseInt(m[1], 10));
   });
+  return max + 1;
+}
+
+const MOBILE_MAX = 767;
+function isMobile() { return window.innerWidth <= MOBILE_MAX; }
+
+// Riempie le card del template. La struttura HTML del pannello è la stessa su
+// mobile e desktop — è il CSS responsive a cambiare layout.
+function renderGalleryCards() {
+  const body = document.getElementById('fg-body');
+  body.innerHTML = TEMPLATES.map(tpl => {
+    const existingWs = findWsByTemplate(tpl.id);
+    const isActive = existingWs && existingWs.id === state.activeWorkspaceId;
+    const isExisting = existingWs && !isActive;
+    const cls = ['fg-card'];
+    if (tpl.blank) cls.push('blank');
+    if (isActive) cls.push('active');
+    let badge = '';
+    if (isActive) badge = `<span class="fg-badge active">${escapeHtml(t('tplBadgeActive'))}</span>`;
+    else if (isExisting) badge = `<span class="fg-badge">${escapeHtml(t('tplBadgeGo'))}</span>`;
+    return `
+      <button class="${cls.join(' ')}" data-template="${tpl.id}" ${isActive ? 'aria-disabled="true"' : ''}>
+        ${badge}
+        <span class="fg-emoji">${tpl.emoji}</span>
+        <span class="fg-text">
+          <span class="fg-name">${escapeHtml(tpl.name[currentLang])}</span>
+          <span class="fg-desc">${escapeHtml(tpl.desc[currentLang])}</span>
+        </span>
+      </button>`;
+  }).join('');
+
+  body.querySelectorAll('[data-template]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.getAttribute('aria-disabled') === 'true') return;
+      applyTemplate(btn.dataset.template);
+    });
+  });
+}
+
+// Applica la posizione persistita SOLO su desktop. Su mobile la galleria è
+// sempre full-width-bottom; ignoriamo galleryPos per evitare comportamenti
+// strani al resize/rotation.
+function applyGalleryPos() {
+  const panel = document.getElementById('fg-panel');
+  const pos = state.ui.galleryPos || { x: null, y: null };
+  if (!isMobile() && Number.isFinite(pos.x) && Number.isFinite(pos.y)) {
+    panel.style.left = pos.x + 'px';
+    panel.style.top = pos.y + 'px';
+    panel.classList.add('positioned');
+  } else {
+    panel.style.left = '';
+    panel.style.top = '';
+    panel.classList.remove('positioned');
+  }
+}
+
+// Riporta la galleria dentro al viewport se ridimensiona la finestra.
+function clampGalleryPos() {
+  const pos = state.ui.galleryPos || { x: null, y: null };
+  if (isMobile() || !Number.isFinite(pos.x) || !Number.isFinite(pos.y)) return;
+  const panel = document.getElementById('fg-panel');
+  const w = panel.offsetWidth;
+  const h = panel.offsetHeight;
+  const maxX = Math.max(0, window.innerWidth - w);
+  const maxY = Math.max(0, window.innerHeight - h);
+  const nx = Math.min(Math.max(0, pos.x), maxX);
+  const ny = Math.min(Math.max(0, pos.y), maxY);
+  if (nx !== pos.x || ny !== pos.y) {
+    state.ui.galleryPos = { x: nx, y: ny };
+    saveState();
+    applyGalleryPos();
+  }
+}
+
+// Aggiorna pillola fissa esterna in funzione dello stato della galleria.
+function syncPillVisibility() {
+  document.getElementById('fg-pill').classList.toggle('hidden', !!state.ui.galleryOpen);
+}
+
+// Render principale della galleria — chiamato da renderAll() e dopo cambi UI.
+function renderFloatingGallery() {
+  const root = document.getElementById('floating-gallery');
+  const isOpen = !!state.ui.galleryOpen;
+  root.classList.toggle('hidden', !isOpen && !root.classList.contains('closing'));
+  root.classList.toggle('open', isOpen);
+  if (isOpen) {
+    renderGalleryCards();
+    applyGalleryPos();
+  }
+  syncPillVisibility();
+}
+
+// Apre la galleria con animazione. Sul mobile la posizione persistita viene
+// ignorata. Su desktop, se c'era una posizione salvata, la finestra ricompare lì.
+function openGallery() {
+  const root = document.getElementById('floating-gallery');
+  state.ui.galleryOpen = true;
+  saveState();
+  renderGalleryCards();
+  // Forza un layout flush prima di applicare .open così la transizione parte.
+  root.classList.remove('hidden', 'closing');
+  applyGalleryPos();
+  // Doppio rAF per garantire che il browser applichi lo stato iniziale prima
+  // di transitare allo stato finale (entry animation).
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    root.classList.add('open');
+    syncPillVisibility();
+  }));
+}
+
+// Chiude con animazione, poi nasconde. Persiste lo stato.
+function closeGallery() {
+  const root = document.getElementById('floating-gallery');
+  if (!state.ui.galleryOpen) return;
+  state.ui.galleryOpen = false;
+  saveState();
+  root.classList.remove('open');
+  root.classList.add('closing');
+  syncPillVisibility();
+  const onDone = () => {
+    root.classList.remove('closing');
+    root.classList.add('hidden');
+    root.removeEventListener('transitionend', onDone);
+  };
+  // Fallback: anche se transitionend non arriva (es. user-stylesheet),
+  // garantiamo la chiusura con un timer.
+  root.addEventListener('transitionend', onDone);
+  setTimeout(onDone, 350);
+}
+
+// Crea un nuovo workspace dal template (o "Vuoto N"), lo attiva, mostra toast.
+function createWorkspaceFromTemplate(tpl) {
+  if (tpl.blank) {
+    const n = nextBlankNumber();
+    const name = `${tpl.name[currentLang]} ${n}`;
+    const ws = makeWorkspace({ name, emoji: tpl.emoji, templateId: null });
+    state.workspaces[ws.id] = ws;
+    state.activeWorkspaceId = ws.id;
+    state.filter = { search: '', cat: 'all', status: 'all' };
+    saveState();
+    renderAll();
+    toast(t('wsCreated', name));
+    return;
+  }
+  const statuses = tpl.statuses.map((s, i) => ({
+    id: 's' + (i + 1), label: s.label, emoji: s.emoji, color: s.color
+  }));
+  const categories = tpl.categories.map(c => ({ id: uid(), name: c.name, emoji: c.emoji }));
+  const ws = makeWorkspace({
+    name: tpl.name,            // oggetto {it,en} per supportare lo switch lingua
+    emoji: tpl.emoji,
+    templateId: tpl.id,
+    statuses, categories,
+    valueUnit: tpl.valueUnit !== undefined ? tpl.valueUnit : ''
+  });
+  state.workspaces[ws.id] = ws;
+  state.activeWorkspaceId = ws.id;
+  state.filter = { search: '', cat: 'all', status: 'all' };
+  saveState();
+  renderAll();
+  toast(t('wsCreated', tpl.name[currentLang]));
+}
+
+function switchWorkspace(wsId) {
+  if (!state.workspaces[wsId]) return;
+  if (state.activeWorkspaceId === wsId) return;
+  state.activeWorkspaceId = wsId;
+  state.filter = { search: '', cat: 'all', status: 'all' };
+  document.getElementById('search').value = '';
+  saveState();
+  renderAll();
+  const w = state.workspaces[wsId];
+  toast(t('wsActive', localized(w.name)));
 }
 
 function applyTemplate(tplId) {
   const tpl = TEMPLATES.find(x => x.id === tplId);
   if (!tpl) return;
+  // Su tap card chiudiamo la galleria (UX: il task è completato).
+  closeGallery();
+
+  // "Vuoto" è sempre duplicabile per design: niente conferma, crea N+1.
   if (tpl.blank) {
-    closeDialog('dlg-templates');
+    createWorkspaceFromTemplate(tpl);
     return;
   }
-  // v1.2: il template applica ancora al workspace attivo (al commit 2 diventerà
-  // "crea un nuovo workspace per il template"). Sostituisce gli statuses (3)
-  // e aggiunge le categorie mancanti.
-  const ws = activeWorkspace();
-  if (!ws) return;
-  ws.statuses = tpl.statuses.map((s, i) => ({
-    id: 's' + (i + 1), label: s.label, emoji: s.emoji, color: s.color
-  }));
-  const existing = new Set(ws.categories.map(c => localized(c.name).toLowerCase()));
-  tpl.categories.forEach(c => {
-    const localName = c.name[currentLang].toLowerCase();
-    if (!existing.has(localName)) {
-      ws.categories.push({ id: uid(), name: c.name, emoji: c.emoji });
-    }
-  });
-  if (tpl.valueUnit !== undefined) ws.valueUnit = tpl.valueUnit;
-  saveState();
-  renderAll();
-  closeDialog('dlg-templates');
-  toast(`✓ Template "${tpl.name[currentLang]}" ${currentLang === 'it' ? 'applicato' : 'applied'}`);
+  const existing = findWsByTemplate(tpl.id);
+  if (!existing) {
+    createWorkspaceFromTemplate(tpl);
+    return;
+  }
+  // Workspace di quel template è già attivo: no-op.
+  if (existing.id === state.activeWorkspaceId) return;
+  // Esiste ma non è attivo: switch diretto.
+  // TODO (commit 3): l'azione "duplica template per averne due" sarà
+  // aggiunta al menu contestuale delle workspace cards.
+  switchWorkspace(existing.id);
 }
 
+// ----- Wiring eventi -----
+// Aprono la galleria: bottone toolbar e pillola fissa esterna.
 document.getElementById('btn-templates').addEventListener('click', () => {
-  renderTemplateGallery();
-  openDialog('dlg-templates');
+  if (state.ui.galleryOpen) closeGallery();
+  else openGallery();
+});
+document.getElementById('fg-pill').addEventListener('click', openGallery);
+
+// Chiudono: bottone × nell'header, click sul backdrop, ESC.
+document.getElementById('fg-close').addEventListener('click', closeGallery);
+document.getElementById('fg-backdrop').addEventListener('click', closeGallery);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && state.ui.galleryOpen) closeGallery();
+});
+
+// ----- Drag desktop / swipe-down mobile via Pointer API -----
+(function initGalleryGesture() {
+  const root = document.getElementById('floating-gallery');
+  const panel = document.getElementById('fg-panel');
+  const header = document.getElementById('fg-header');
+  let mode = null; // 'drag' (desktop) | 'swipe' (mobile)
+  let start = null;
+
+  header.addEventListener('pointerdown', e => {
+    if (e.target.closest('.fg-close')) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    if (isMobile()) {
+      mode = 'swipe';
+      start = { y: e.clientY };
+    } else {
+      mode = 'drag';
+      const rect = panel.getBoundingClientRect();
+      // Promuoviamo il pannello a posizione assoluta (così possiamo muoverlo
+      // senza il translate centrale), partendo dalle coordinate correnti.
+      panel.classList.add('positioned');
+      panel.style.left = rect.left + 'px';
+      panel.style.top = rect.top + 'px';
+      start = { x: e.clientX, y: e.clientY, left: rect.left, top: rect.top };
+      root.classList.add('dragging');
+    }
+    header.setPointerCapture?.(e.pointerId);
+    e.preventDefault();
+  });
+
+  header.addEventListener('pointermove', e => {
+    if (!mode) return;
+    if (mode === 'drag') {
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      const w = panel.offsetWidth, h = panel.offsetHeight;
+      const nx = Math.min(Math.max(0, start.left + dx), Math.max(0, window.innerWidth - w));
+      const ny = Math.min(Math.max(0, start.top + dy), Math.max(0, window.innerHeight - h));
+      panel.style.left = nx + 'px';
+      panel.style.top = ny + 'px';
+    } else if (mode === 'swipe') {
+      const dy = Math.max(0, e.clientY - start.y);
+      panel.style.transition = 'none';
+      panel.style.transform = `translateY(${dy}px)`;
+    }
+  });
+
+  function endGesture(e) {
+    if (!mode) return;
+    try { header.releasePointerCapture?.(e.pointerId); } catch (_) {}
+    if (mode === 'drag') {
+      root.classList.remove('dragging');
+      const x = parseFloat(panel.style.left);
+      const y = parseFloat(panel.style.top);
+      state.ui.galleryPos = {
+        x: Number.isFinite(x) ? x : null,
+        y: Number.isFinite(y) ? y : null
+      };
+      saveState();
+    } else if (mode === 'swipe') {
+      const dy = e.clientY - start.y;
+      panel.style.transition = '';
+      panel.style.transform = '';
+      if (dy > 100) closeGallery();
+    }
+    mode = null;
+    start = null;
+  }
+  header.addEventListener('pointerup', endGesture);
+  header.addEventListener('pointercancel', endGesture);
+})();
+
+// Resize: clamp posizione desktop. Su transizione mobile↔desktop resettiamo
+// le coordinate inline così la galleria torna allo stato corretto del media-query.
+window.addEventListener('resize', () => {
+  const panel = document.getElementById('fg-panel');
+  if (isMobile()) {
+    // su mobile rimuoviamo eventuali coordinate desktop residue
+    panel.style.left = '';
+    panel.style.top = '';
+    panel.classList.remove('positioned');
+  } else {
+    clampGalleryPos();
+  }
 });
 
 // ============================================
@@ -1957,15 +2456,13 @@ applyI18n();
 loadState();
 renderAll();
 
-// Mostra template gallery automaticamente al primo avvio (se workspace attivo è vuoto).
-// In v1.2 la galleria diventerà flottante; per ora resta il dialog esistente.
+// Primo avvio assoluto: la galleria si apre con animazione. Su mobile è bottom
+// sheet, su desktop è dialog centrato. Sui carichi successivi resta chiusa
+// (l'utente la riapre dalla pillola in alto a destra o dal bottone toolbar).
 const _ws = activeWorkspace();
 if (_ws && _ws.items.length === 0 && _ws.categories.length === 0 && !localStorage.getItem('triagehub-onboarded')) {
-  setTimeout(() => {
-    renderTemplateGallery();
-    openDialog('dlg-templates');
-    localStorage.setItem('triagehub-onboarded', '1');
-  }, 400);
+  openGallery();
+  localStorage.setItem('triagehub-onboarded', '1');
 }
 </script>
 
