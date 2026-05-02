@@ -3711,6 +3711,7 @@ function exportXLSX(ws, mode) {
   const m = ws.xlsxMapping;
   const headerRow = m.headers.map((h, i) => m.renames[i] || h);
   const statusLabel = currentLang === 'it' ? 'Stato' : 'Status';
+  const categoryLabel = currentLang === 'it' ? 'Categoria' : 'Category';
   const isXlsxItem = it => !!it.xlsxData;
 
   // Map item → row values (in original column order, applying renames only to header).
@@ -3726,22 +3727,32 @@ function exportXLSX(ws, mode) {
     const st = ws.statuses.find(s => s.id === sid);
     return st ? localized(st.label) : '';
   };
+  // v1.3.3: include manually-assigned category in the export. Empty string
+  // (not "Senza categoria") so downstream Excel filters / pivots don't get
+  // a noisy fake bucket — empty cells are the natural Excel idiom for "none".
+  const categoryOf = it => {
+    if (!it.cat) return '';
+    const c = ws.categories.find(c => c.id === it.cat);
+    return c ? localized(c.name) : '';
+  };
 
   const wb = XLSX.utils.book_new();
   const safeSheetName = name => String(name || '').replace(/[\\\/\*\?\[\]\:]/g, '').slice(0, 30) || 'Sheet';
   if (mode === 'single') {
-    const aoa = [headerRow.concat([statusLabel])];
+    // Header: …colonne originali, Categoria, Stato.
+    const aoa = [headerRow.concat([categoryLabel, statusLabel])];
     ws.items.filter(isXlsxItem).forEach(it => {
-      aoa.push(itemRow(it).concat([statusOf(it)]));
+      aoa.push(itemRow(it).concat([categoryOf(it), statusOf(it)]));
     });
     const sheet = XLSX.utils.aoa_to_sheet(aoa);
     XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(wsDisplayName(ws) || 'TriageHub'));
   } else {
-    // Multi: un foglio per ciascuno dei 3 stati ordinati.
+    // Multi: un foglio per ciascuno dei 3 stati ordinati. Lo stato è implicito
+    // nel nome del foglio, quindi aggiungiamo solo la colonna Categoria.
     ws.statuses.forEach(s => {
-      const aoa = [headerRow.slice()];
+      const aoa = [headerRow.concat([categoryLabel])];
       ws.items.filter(it => isXlsxItem(it) && ws.itemStatus[it.id] === s.id).forEach(it => {
-        aoa.push(itemRow(it));
+        aoa.push(itemRow(it).concat([categoryOf(it)]));
       });
       const sheet = XLSX.utils.aoa_to_sheet(aoa);
       XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(`${s.emoji || ''} ${localized(s.label)}`.trim()));
@@ -3749,8 +3760,8 @@ function exportXLSX(ws, mode) {
     // Aggiungi anche un foglio "Senza scelta" se esistono item non triagiati.
     const unsorted = ws.items.filter(it => isXlsxItem(it) && !ws.itemStatus[it.id]);
     if (unsorted.length) {
-      const aoa = [headerRow.slice()];
-      unsorted.forEach(it => aoa.push(itemRow(it)));
+      const aoa = [headerRow.concat([categoryLabel])];
+      unsorted.forEach(it => aoa.push(itemRow(it).concat([categoryOf(it)])));
       const sheet = XLSX.utils.aoa_to_sheet(aoa);
       XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(currentLang === 'it' ? 'Senza scelta' : 'Unsorted'));
     }
