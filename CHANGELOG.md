@@ -3,6 +3,16 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.2.6] — Unreleased
+
+### Changed
+- 🌍 **Documenti esportati universali multi-OS**: i report PDF, Word (.rtf), Testo e Markdown del template **Pulizia file & Desktop** ora contengono SEMPRE le istruzioni complete per macOS, Windows e Linux. Le sezioni "Modo veloce", "Come spostare nelle cartelle" e "Come cestinare velocemente" hanno tre sotto-sezioni dedicate, una per OS. Un report scaricato su Mac e condiviso a un collega Windows è ora immediatamente utile, senza dover rigenerare il file.
+- 🧹 **Rimosso il branching `navigator.userAgent` dal report builder**: i documenti esportati non sono più condizionati dall'OS rilevato. Il detect rimane solo per UI a schermo (banner workspace, micro-guide, qualora se ne aggiunga uso futuro).
+- 🗑 **Rimossa la funzione `detectOS()`** (dead code): non aveva più chiamanti dopo il refactor.
+
+### Added
+- 💡 **Sezione "Suggerimenti operativi" per il template Email**: appendice cross-platform al report con shortcut tastiera (`Cmd + R` su macOS, `Ctrl + R` su Windows/Linux per "rispondi"; `Cmd/Ctrl + Shift + R` per "rispondi a tutti") e promemoria che le azioni concrete (rispondere, archiviare, cancellare) avvengono nel client mail (Gmail, Outlook, Apple Mail, Thunderbird).
+
 ## [1.2.5] — Unreleased
 
 ### Added
