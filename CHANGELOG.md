@@ -3,6 +3,21 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.2.5] — Unreleased
+
+### Added
+- 📄 **Export PDF (consigliato)**: nuovo bottone primario nel dialog Esporta. Apre la finestra di stampa nativa del browser dentro un iframe nascosto: l'utente sceglie "Salva come PDF" e ottiene un documento stampabile, leggibile su qualsiasi dispositivo, anche offline. Niente librerie esterne (jsPDF/html2pdf), solo `window.print()` + CSS `@media print`.
+- 📝 **Export Word (.rtf)**: file Rich Text Format generato in vanilla JS, compatibile con Microsoft Word, Pages e LibreOffice. Conversione markdown → RTF con escape Unicode (`\uNNNN?`) per emoji e caratteri non-ASCII, supporto per heading, grassetto, corsivo, code, liste e link.
+- 📃 **Export Testo semplice (.txt)**: report leggibile ovunque, anche dal Blocco note. Mantiene la struttura visiva (titoli con underline `===` / `---`, separatori).
+- 🔧 **Sottomenu "Avanzato (per sviluppatori)"** nel dialog Esporta: collassa i formati tecnici (JSON, CSV, Markdown) sotto un `<details>` espandibile, riducendo la frizione per gli utenti non tecnici.
+
+### Changed
+- 🎨 **Dialog Esporta riprogettato**: layout a card verticali invece di pulsanti orizzontali, con titolo grande + descrizione esplicativa per ogni formato. Il PDF è il formato consigliato (bordo accent, sfondo tenue).
+- 📚 **Micro-guide aggiornate**: il template Pulizia Desktop ora consiglia "📄 PDF" al posto di Markdown nello step 4. Anche l'Email guide menziona PDF come formato per la to-do quotidiana.
+- 📖 **Manuale in-app aggiornato** (sezioni 4 "Tutorial Pulizia Desktop" e 6 "Importare ed esportare"): documenta i 3 nuovi formati user-friendly + il sottomenu Avanzato.
+- 💡 **Banner promemoria cleanup**: ora dice "↑ Esporta → 📄 PDF" invece di "↑ Esporta → Markdown".
+- 🧱 **Refactor interno**: estratta la funzione `buildMarkdownReport(ws)` come single source of truth per tutti gli export (PDF/Word/Text/MD condividono lo stesso markdown sorgente). Aggiunte `markdownToHTML`, `markdownToRTF`, `markdownToText` come converter puri.
+
 ## [1.2.4] — Unreleased
 
 ### Fixed
