@@ -3,10 +3,24 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
-## [1.2.3] — Unreleased
+## [1.2.4] — Unreleased
 
 ### Fixed
-- 🪟 **Galleria template — testo troncato su desktop wide**: a viewport ≥ 1024px la galleria si allarga da 720px a 900px e le descrizioni delle card passano a 3 righe massime di clamp, così frasi come "Caldo/tiepido/freddo per ogni lead" non vengono più tagliate a metà parola. Tablet (768–1023px) e mobile invariati.
+- 🪟 **Galleria template — testo troncato anche su tablet 768–1023px**: la galleria a quel viewport ora usa **2 colonne** (invece di 3) per dare più larghezza alle card, e su desktop wide ≥ 1024px torna a 3 colonne con 900px width. Le descrizioni passano da 2 a 3 righe di clamp, così niente più tronchi a metà parola.
+
+### Added
+- 🏷️ **Etichette UX più chiare per il template Pulizia Desktop**: gli stati ora sono `Da tenere / Da archiviare / Da cestinare` (era `Tieni / Archivia / Cestina`). In EN: `To keep / To archive / To trash`. Migration soft per i workspace esistenti: i label vengono aggiornati solo se ancora ai default (i nomi rinominati dall'utente non si toccano).
+- ⚠️ **Dialog disclaimer al primo click sul template Desktop**: spiega cosa fa e cosa NON fa l'app (no upload, no spostamento file, no cancellazione), perché un browser non può modificare i file e il tempo stimato totale (~25 min). Checkbox "non mostrare più" persiste in `localStorage`.
+- 💡 **Banner promemoria permanente** nel workspace Desktop (sopra la lista item): ricorda all'utente che TriageHub non sposta i file, le scelte sono marcature per il report finale.
+- 🧭 **Report Markdown multi-piattaforma** per il template Desktop: rilevamento automatico del sistema operativo (macOS / Windows / Linux) e generazione di un manuale operativo personalizzato — destinazioni consigliate per ogni categoria di file (Documenti, Immagini, Audio, Excel & Listini, Lavoro cliente, Cartelle progetto), istruzioni passo-passo per spostare e cestinare con scorciatoie tastiera per il proprio OS, calcolo dello spazio recuperabile dai file da cestinare.
+
+### Changed
+- 📖 Manuale in-app, sezione 4 "Tutorial Pulizia Desktop": riscritta in 5 step con enfasi sul fatto che TriageHub aiuta a decidere ma è il sistema operativo a eseguire. Specifica esplicita "funziona su macOS, Windows e Linux".
+
+## [1.2.3] — 2026-05-02
+
+### Fixed
+- 🪟 **Galleria template — testo troncato su desktop wide**: a viewport ≥ 1024px la galleria si allarga da 720px a 900px e le descrizioni delle card passano a 3 righe massime di clamp.
 
 ## [1.2.2] — Unreleased
 

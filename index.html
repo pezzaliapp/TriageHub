@@ -448,6 +448,19 @@
     .ws-card { width: 160px; }
   }
 
+  /* CLEANUP BANNER — promemoria permanente nel workspace cleanup */
+  .cleanup-banner {
+    background: #fff8e1;
+    border: 1px solid #f9c74f;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #4a3b00;
+    line-height: 1.5;
+  }
+  .cleanup-banner strong { color: #1d1d1f; }
+
   /* MICRO-GUIDE — onboarding contestuale sopra l'empty state */
   .micro-guide {
     position: relative;
@@ -809,7 +822,7 @@
     .fg-body {
       padding: 24px;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
     }
     .fg-card { padding: 16px; min-height: 0; }
@@ -817,15 +830,15 @@
     .fg-emoji { font-size: 28px; }
     .fg-desc {
       font-size: 13px; line-height: 1.4;
-      -webkit-line-clamp: 2;
+      -webkit-line-clamp: 3;
     }
   }
 
-  /* Wide desktop: la galleria si allarga così la 3ª colonna ha respiro
-     e le descrizioni dei template non vengono troncate a metà parola. */
+  /* Wide desktop: la galleria si allarga, ritorna a 3 colonne così tutti
+     gli 8 template stanno in due righe e le descrizioni hanno respiro. */
   @media (min-width: 1024px) {
     .fg-panel { width: 900px; }
-    .fg-desc { -webkit-line-clamp: 3; }
+    .fg-body { grid-template-columns: repeat(3, 1fr); }
   }
 
   /* RESPONSIVE */
@@ -1132,6 +1145,19 @@
   <button class="ctx-cancel-btn" data-ctx="cancel" data-i18n="contextMenuCancel">Annulla</button>
 </div>
 
+<!-- DIALOG: Disclaimer al primo click sul template "Pulizia file & Desktop" -->
+<dialog id="dlg-cleanup-disclaimer">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="cleanupDisclaimerTitle">📂 Pulizia file & Desktop</h2>
+    <button class="dialog-close" data-close="dlg-cleanup-disclaimer">×</button>
+  </div>
+  <div class="dialog-body" id="cleanup-disclaimer-body"></div>
+  <div class="dialog-footer">
+    <button type="button" class="btn" data-close="dlg-cleanup-disclaimer" data-i18n="cancel">Annulla</button>
+    <button type="button" class="btn primary" id="btn-cleanup-confirm" data-i18n="cleanupDisclaimerConfirm">Ho capito, procedi</button>
+  </div>
+</dialog>
+
 <!-- DIALOG: Manuale -->
 <dialog id="dlg-manual">
   <div class="dialog-header">
@@ -1240,7 +1266,11 @@ const I18N = {
     desktopLoadFiles: "📥 Carica file da smistare",
     desktopLoadFilesPrivacy: "🔒 I file restano sul tuo dispositivo, l'app legge solo nome e dimensione.",
     desktopLoadedFiles: n => `✓ ${n} file caricati nel workspace`,
-    guideAddManually: "✏️ Aggiungo a mano"
+    guideAddManually: "✏️ Aggiungo a mano",
+    cleanupDisclaimerTitle: "📂 Pulizia file & Desktop",
+    cleanupDisclaimerConfirm: "Ho capito, procedi",
+    cleanupDisclaimerDontShow: "Non mostrare più questo messaggio",
+    cleanupBanner: "💡 <strong>Promemoria</strong>: TriageHub non sposta i file da solo. Le scelte qui sono marcature per il report finale. Quando hai finito di smistare, clicca <strong>↑ Esporta</strong> → <strong>Markdown</strong>: il report ti guiderà passo-passo nello spostamento e cancellazione dei file sul tuo computer."
   },
   en: {
     subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
@@ -1329,8 +1359,58 @@ const I18N = {
     desktopLoadFiles: "📥 Load files to triage",
     desktopLoadFilesPrivacy: "🔒 Files stay on your device. The app only reads name and size.",
     desktopLoadedFiles: n => `✓ ${n} files loaded into the workspace`,
-    guideAddManually: "✏️ I'll add by hand"
+    guideAddManually: "✏️ I'll add by hand",
+    cleanupDisclaimerTitle: "📂 File & Desktop cleanup",
+    cleanupDisclaimerConfirm: "Got it, proceed",
+    cleanupDisclaimerDontShow: "Don't show this message again",
+    cleanupBanner: "💡 <strong>Reminder</strong>: TriageHub doesn't move files for you. Your choices here are markers for the final report. When done sorting, click <strong>↑ Export</strong> → <strong>Markdown</strong>: the report will guide you step-by-step through moving and deleting files on your computer."
   }
+};
+
+// HTML body del dialog disclaimer (PARTE 1.2.4 — fix 3).
+const CLEANUP_DISCLAIMER_HTML = {
+  it: `<p><strong>Cosa fa questo workspace</strong></p>
+<ul>
+<li>✓ Legge nome, dimensione e tipo dei tuoi file (privacy: niente upload)</li>
+<li>✓ Ti aiuta a decidere per ognuno: tenere, archiviare, cestinare</li>
+<li>✓ Genera un report con le tue scelte e le istruzioni passo-passo per agire sul tuo computer</li>
+</ul>
+<p><strong>Cosa NON fa</strong></p>
+<ul>
+<li>✗ Non sposta i file</li>
+<li>✗ Non cestina i file</li>
+<li>✗ Non modifica niente sul tuo computer</li>
+</ul>
+<p><strong>Perché?</strong></p>
+<p>Per motivi di sicurezza, un'app web non può modificare i file sul tuo computer. Ma TriageHub ti dà il vantaggio di decidere con calma davanti a un'interfaccia chiara, e ti guida passo-passo nell'esecuzione finale.</p>
+<p><strong>Tempo stimato</strong></p>
+<ul>
+<li>5-10 minuti per smistare 100 file</li>
+<li>10-15 minuti per eseguire le azioni nel sistema operativo</li>
+<li>Totale: ~20-25 minuti per un Desktop disordinato</li>
+</ul>
+<label style="display:block; margin-top:12px"><input type="checkbox" id="dontShowAgain"> Non mostrare più questo messaggio</label>`,
+  en: `<p><strong>What this workspace does</strong></p>
+<ul>
+<li>✓ Reads name, size and type of your files (privacy: no uploads)</li>
+<li>✓ Helps you decide for each: keep, archive, trash</li>
+<li>✓ Generates a report with your choices and step-by-step instructions to act on your computer</li>
+</ul>
+<p><strong>What it does NOT do</strong></p>
+<ul>
+<li>✗ Does not move files</li>
+<li>✗ Does not delete files</li>
+<li>✗ Does not change anything on your computer</li>
+</ul>
+<p><strong>Why?</strong></p>
+<p>For security reasons, a web app cannot modify files on your computer. But TriageHub gives you the upside of deciding calmly in front of a clear interface, and guides you step-by-step through the final execution.</p>
+<p><strong>Estimated time</strong></p>
+<ul>
+<li>5-10 minutes to triage 100 files</li>
+<li>10-15 minutes to execute actions in the operating system</li>
+<li>Total: ~20-25 minutes for a messy Desktop</li>
+</ul>
+<label style="display:block; margin-top:12px"><input type="checkbox" id="dontShowAgain"> Don't show this message again</label>`
 };
 
 let currentLang = localStorage.getItem('triagehub-lang') ||
@@ -1499,9 +1579,9 @@ const TEMPLATES = [
       en: 'Triage files from Desktop or any folder. Export list to CSV, triage, then act in Finder in batch.'
     },
     statuses: [
-      { label: { it: 'Tieni',    en: 'Keep'    }, emoji: '📌',  color: '#34c759' },
-      { label: { it: 'Archivia', en: 'Archive' }, emoji: '🗄️', color: '#ff9500' },
-      { label: { it: 'Cestina',  en: 'Trash'   }, emoji: '🗑️', color: '#86868b' }
+      { label: { it: 'Da tenere',     en: 'To keep'    }, emoji: '📌',  color: '#34c759' },
+      { label: { it: 'Da archiviare', en: 'To archive' }, emoji: '🗄️', color: '#ff9500' },
+      { label: { it: 'Da cestinare',  en: 'To trash'   }, emoji: '🗑️', color: '#86868b' }
     ],
     categories: [
       { name: { it: 'Documenti',           en: 'Documents'                }, emoji: '📄'  },
@@ -1852,28 +1932,36 @@ const MANUAL_HTML = {
 <li><strong>Link</strong> (URL utili)</li>
 </ul>` },
 
-    { id: 's4', title: 'Tutorial: ripulire il Desktop in 15 minuti', body:
+    { id: 's4', title: 'Tutorial: ripulire il Desktop in 25 minuti', body:
 `<p>Caso pratico universale. Hai un Desktop con decine o centinaia di file accumulati. Vuoi metterlo in ordine.</p>
+<p><strong>Funziona su macOS, Windows e Linux.</strong></p>
+
 <h4>Step 1: crea il workspace</h4>
-<p>Apri TriageHub, clicca <strong>+ Nuovo workspace</strong> e scegli <strong>📂 Pulizia file & Desktop</strong>.</p>
+<p>Apri TriageHub, clicca su <strong>+ Nuovo workspace</strong> e scegli <strong>📂 Pulizia file & Desktop</strong>. Apparirà un dialog che spiega cosa fa l'app — leggilo, è importante.</p>
+
 <h4>Step 2: carica i file</h4>
-<p>Nell'empty state vedi il bottone <strong>📥 Carica file da smistare</strong>. Click. Si apre la finestra del Mac. Vai sul Desktop, seleziona i file (Cmd+A per tutti), conferma. L'app legge nome, dimensione e data di ogni file.</p>
-<p><strong>🔒 Importante:</strong> i file NON vengono caricati da nessuna parte. Restano sul tuo Desktop, intatti. L'app legge solo i metadata.</p>
+<p>Nell'empty state vedi il bottone <strong>📥 Carica file da smistare</strong>. Click. Si apre la finestra di selezione del sistema operativo. Vai sul Desktop, seleziona i file (Cmd+A su Mac, Ctrl+A su Windows/Linux), conferma.</p>
+<p><strong>🔒 Privacy</strong>: i file restano sul tuo Desktop. TriageHub legge solo i metadata.</p>
+
 <h4>Step 3: smista</h4>
-<p>Per ogni file vedrai una card. Clicca lo stato giusto:</p>
+<p>Per ogni file, clicca lo stato giusto:</p>
 <ul>
-<li><strong>📌 Tieni</strong> — è al posto giusto, lascialo</li>
-<li><strong>🗄️ Archivia</strong> — vale la pena conservarlo, ma non sul Desktop</li>
-<li><strong>🗑️ Cestina</strong> — non serve più</li>
+<li><strong>📌 Da tenere</strong> — al posto giusto, lascialo</li>
+<li><strong>🗄️ Da archiviare</strong> — vale la pena conservarlo, ma in altra cartella</li>
+<li><strong>🗑️ Da cestinare</strong> — non serve più</li>
 </ul>
-<h4>Step 4: esporta e agisci</h4>
-<p>Quando hai smistato tutto, clicca <strong>↑ Esporta → Report Markdown</strong>. Si scarica un file con 3 liste:</p>
+
+<h4>Step 4: esporta il report</h4>
+<p>Click <strong>↑ Esporta</strong> → <strong>Markdown</strong>. Si scarica un file <code>.md</code> con istruzioni passo-passo per il tuo sistema operativo.</p>
+
+<h4>Step 5: ESEGUI nel sistema operativo</h4>
+<p><strong>⚠️ Importante</strong>: TriageHub non sposta né cestina i file — è il browser, non un'applicazione di sistema. Il report Markdown ti dice esattamente cosa fare:</p>
 <ul>
-<li>I file da tenere (lasciali stare)</li>
-<li>I file da archiviare (sposta in cartelle Documenti, Foto, ecc.)</li>
-<li>I file da cestinare (mandali nel Cestino)</li>
+<li>Apri il file manager (Finder su Mac, Esplora File su Windows, file manager su Linux)</li>
+<li>Apri accanto il report con un editor di testo</li>
+<li>Per ogni sezione del report, esegui le azioni indicate</li>
 </ul>
-<p>Apri il Finder e segui il report. In 15 minuti il Desktop è pulito.</p>` },
+<p>In 15-20 minuti il Desktop è pulito.</p>` },
 
     { id: 's5', title: 'Gli 8 template precaricati', body:
 `<p>TriageHub include 8 template pronti, uno per ogni caso d'uso comune.</p>
@@ -1977,28 +2065,36 @@ const MANUAL_HTML = {
 <li><strong>Links</strong> (useful URLs)</li>
 </ul>` },
 
-    { id: 's4', title: 'Tutorial: tidy the Desktop in 15 minutes', body:
+    { id: 's4', title: 'Tutorial: tidy the Desktop in 25 minutes', body:
 `<p>Universal practical case. You have a Desktop with dozens or hundreds of files piled up. You want to clean it up.</p>
+<p><strong>Works on macOS, Windows and Linux.</strong></p>
+
 <h4>Step 1: create the workspace</h4>
-<p>Open TriageHub, click <strong>+ New workspace</strong> and pick <strong>📂 File & Desktop cleanup</strong>.</p>
+<p>Open TriageHub, click <strong>+ New workspace</strong> and pick <strong>📂 File & Desktop cleanup</strong>. A dialog appears explaining what the app does — read it, it matters.</p>
+
 <h4>Step 2: load the files</h4>
-<p>In the empty state you see the button <strong>📥 Load files to triage</strong>. Click. The system dialog opens. Go to the Desktop, select files (Cmd+A for all), confirm. The app reads name, size and date of each file.</p>
-<p><strong>🔒 Important:</strong> files are NOT uploaded anywhere. They stay on your Desktop, untouched. The app reads only metadata.</p>
+<p>In the empty state you see the button <strong>📥 Load files to triage</strong>. Click. The OS file picker opens. Go to the Desktop, select files (Cmd+A on Mac, Ctrl+A on Windows/Linux), confirm.</p>
+<p><strong>🔒 Privacy</strong>: files stay on your Desktop. TriageHub only reads metadata.</p>
+
 <h4>Step 3: triage</h4>
-<p>For each file you'll see a card. Click the right state:</p>
+<p>For each file, click the right state:</p>
 <ul>
-<li><strong>📌 Keep</strong> — it belongs there, leave it</li>
-<li><strong>🗄️ Archive</strong> — worth keeping, but not on the Desktop</li>
-<li><strong>🗑️ Trash</strong> — no longer needed</li>
+<li><strong>📌 To keep</strong> — in the right place, leave it</li>
+<li><strong>🗄️ To archive</strong> — worth keeping, but in another folder</li>
+<li><strong>🗑️ To trash</strong> — no longer needed</li>
 </ul>
-<h4>Step 4: export and act</h4>
-<p>When you're done, click <strong>↑ Export → Markdown report</strong>. A file with 3 lists is downloaded:</p>
+
+<h4>Step 4: export the report</h4>
+<p>Click <strong>↑ Export</strong> → <strong>Markdown</strong>. A <code>.md</code> file is downloaded with step-by-step instructions for your operating system.</p>
+
+<h4>Step 5: EXECUTE in the operating system</h4>
+<p><strong>⚠️ Important</strong>: TriageHub doesn't move or trash files — it's the browser, not a system app. The Markdown report tells you exactly what to do:</p>
 <ul>
-<li>Files to keep (leave them alone)</li>
-<li>Files to archive (move to Documents, Photos, etc.)</li>
-<li>Files to trash (drop them in the Bin)</li>
+<li>Open the file manager (Finder on Mac, File Explorer on Windows, your file manager on Linux)</li>
+<li>Open the report next to it with a text editor</li>
+<li>For each report section, execute the indicated actions</li>
 </ul>
-<p>Open Finder and follow the report. In 15 minutes the Desktop is clean.</p>` },
+<p>In 15-20 minutes the Desktop is clean.</p>` },
 
     { id: 's5', title: 'The 8 ready-made templates', body:
 `<p>TriageHub includes 8 ready templates, one for each common use case.</p>
@@ -2148,6 +2244,28 @@ function loadState() {
         galleryPos: saved.ui.galleryPos || { x: null, y: null }
       };
     }
+    // v1.2.4 — migration soft delle etichette del template "cleanup":
+    // sostituiamo "Tieni/Archivia/Cestina" → "Da tenere/Da archiviare/Da cestinare"
+    // SOLO se l'utente non ha rinominato gli stati. I label custom non vengono toccati.
+    const STATUS_RELABEL = {
+      'tieni': { it: 'Da tenere', en: 'To keep' },
+      'keep': { it: 'Da tenere', en: 'To keep' },
+      'archivia': { it: 'Da archiviare', en: 'To archive' },
+      'archive': { it: 'Da archiviare', en: 'To archive' },
+      'cestina': { it: 'Da cestinare', en: 'To trash' },
+      'trash': { it: 'Da cestinare', en: 'To trash' }
+    };
+    let migrated = false;
+    Object.values(state.workspaces).forEach(ws => {
+      if (ws.templateId !== 'cleanup' || !Array.isArray(ws.statuses)) return;
+      ws.statuses.forEach(s => {
+        const lbl = s.label;
+        if (!lbl || typeof lbl !== 'object') return;
+        const key = (lbl.it || lbl.en || '').toLowerCase();
+        if (STATUS_RELABEL[key]) { s.label = STATUS_RELABEL[key]; migrated = true; }
+      });
+    });
+    if (migrated) saveState();
   }
 
   // Caso 3 — niente dati o workspaces vuoto: crea un Default.
@@ -2362,6 +2480,11 @@ function renderItems() {
     return;
   }
 
+  // v1.2.4: nel workspace cleanup, mostra sempre un banner promemoria.
+  const bannerHtml = ws.templateId === 'cleanup'
+    ? `<div class="cleanup-banner">${t('cleanupBanner')}</div>`
+    : '';
+
   const groups = new Map();
   filtered.forEach(it => {
     const key = it.cat || '__none__';
@@ -2373,7 +2496,7 @@ function renderItems() {
   ws.categories.forEach(c => { if (groups.has(c.id)) orderedKeys.push(c.id); });
   if (groups.has('__none__')) orderedKeys.push('__none__');
 
-  let html = '';
+  let html = bannerHtml;
   orderedKeys.forEach(key => {
     const items = groups.get(key);
     const cat = key === '__none__'
@@ -2675,12 +2798,35 @@ function switchWorkspace(wsId) {
 // v1.2.1: click su card della galleria → SEMPRE crea un nuovo workspace.
 // Se ne esiste già uno con lo stesso templateId, il nuovo prende un suffisso
 // numerico (es. "Email 2"). Lo switch tra workspace si fa dalle ws cards.
+// v1.2.4: per il template "cleanup" interponiamo un dialog di disclaimer al
+// primo click (saltabile con la checkbox "non mostrare più").
+const CLEANUP_DISCLAIMER_KEY = 'triagehub-cleanup-disclaimer-acknowledged';
+let pendingCleanupTemplate = null;
+
 function applyTemplate(tplId) {
   const tpl = TEMPLATES.find(x => x.id === tplId);
   if (!tpl) return;
+  if (tpl.id === 'cleanup' && localStorage.getItem(CLEANUP_DISCLAIMER_KEY) !== '1') {
+    pendingCleanupTemplate = tpl;
+    closeGallery();
+    document.getElementById('cleanup-disclaimer-body').innerHTML =
+      (CLEANUP_DISCLAIMER_HTML[currentLang] || CLEANUP_DISCLAIMER_HTML.it);
+    openDialog('dlg-cleanup-disclaimer');
+    return;
+  }
   closeGallery();
   createWorkspaceFromTemplate(tpl);
 }
+
+document.getElementById('btn-cleanup-confirm').addEventListener('click', () => {
+  const dontShow = document.getElementById('dontShowAgain');
+  if (dontShow && dontShow.checked) localStorage.setItem(CLEANUP_DISCLAIMER_KEY, '1');
+  closeDialog('dlg-cleanup-disclaimer');
+  if (pendingCleanupTemplate) {
+    createWorkspaceFromTemplate(pendingCleanupTemplate);
+    pendingCleanupTemplate = null;
+  }
+});
 
 // ----- Wiring eventi -----
 // Apre/chiude la galleria: bottone toolbar (la card "+" delle ws cards
@@ -3671,10 +3817,295 @@ document.getElementById('exp-json').addEventListener('click', () => {
   toast(t('backupSaved')); closeDialog('dlg-export');
 });
 
-// Markdown = report del solo workspace attivo.
+// Detect OS per il report multi-piattaforma del template cleanup (v1.2.4).
+function detectOS() {
+  const ua = (navigator.userAgent || '').toLowerCase();
+  if (ua.includes('mac')) return 'mac';
+  if (ua.includes('win')) return 'windows';
+  if (ua.includes('linux')) return 'linux';
+  return 'mac';
+}
+
+// Costruisce il report Markdown specifico per il workspace cleanup.
+// Multi-OS: macOS / Windows / Linux. Multi-lingua: IT / EN.
+function buildCleanupMarkdown(ws) {
+  const os = detectOS();
+  const isIT = currentLang === 'it';
+  const date = new Date().toLocaleString(isIT ? 'it-IT' : 'en-US');
+  const dateShort = new Date().toISOString().slice(0, 10);
+
+  // Group items by status id (stati 'cleanup' sono ordinati: tenere/archiviare/cestinare).
+  const byStatus = { keep: [], archive: [], trash: [], unsorted: [] };
+  ws.items.forEach(it => {
+    const sid = ws.itemStatus[it.id];
+    const idx = ws.statuses.findIndex(s => s.id === sid);
+    if (idx === 0) byStatus.keep.push(it);
+    else if (idx === 1) byStatus.archive.push(it);
+    else if (idx === 2) byStatus.trash.push(it);
+    else byStatus.unsorted.push(it);
+  });
+
+  const totalSize = arr => arr.reduce((sum, it) => sum + (Number(it.value) || 0), 0);
+  const trashMB = totalSize(byStatus.trash);
+
+  // Helper per testo OS-specifico.
+  const tx = (mac, win, linux) => os === 'mac' ? mac : os === 'windows' ? win : linux;
+  const osLabel = tx('macOS', 'Windows', 'Linux');
+
+  // Categorie del workspace (per la sezione "Da archiviare", divise per categoria).
+  const archiveByCategory = new Map();
+  byStatus.archive.forEach(it => {
+    const key = it.cat || '__none__';
+    if (!archiveByCategory.has(key)) archiveByCategory.set(key, []);
+    archiveByCategory.get(key).push(it);
+  });
+
+  const formatItem = it => {
+    const size = (it.value !== null && it.value !== undefined && it.value !== '')
+      ? `${fmtNumber(it.value)} MB` : '';
+    const tagPart = it.tag ? ` — ${it.tag}` : '';
+    const sizePart = size ? ` — ${size}` : '';
+    return `- ${it.name}${sizePart}${tagPart}`;
+  };
+
+  // -------- Suggerimenti destinazione per categoria --------
+  // mac/win/linux paths per le categorie di default del template cleanup.
+  const dest = {
+    Documenti: {
+      mac: '`~/Documenti` (sotto la home, icona 📁)',
+      windows: '`Documenti` (cartella nella User home)',
+      linux: '`~/Documenti` o `~/Documents`'
+    },
+    Documents: {
+      mac: '`~/Documents`', windows: '`Documents`', linux: '`~/Documents` or `~/Documenti`'
+    },
+    Immagini: {
+      mac: '`Immagini` o app **Foto**',
+      windows: '`Immagini` o app **Foto**',
+      linux: '`~/Immagini` o `~/Pictures`'
+    },
+    Images: {
+      mac: '`Pictures` or **Photos** app',
+      windows: '`Pictures` or **Photos** app',
+      linux: '`~/Pictures`'
+    },
+    Audio: {
+      mac: '`Musica` o app **Musica**',
+      windows: '`Musica` o app **Groove Musica**',
+      linux: '`~/Musica` o `~/Music`'
+    },
+    'Excel & Listini': {
+      mac: 'cartella dedicata, es. `Documenti/Listini/`',
+      windows: 'cartella dedicata, es. `Documenti/Listini/`',
+      linux: 'cartella dedicata, es. `~/Documenti/Listini/`'
+    },
+    'Spreadsheets & Pricelists': {
+      mac: 'dedicated folder, e.g. `Documents/Pricelists/`',
+      windows: 'dedicated folder, e.g. `Documents/Pricelists/`',
+      linux: 'dedicated folder, e.g. `~/Documents/Pricelists/`'
+    },
+    'Lavoro cliente': {
+      mac: 'cartella per cliente, es. `Documenti/Clienti/[NomeCliente]/`',
+      windows: 'cartella per cliente, es. `Documenti/Clienti/[NomeCliente]/`',
+      linux: 'cartella per cliente, es. `~/Documenti/Clienti/[NomeCliente]/`'
+    },
+    'Client work': {
+      mac: 'one folder per client, e.g. `Documents/Clients/[ClientName]/`',
+      windows: 'one folder per client, e.g. `Documents/Clients/[ClientName]/`',
+      linux: 'one folder per client, e.g. `~/Documents/Clients/[ClientName]/`'
+    },
+    'Cartelle progetto': {
+      mac: 'cartella **Progetti** dedicata, es. `Documenti/Progetti/[NomeProgetto]/`',
+      windows: 'cartella **Progetti** dedicata, es. `Documenti/Progetti/[NomeProgetto]/`',
+      linux: 'cartella **Progetti** dedicata, es. `~/Documenti/Progetti/[NomeProgetto]/`'
+    },
+    'Project folders': {
+      mac: 'dedicated **Projects** folder, e.g. `Documents/Projects/[ProjectName]/`',
+      windows: 'dedicated **Projects** folder, e.g. `Documents/Projects/[ProjectName]/`',
+      linux: 'dedicated **Projects** folder, e.g. `~/Documents/Projects/[ProjectName]/`'
+    },
+    'Da capire': {
+      mac: 'apri uno per uno per decidere',
+      windows: 'apri uno per uno per decidere',
+      linux: 'apri uno per uno per decidere'
+    },
+    Unknown: {
+      mac: 'open one by one to decide',
+      windows: 'open one by one to decide',
+      linux: 'open one by one to decide'
+    }
+  };
+
+  // -------- Markdown construction --------
+  let md = '';
+  if (isIT) {
+    md += `# Pulizia file & Desktop — ${date}\n\n`;
+    md += `## 📊 Riassunto delle tue scelte\n\n`;
+    md += `- **Da tenere**: ${byStatus.keep.length} file\n`;
+    md += `- **Da archiviare**: ${byStatus.archive.length} file\n`;
+    md += `- **Da cestinare**: ${byStatus.trash.length} file\n`;
+    md += `- **Totale**: ${ws.items.length} file\n\n`;
+    md += `Spazio recuperabile (cestinando): ~${fmtNumber(trashMB)} MB\n\n---\n\n`;
+
+    md += `## ⚙️ Come usare questo report\n\n`;
+    md += `Hai 3 sezioni qui sotto, una per ogni scelta. Per ognuna ci sono istruzioni passo-passo per il tuo sistema operativo.\n\n`;
+    md += `**OS rilevato**: ${osLabel}\n\n### Modo veloce (consigliato)\n\n`;
+
+    md += tx(
+      `1. Apri il **Finder** (icona della faccia sorridente nel Dock)\n2. Vai sul **Desktop**: Cmd+Shift+D oppure menu Vai → Scrivania\n3. Imposta vista a lista: menu Vista → come elenco (o Cmd+2)\n4. Tieni il report aperto in una finestra accanto al Finder\n\n---\n\n`,
+      `1. Apri **Esplora File** (icona della cartella nella taskbar)\n2. Vai sul **Desktop**: Win+D oppure click sull'icona Desktop\n3. Imposta vista dettagli: menu Visualizza → Dettagli\n4. Tieni il report aperto in una finestra accanto a Esplora File\n\n---\n\n`,
+      `1. Apri il file manager (Files / Nautilus / Dolphin / Thunar)\n2. Vai sul **Desktop**: tipicamente in \`~/Desktop\` o \`~/Scrivania\`\n3. Imposta vista a lista: menu Visualizza → Vista a lista\n4. Tieni il report aperto in una finestra accanto al file manager\n\n---\n\n`
+    );
+
+    // Da tenere
+    md += `## 📌 Da tenere (${byStatus.keep.length} file)\n\n`;
+    if (byStatus.keep.length === 0) md += `_Nessuno._\n\n`;
+    else {
+      md += `I file qui sotto sono al posto giusto. **Non fare nulla**, lasciali sul Desktop.\n\n`;
+      md += byStatus.keep.map(formatItem).join('\n') + '\n\n';
+    }
+    md += `---\n\n`;
+
+    // Da archiviare per categoria
+    md += `## 🗄️ Da archiviare (${byStatus.archive.length} file)\n\n`;
+    if (byStatus.archive.length === 0) md += `_Nessuno._\n\n`;
+    else {
+      md += `Questi file vanno spostati in cartelle adatte. Sotto trovi **dove conviene metterli**, divisi per categoria.\n\n`;
+      const orderedKeys = [];
+      ws.categories.forEach(c => { if (archiveByCategory.has(c.id)) orderedKeys.push(c.id); });
+      if (archiveByCategory.has('__none__')) orderedKeys.push('__none__');
+      orderedKeys.forEach(catId => {
+        const cat = catId === '__none__' ? null : findCat(catId);
+        const catLabel = cat ? localized(cat.name) : 'Senza categoria';
+        const catEmoji = cat ? (cat.emoji || '📁') : '📂';
+        const items = archiveByCategory.get(catId);
+        const destInfo = dest[catLabel] && dest[catLabel][os];
+        md += `### ${catEmoji} ${catLabel} (${items.length} file)\n\n`;
+        if (destInfo) md += `**Destinazione consigliata** (${osLabel}): ${destInfo}\n\n`;
+        md += `**Come spostarli**:\n`;
+        md += tx(
+          `1. Apri il Finder nella destinazione\n2. Lascia aperta una seconda finestra sul Desktop\n3. Trascina i file dal Desktop alla cartella destinazione (Cmd+click per selezione multipla)\n\n`,
+          `1. Apri Esplora File nella destinazione\n2. Lascia aperta una seconda finestra sul Desktop\n3. Trascina i file dal Desktop alla cartella destinazione (Ctrl+click per selezione multipla)\n\n`,
+          `1. Apri il file manager nella destinazione\n2. Lascia aperta una seconda finestra sul Desktop\n3. Trascina i file dal Desktop alla cartella destinazione (Ctrl+click per selezione multipla)\n\n`
+        );
+        md += items.map(formatItem).join('\n') + '\n\n';
+      });
+    }
+    md += `---\n\n`;
+
+    // Da cestinare
+    md += `## 🗑️ Da cestinare (${byStatus.trash.length} file)\n\n`;
+    if (byStatus.trash.length === 0) md += `_Nessuno._\n\n`;
+    else {
+      md += `Questi file possono essere eliminati. **Spazio liberato**: ~${fmtNumber(trashMB)} MB.\n\n`;
+      md += `⚠️ **Importante prima di cestinare**:\n- Leggi i nomi qui sotto. Se hai dubbi su un file, NON cestinarlo.\n- I file vanno nel **Cestino**: puoi recuperarli prima di svuotarlo.\n- Solo svuotando il Cestino i file sono persi davvero.\n\n`;
+      md += `### Come cestinare velocemente\n\n`;
+      md += tx(
+        `**Modo 1 — Uno per uno**:\n1. Apri Finder, vai sul Desktop\n2. Click su un file della lista qui sotto\n3. Premi \`Cmd + Backspace\`: il file va nel Cestino\n4. Ripeti per ogni file\n\n**Modo 2 — Tutti insieme**:\n1. Apri Finder, vai sul Desktop, vista a lista (Cmd+2)\n2. Tieni Cmd premuto e clicca su ogni file della lista\n3. Tutti selezionati, premi \`Cmd + Backspace\`\n4. Vanno nel Cestino tutti insieme\n\n**Per svuotare il Cestino**:\n- Click destro sull'icona Cestino nel Dock → Svuota Cestino\n- Oppure menu Finder → Svuota Cestino\n\n`,
+        `**Modo 1 — Uno per uno**:\n1. Apri Esplora File, vai sul Desktop\n2. Click su un file della lista qui sotto\n3. Premi \`Canc\` (o \`Del\`): il file va nel Cestino\n4. Ripeti per ogni file\n\n**Modo 2 — Tutti insieme**:\n1. Apri Esplora File, vai sul Desktop\n2. Tieni Ctrl premuto e clicca su ogni file della lista\n3. Tutti selezionati, premi \`Canc\`\n4. Vanno nel Cestino tutti insieme\n\n**Per svuotare il Cestino**:\n- Click destro sull'icona **Cestino** sul Desktop → Svuota Cestino\n\n`,
+        `**Modo 1 — Uno per uno**:\n1. Apri il file manager, vai sul Desktop\n2. Click su un file della lista qui sotto\n3. Premi \`Canc\` o tasto destro → Sposta nel Cestino\n4. Ripeti per ogni file\n\n**Modo 2 — Tutti insieme**:\n1. Apri il file manager, vai sul Desktop\n2. Tieni Ctrl premuto e clicca su ogni file della lista\n3. Tutti selezionati, premi \`Canc\`\n\n**Per svuotare il Cestino**:\n- Apri il file manager, vai nel Cestino (di solito a sinistra)\n- Click su "Svuota Cestino"\n\n`
+      );
+      md += byStatus.trash.map(formatItem).join('\n') + '\n\n';
+    }
+    md += `---\n\n`;
+
+    if (byStatus.unsorted.length) {
+      md += `## ⚪ Senza scelta (${byStatus.unsorted.length} file)\n\n`;
+      md += `Questi file non sono stati ancora smistati. Tornaci sopra in TriageHub.\n\n`;
+      md += byStatus.unsorted.map(formatItem).join('\n') + '\n\n---\n\n';
+    }
+
+    md += `## ✅ Quando hai finito\n\n1. Verifica che i file "Da tenere" siano ancora sul Desktop\n2. Verifica che le cartelle di archivio abbiano i file giusti\n3. Svuota il Cestino per liberare spazio\n4. Torna su TriageHub se vuoi smistare un'altra cartella\n\n---\n\n`;
+    md += `🔒 **Privacy**: TriageHub ha letto solo i metadata dei tuoi file (nome, dimensione, tipo). Niente è stato caricato online, niente è stato letto del contenuto.\n\nGenerato da TriageHub v1.2.4 il ${date}\nhttps://www.alessandropezzali.it/TriageHub/\n`;
+  } else {
+    // EN
+    md += `# File & Desktop cleanup — ${date}\n\n`;
+    md += `## 📊 Summary of your choices\n\n`;
+    md += `- **To keep**: ${byStatus.keep.length} files\n`;
+    md += `- **To archive**: ${byStatus.archive.length} files\n`;
+    md += `- **To trash**: ${byStatus.trash.length} files\n`;
+    md += `- **Total**: ${ws.items.length} files\n\n`;
+    md += `Reclaimable space (by trashing): ~${fmtNumber(trashMB)} MB\n\n---\n\n`;
+
+    md += `## ⚙️ How to use this report\n\nThree sections below, one per choice. Each one has step-by-step instructions for your operating system.\n\n**Detected OS**: ${osLabel}\n\n### Quick way (recommended)\n\n`;
+    md += tx(
+      `1. Open the **Finder** (smiley icon in the Dock)\n2. Go to **Desktop**: Cmd+Shift+D or Go → Desktop\n3. Switch to list view: View → as List (Cmd+2)\n4. Keep the report open in a window next to Finder\n\n---\n\n`,
+      `1. Open **File Explorer** (folder icon in the taskbar)\n2. Go to **Desktop**: Win+D or click the Desktop icon\n3. Set details view: View → Details\n4. Keep the report open in a window next to File Explorer\n\n---\n\n`,
+      `1. Open your file manager (Files / Nautilus / Dolphin / Thunar)\n2. Go to **Desktop**: usually \`~/Desktop\`\n3. Set list view: View → List view\n4. Keep the report open in a window next to your file manager\n\n---\n\n`
+    );
+
+    md += `## 📌 To keep (${byStatus.keep.length} files)\n\n`;
+    if (byStatus.keep.length === 0) md += `_None._\n\n`;
+    else {
+      md += `Files below are in the right place. **Do nothing**, leave them on the Desktop.\n\n`;
+      md += byStatus.keep.map(formatItem).join('\n') + '\n\n';
+    }
+    md += `---\n\n`;
+
+    md += `## 🗄️ To archive (${byStatus.archive.length} files)\n\n`;
+    if (byStatus.archive.length === 0) md += `_None._\n\n`;
+    else {
+      md += `These files should be moved to proper folders. Below you'll find **where to put them**, by category.\n\n`;
+      const orderedKeys = [];
+      ws.categories.forEach(c => { if (archiveByCategory.has(c.id)) orderedKeys.push(c.id); });
+      if (archiveByCategory.has('__none__')) orderedKeys.push('__none__');
+      orderedKeys.forEach(catId => {
+        const cat = catId === '__none__' ? null : findCat(catId);
+        const catLabel = cat ? localized(cat.name) : 'No category';
+        const catEmoji = cat ? (cat.emoji || '📁') : '📂';
+        const items = archiveByCategory.get(catId);
+        const destInfo = dest[catLabel] && dest[catLabel][os];
+        md += `### ${catEmoji} ${catLabel} (${items.length} files)\n\n`;
+        if (destInfo) md += `**Recommended destination** (${osLabel}): ${destInfo}\n\n`;
+        md += `**How to move them**:\n`;
+        md += tx(
+          `1. Open Finder at the destination\n2. Keep a second window on the Desktop\n3. Drag files from Desktop to the destination folder (Cmd+click for multi-selection)\n\n`,
+          `1. Open File Explorer at the destination\n2. Keep a second window on the Desktop\n3. Drag files from Desktop to the destination folder (Ctrl+click for multi-selection)\n\n`,
+          `1. Open the file manager at the destination\n2. Keep a second window on the Desktop\n3. Drag files from Desktop to the destination folder (Ctrl+click for multi-selection)\n\n`
+        );
+        md += items.map(formatItem).join('\n') + '\n\n';
+      });
+    }
+    md += `---\n\n`;
+
+    md += `## 🗑️ To trash (${byStatus.trash.length} files)\n\n`;
+    if (byStatus.trash.length === 0) md += `_None._\n\n`;
+    else {
+      md += `These files can be deleted. **Space freed**: ~${fmtNumber(trashMB)} MB.\n\n`;
+      md += `⚠️ **Before trashing**:\n- Read the names below. If unsure, do NOT trash.\n- Files go to the **Bin/Trash**: you can recover them before emptying.\n- Only emptying the Bin permanently removes them.\n\n`;
+      md += `### How to trash quickly\n\n`;
+      md += tx(
+        `**Way 1 — One by one**:\n1. Open Finder, go to Desktop\n2. Click a file in the list below\n3. Press \`Cmd + Backspace\`: file goes to Trash\n4. Repeat for each file\n\n**Way 2 — All together**:\n1. Open Finder, Desktop, list view (Cmd+2)\n2. Hold Cmd and click each file in the list\n3. With all selected, press \`Cmd + Backspace\`\n4. They go to Trash together\n\n**To empty the Trash**:\n- Right-click Trash icon in Dock → Empty Trash\n- Or Finder menu → Empty Trash\n\n`,
+        `**Way 1 — One by one**:\n1. Open File Explorer, go to Desktop\n2. Click a file in the list below\n3. Press \`Del\`: file goes to Recycle Bin\n4. Repeat for each file\n\n**Way 2 — All together**:\n1. Open File Explorer, Desktop\n2. Hold Ctrl and click each file in the list\n3. With all selected, press \`Del\`\n4. They go to Bin together\n\n**To empty the Recycle Bin**:\n- Right-click **Recycle Bin** on Desktop → Empty Recycle Bin\n\n`,
+        `**Way 1 — One by one**:\n1. Open file manager, go to Desktop\n2. Click a file in the list below\n3. Press \`Del\` or right-click → Move to Trash\n4. Repeat for each file\n\n**Way 2 — All together**:\n1. Open file manager, Desktop\n2. Hold Ctrl and click each file in the list\n3. With all selected, press \`Del\`\n\n**To empty the Trash**:\n- Open the file manager, go to Trash (usually on the left)\n- Click "Empty Trash"\n\n`
+      );
+      md += byStatus.trash.map(formatItem).join('\n') + '\n\n';
+    }
+    md += `---\n\n`;
+
+    if (byStatus.unsorted.length) {
+      md += `## ⚪ Unsorted (${byStatus.unsorted.length} files)\n\nThese files have not been triaged yet. Go back to TriageHub.\n\n`;
+      md += byStatus.unsorted.map(formatItem).join('\n') + '\n\n---\n\n';
+    }
+
+    md += `## ✅ When you're done\n\n1. Check that "To keep" files are still on the Desktop\n2. Check that archive folders received the right files\n3. Empty the Trash to reclaim space\n4. Come back to TriageHub for another folder\n\n---\n\n`;
+    md += `🔒 **Privacy**: TriageHub only read the metadata of your files (name, size, type). Nothing was uploaded, nothing was read of the content.\n\nGenerated by TriageHub v1.2.4 on ${date}\nhttps://www.alessandropezzali.it/TriageHub/\n`;
+  }
+  return { md, dateShort };
+}
+
+// Markdown = report del solo workspace attivo. Branch dedicato per template "cleanup".
 document.getElementById('exp-md').addEventListener('click', () => {
   const ws = activeWorkspace();
   if (!ws) return;
+
+  if (ws.templateId === 'cleanup') {
+    const { md, dateShort } = buildCleanupMarkdown(ws);
+    downloadFile(md, `triagehub-cleanup-${dateShort}.md`, 'text/markdown');
+    toast(t('mdSaved')); closeDialog('dlg-export');
+    return;
+  }
+
   const groups = {};
   ws.statuses.forEach(s => groups[s.id] = []);
   groups['__none__'] = [];
