@@ -3168,9 +3168,8 @@ function exportSingleWorkspace(wsId) {
     workspaces: { [ws.id]: ws },
     activeWorkspaceId: ws.id
   };
-  const safeName = localized(ws.name).replace(/[^\w\d-]+/g, '_').toLowerCase() || 'workspace';
   downloadFile(JSON.stringify(data, null, 2),
-    `triagehub-${safeName}-${new Date().toISOString().slice(0,10)}.json`,
+    `triagehub-${wsFilenameSlug(ws)}-${new Date().toISOString().slice(0,10)}.json`,
     'application/json');
   toast(t('backupSaved'));
 }
@@ -3493,9 +3492,31 @@ function xlsxItemExtraColumns(ws, it) {
   return out;
 }
 
+// Risolve il nome del workspace come stringa stampabile. ws.name può essere
+// un oggetto {it,en} (workspace appena creato da template, prima che l'utente
+// rinomini), una stringa, o undefined: tutti e tre vanno gestiti senza crash.
+function wsDisplayName(ws) {
+  let n = ws && ws.name;
+  if (n && typeof n === 'object') n = n[currentLang] || n.it || n.en || '';
+  if (typeof n !== 'string') n = '';
+  return n;
+}
+
+// Slug per filename (a-z 0-9 trattini). Usato dagli export Excel per dare un
+// nome leggibile al file scaricato. Fallback "triagehub" se il nome è vuoto
+// o privo di caratteri alfanumerici.
+function wsFilenameSlug(ws) {
+  const slug = wsDisplayName(ws).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+  return slug || 'triagehub';
+}
+
 // Export Excel — mode: 'single' = un foglio + colonna Stato, 'multi' = 3 fogli.
 function exportXLSX(ws, mode) {
   if (typeof XLSX === 'undefined') { toast(t('xlsxLibMissing')); return; }
+  if (!ws || !ws.items || !ws.statuses || !ws.itemStatus) {
+    toast(currentLang === 'it' ? '⚠️ Workspace non valido' : '⚠️ Invalid workspace');
+    return;
+  }
   if (!ws.xlsxMapping || !ws.xlsxMapping.headers) {
     toast(currentLang === 'it' ? 'Nessun file Excel caricato' : 'No Excel file loaded');
     return;
@@ -3521,7 +3542,7 @@ function exportXLSX(ws, mode) {
       aoa.push(itemRow(it).concat([statusOf(it)]));
     });
     const sheet = XLSX.utils.aoa_to_sheet(aoa);
-    XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(ws.name || 'TriageHub'));
+    XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(wsDisplayName(ws) || 'TriageHub'));
   } else {
     // Multi: un foglio per ciascuno dei 3 stati ordinati.
     ws.statuses.forEach(s => {
@@ -3543,8 +3564,7 @@ function exportXLSX(ws, mode) {
   }
   const out = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
   const dateShort = new Date().toISOString().slice(0, 10);
-  const safeName = (ws.name || 'triagehub').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
-  downloadFile(out, `triagehub-${safeName}-${dateShort}.xlsx`,
+  downloadFile(out, `triagehub-${wsFilenameSlug(ws)}-${dateShort}.xlsx`,
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast(t('xlsxExportSaved'));
   closeDialog('dlg-xlsx-export');
@@ -4446,7 +4466,7 @@ function buildMarkdownReport(ws) {
   });
 
   let md = `# TriageHub — Report\n\n_${isIT ? 'Esportato il' : 'Exported on'} ${date}_\n\n`;
-  md += `**${isIT ? 'Workspace' : 'Workspace'}**: ${ws.emoji || ''} ${ws.name}\n\n`;
+  md += `**${isIT ? 'Workspace' : 'Workspace'}**: ${ws.emoji || ''} ${wsDisplayName(ws)}\n\n`;
   md += `**${isIT ? 'Totale' : 'Total'}**: ${ws.items.length} ${t('items')}\n\n---\n\n`;
   ws.statuses.forEach(s => {
     md += `## ${s.emoji} ${localized(s.label)} (${groups[s.id].length})\n\n`;
@@ -4667,7 +4687,7 @@ function exportPDF(ws) {
     em { font-style: italic; }
     strong { font-weight: 600; }
   `;
-  const docHTML = `<!doctype html><html><head><meta charset="utf-8"><title>${title} — ${ws.name}</title><style>${printCss}</style></head><body>${html}</body></html>`;
+  const docHTML = `<!doctype html><html><head><meta charset="utf-8"><title>${title} — ${escapeHtml(wsDisplayName(ws))}</title><style>${printCss}</style></head><body>${html}</body></html>`;
 
   // Crea iframe nascosto, carica il documento, attendi onload, poi stampa.
   const iframe = document.createElement('iframe');

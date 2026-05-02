@@ -3,6 +3,12 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.3.1] — Unreleased
+
+### Fixed
+- 🐛 **`exportXLSX` crash su workspace appena creato da template** (`TypeError: ws.name.toLowerCase is not a function`). Causa: quando il workspace nasce dal template `xlsx`, `ws.name` è l'oggetto i18n `{it:'Lista Excel', en:'Excel List'}` finché l'utente non rinomina il workspace. La costruzione del filename chiamava `.toLowerCase()` direttamente sull'oggetto. Fix: introdotti due helper `wsDisplayName(ws)` e `wsFilenameSlug(ws)` che gestiscono in modo sicuro stringa, oggetto i18n e undefined. Applicati anche ai title del PDF, all'header del report Markdown e al filename dell'export JSON single-workspace, dove esisteva la stessa fragilità latente.
+- 🛡 **Validazione input in `exportXLSX`**: early-return con toast se `ws` non ha `items`/`statuses`/`itemStatus` (workspace corrotto o passato sbagliato).
+
 ## [1.3.0] — Unreleased
 
 > **Major refocus**: da 8 a 3 template. Sembra una perdita, non lo è — il valore di un prodotto si misura dalle feature che funzionano davvero, non da quante ce ne sono. Cf. `FACT_CHECK_v1.2.6.md`.
