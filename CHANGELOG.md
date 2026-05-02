@@ -3,6 +3,18 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.2.2] — Unreleased
+
+### Added
+- 📥 **File picker per template "Pulizia file & Desktop"**: bottone "Carica file da smistare" nell'empty state. Click apre il selettore file del sistema operativo, l'utente seleziona N file (anche centinaia con Cmd+A), l'app crea un item per ogni file con nome, dimensione in MB (`item.value`), data ultimo aggiornamento (`item.tag`) e categoria auto-detect dal MIME type (Immagini / Audio / Documenti / Excel & Listini / Da capire). Niente Terminale richiesto.
+- 🔒 Privacy: i file restano sul disco dell'utente, l'app legge solo i metadata (nome/size/type/lastModified). Nessun upload.
+- 📚 **Micro-guide contestuali**: quando un workspace è vuoto e ha un templateId, sopra l'empty state compare una guida 3-step specifica per quel template (8 guide totali, IT + EN). Bottoni di azione collegati alle azioni reali (file picker, import CSV, dialog item, dialog stati/categorie). La guida si nasconde quando arriva il primo item, oppure tramite "✕ Nascondi questa guida" (persiste per workspace tramite `ws.hideGuide`).
+- 📖 **Manuale in-app**: nuovo bottone `❓ Aiuto` in toolbar che apre un dialog modale con 8 sezioni espandibili (Cos'è / Quickstart 60s / Concetti / Tutorial Pulizia Desktop / Guida ai 8 template / Import-Export / Privacy / FAQ). Tutto in IT + EN.
+
+### Changed
+- L'empty state per il template "Pulizia file & Desktop" ora mostra `📥 Carica file da smistare` come azione primaria (al posto di `+ Nuovo`).
+- I bottoni dell'empty state classico ora usano `data-guide-action` invece di `onclick`, per coerenza con la guida.
+
 ## [1.2.1] — Unreleased
 
 ### Added

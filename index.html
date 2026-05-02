@@ -448,6 +448,124 @@
     .ws-card { width: 160px; }
   }
 
+  /* MICRO-GUIDE — onboarding contestuale sopra l'empty state */
+  .micro-guide {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px 20px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .micro-guide-dismiss {
+    position: absolute; top: 10px; right: 12px;
+    background: var(--bg); border: none;
+    width: 30px; height: 30px; border-radius: 50%;
+    color: var(--text-tertiary); cursor: pointer;
+    font-size: 12px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: inherit;
+    transition: color 0.15s, background 0.15s;
+  }
+  .micro-guide-dismiss:hover { color: var(--text); background: var(--border); }
+  .micro-guide-title {
+    font-family: var(--serif); font-style: italic;
+    font-size: 28px; line-height: 1.1; letter-spacing: -0.02em;
+    margin-bottom: 8px; padding-right: 36px;
+  }
+  .micro-guide-intro {
+    font-size: 15px; color: var(--text-secondary);
+    line-height: 1.5; margin-bottom: 20px;
+  }
+  .micro-guide-steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 18px; }
+  .mg-step { display: flex; gap: 14px; }
+  .mg-step-num {
+    flex-shrink: 0;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    border: 1px solid var(--border);
+  }
+  .mg-step-body { flex: 1; min-width: 0; }
+  .mg-step-title {
+    font-weight: 600; font-size: 15px; margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .mg-step-text {
+    font-size: 14px; color: var(--text-secondary); line-height: 1.5;
+  }
+  .mg-step-text strong { color: var(--text); font-weight: 600; }
+  .micro-guide-tip {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px; color: var(--text-secondary); line-height: 1.45;
+    margin-bottom: 16px;
+  }
+  .micro-guide-actions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .micro-guide-actions .btn { font-size: 14px; padding: 10px 16px; }
+  .micro-guide-privacy {
+    font-size: 12px; color: var(--text-tertiary);
+    margin-top: 8px;
+  }
+  @media (max-width: 640px) {
+    .micro-guide { padding: 20px 18px; }
+    .micro-guide-title { font-size: 22px; padding-right: 32px; }
+    .micro-guide-intro { font-size: 14px; }
+  }
+
+  /* MANUAL DIALOG */
+  #dlg-manual { max-width: 720px; }
+  .manual-section { border-bottom: 1px solid var(--border); }
+  .manual-section:last-child { border-bottom: none; }
+  .manual-section > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 4px;
+    font-family: var(--serif); font-style: italic;
+    font-size: 22px; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .manual-section > summary::-webkit-details-marker { display: none; }
+  .manual-section > summary::before {
+    content: '▶'; font-size: 12px; color: var(--text-tertiary);
+    font-style: normal; font-family: var(--sans);
+    transition: transform 0.15s;
+    display: inline-block; width: 14px; flex-shrink: 0;
+  }
+  .manual-section[open] > summary::before { transform: rotate(90deg); }
+  .manual-section-body { padding: 4px 28px 18px; line-height: 1.55; font-size: 15px; }
+  .manual-section-body h4 {
+    font-family: var(--serif); font-style: italic;
+    font-size: 18px; margin: 14px 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .manual-section-body p { margin-bottom: 10px; color: var(--text-secondary); }
+  .manual-section-body ul, .manual-section-body ol {
+    margin: 0 0 12px 22px; color: var(--text-secondary);
+  }
+  .manual-section-body li { margin-bottom: 4px; }
+  .manual-section-body strong { color: var(--text); }
+  .manual-section-body details {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 0 12px; margin-bottom: 8px;
+  }
+  .manual-section-body details > summary {
+    padding: 10px 0; cursor: pointer;
+    font-weight: 600; font-size: 14px; color: var(--text);
+    list-style: none;
+  }
+  .manual-section-body details > summary::-webkit-details-marker { display: none; }
+  .manual-section-body details > summary::before {
+    content: '+ '; color: var(--text-tertiary); font-weight: 700;
+  }
+  .manual-section-body details[open] > summary::before { content: '− '; }
+  .manual-section-body details > p { padding: 0 0 10px; margin: 0; }
+
   /* CONTEXT MENU — desktop dropdown / mobile action sheet */
   .ctx-backdrop {
     position: fixed; inset: 0;
@@ -778,6 +896,7 @@
         <button class="btn" id="btn-export">↑ <span data-i18n="export">Esporta</span></button>
         <button class="btn" id="btn-categories">🗂 <span data-i18n="categories">Categorie</span></button>
         <button class="btn" id="btn-statuses">🏷 <span data-i18n="statuses">Stati</span></button>
+        <button class="btn" id="btn-help">❓ <span data-i18n="helpButton">Aiuto</span></button>
         <button class="btn danger" id="btn-clear" data-i18n-attr="title:resetTitle">↺</button>
       </div>
       <div class="chips" id="chips"></div>
@@ -1006,6 +1125,18 @@
   <button class="ctx-cancel-btn" data-ctx="cancel" data-i18n="contextMenuCancel">Annulla</button>
 </div>
 
+<!-- DIALOG: Manuale -->
+<dialog id="dlg-manual">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="helpManualTitle">📖 Manuale TriageHub</h2>
+    <button class="dialog-close" data-close="dlg-manual">×</button>
+  </div>
+  <div class="dialog-body" id="manual-body"></div>
+</dialog>
+
+<!-- File picker nascosto per il template "Pulizia file & Desktop" -->
+<input type="file" id="cleanup-files" multiple hidden>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1094,7 +1225,15 @@ const I18N = {
     exportBeforeDelete: "Esporta prima",
     exportedBeforeDelete: "✓ Backup scaricato. Conferma per eliminare.",
     workspaceContextHint: "Click destro o long-press per opzioni",
-    contextMenuCancel: "Annulla"
+    contextMenuCancel: "Annulla",
+    helpButton: "Aiuto",
+    helpManualTitle: "📖 Manuale TriageHub",
+    guideTitle: name => `Come funziona ${name}`,
+    guideDismiss: "✕ Nascondi questa guida",
+    desktopLoadFiles: "📥 Carica file da smistare",
+    desktopLoadFilesPrivacy: "🔒 I file restano sul tuo dispositivo, l'app legge solo nome e dimensione.",
+    desktopLoadedFiles: n => `✓ ${n} file caricati nel workspace`,
+    guideAddManually: "✏️ Aggiungo a mano"
   },
   en: {
     subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
@@ -1175,7 +1314,15 @@ const I18N = {
     exportBeforeDelete: "Export first",
     exportedBeforeDelete: "✓ Backup downloaded. Confirm to delete.",
     workspaceContextHint: "Right-click or long-press for options",
-    contextMenuCancel: "Cancel"
+    contextMenuCancel: "Cancel",
+    helpButton: "Help",
+    helpManualTitle: "📖 TriageHub Manual",
+    guideTitle: name => `How to use ${name}`,
+    guideDismiss: "✕ Hide this guide",
+    desktopLoadFiles: "📥 Load files to triage",
+    desktopLoadFilesPrivacy: "🔒 Files stay on your device. The app only reads name and size.",
+    desktopLoadedFiles: n => `✓ ${n} files loaded into the workspace`,
+    guideAddManually: "✏️ I'll add by hand"
   }
 };
 
@@ -1361,6 +1508,556 @@ const TEMPLATES = [
     valueUnit: 'MB'
   }
 ];
+
+// ============================================
+// MICRO-GUIDES — onboarding contestuale per ogni template (v1.2.2)
+// ============================================
+// Ogni guida ha: title, intro, steps[{emoji,title,body}], tip, actions[{id,label,primary}].
+// La chiave 'blank' viene usata anche per workspace con templateId === null.
+// Action id supportati: 'load-files' | 'add-manual' | 'new-item' | 'import' |
+// 'categories' | 'statuses'.
+const MICRO_GUIDES = {
+  it: {
+    cleanup: {
+      title: '📂 Come funziona Pulizia file & Desktop',
+      intro: 'Hai aperto questo workspace per mettere ordine sul tuo Desktop o in una cartella piena di file. Funziona in 3 passi:',
+      steps: [
+        { emoji: '📥', title: 'Carica i file da smistare',
+          body: "Clicca il bottone qui sotto: si aprirà una finestra del Mac. Vai sul Desktop, seleziona i file (anche tutti insieme con Cmd+A), conferma. L'app legge nome e dimensione di ogni file." },
+        { emoji: '🎯', title: 'Smista in 3 stati',
+          body: 'Per ogni file clicca uno dei 3 stati:<br>📌 <strong>Tieni</strong> — i file che servono al loro posto<br>🗄️ <strong>Archivia</strong> — i file da spostare in altre cartelle<br>🗑️ <strong>Cestina</strong> — i file da buttare via' },
+        { emoji: '📋', title: 'Esporta il report e agisci',
+          body: "Quando hai finito, clicca <strong>↑ Esporta</strong> → Report Markdown. Apri il Finder e segui il report: sposta gli 'Archivia' nelle cartelle giuste, butta i 'Cestina' nel Cestino del Mac." }
+      ],
+      tip: '💡 In 15 minuti il tuo Desktop torna pulito. 🔒 I file restano dove sono — TriageHub non sposta nulla.',
+      actions: [
+        { id: 'load-files', label: '📥 Carica file da smistare', primary: true },
+        { id: 'add-manual', label: '✏️ Aggiungo a mano' }
+      ]
+    },
+    email: {
+      title: '📧 Come funziona Email',
+      intro: 'Hai aperto questo workspace per smistare la tua casella di posta. Funziona così:',
+      steps: [
+        { emoji: '✏️', title: 'Aggiungi le email',
+          body: 'Clicca <strong>+ Nuovo</strong> per ogni messaggio importante:<br>- Nome: mittente o oggetto<br>- Descrizione: di cosa si tratta<br>- Tag: data, urgenza, o cosa devi fare' },
+        { emoji: '🎯', title: 'Smista in 3 stati',
+          body: '✉️ <strong>Da rispondere</strong> — meritano una risposta tua<br>⏳ <strong>In attesa</strong> — aspetti tu una risposta da qualcuno<br>📦 <strong>Archiviata</strong> — letta, niente da fare' },
+        { emoji: '📋', title: 'Usa il report come to-do',
+          body: "Esporta in Markdown: la lista 'Da rispondere' è la tua to-do della giornata." }
+      ],
+      tip: '💡 Funziona meglio se lo fai una volta a settimana, non ogni giorno.',
+      actions: [
+        { id: 'new-item', label: '+ Aggiungi prima email', primary: true },
+        { id: 'import',   label: '↓ Importa CSV' }
+      ]
+    },
+    leads: {
+      title: '💼 Come funziona Lead commerciali',
+      intro: 'Hai aperto questo workspace per gestire la pipeline vendite. Funziona così:',
+      steps: [
+        { emoji: '✏️', title: 'Aggiungi i tuoi lead',
+          body: 'Clicca <strong>+ Nuovo</strong> per ogni potenziale cliente:<br>- Nome: azienda o persona<br>- Categoria: settore, area, fonte<br>- Valore: stima fatturato in €<br>- Tag: data ultimo contatto, prodotto' },
+        { emoji: '🎯', title: 'Smista in 3 stati',
+          body: '🔥 <strong>Caldo</strong> — pronto a chiudere, segui ora<br>☀️ <strong>Tiepido</strong> — interesse, richiede follow-up<br>❄️ <strong>Freddo</strong> — nessuna risposta, rivaluta dopo' },
+        { emoji: '🎯', title: 'Filtra e agisci',
+          body: "Clicca il chip 'Caldo' in alto per vedere solo i lead caldi. Quella è la tua to-do della settimana." }
+      ],
+      tip: "💡 Aggiorna gli stati dopo ogni contatto. Non lasciare lead in 'Caldo' per più di 7 giorni.",
+      actions: [
+        { id: 'new-item', label: '+ Aggiungi primo lead', primary: true },
+        { id: 'import',   label: '↓ Importa CSV' }
+      ]
+    },
+    tickets: {
+      title: '🔧 Come funziona Ticket assistenza',
+      intro: 'Hai aperto questo workspace per smistare richieste di assistenza. Funziona così:',
+      steps: [
+        { emoji: '✏️', title: 'Aggiungi le richieste',
+          body: 'Clicca <strong>+ Nuovo</strong> per ogni chiamata o ticket:<br>- Nome: cliente o numero ticket<br>- Categoria: tipo macchina o area problema<br>- Descrizione: sintomo riportato<br>- Tag: urgenza, ricambio necessario' },
+        { emoji: '🎯', title: 'Smista in 3 stati',
+          body: '🚨 <strong>Aperto</strong> — da gestire ora<br>🔧 <strong>In lavorazione</strong> — già contattato<br>✅ <strong>Risolto</strong> — problema chiuso' },
+        { emoji: '🎯', title: 'Filtra per categoria',
+          body: 'Clicca un chip categoria per vedere solo i ticket di una tipologia.' }
+      ],
+      tip: '💡 Importa CSV se hai già un export dal gestionale ticket.',
+      actions: [
+        { id: 'new-item', label: '+ Aggiungi primo ticket', primary: true },
+        { id: 'import',   label: '↓ Importa CSV' }
+      ]
+    },
+    catalog: {
+      title: '📦 Come funziona Listino prodotti',
+      intro: 'Hai aperto questo workspace per decidere cosa pubblicare nel prossimo catalogo. Funziona così:',
+      steps: [
+        { emoji: '↓', title: 'Importa il listino esistente',
+          body: 'Hai un Excel o CSV con i tuoi prodotti? Clicca <strong>↓ Importa</strong> e mappa le colonne: Codice/Nome → Nome, Categoria → Categoria, Prezzo → Valore.' },
+        { emoji: '🎯', title: 'Smista in 3 stati',
+          body: '🚀 <strong>Spingere</strong> — prodotti da promuovere/inserire in catalogo<br>🔍 <strong>Da valutare</strong> — margine basso, da rivedere<br>📦 <strong>Out</strong> — fuori catalogo' },
+        { emoji: '📊', title: 'Filtra e analizza',
+          body: 'Le 4 stat card in alto mostrano in tempo reale quanti prodotti hai in ogni stato.' }
+      ],
+      tip: "💡 Ottimo a fine anno per pianificare il listino dell'anno dopo.",
+      actions: [
+        { id: 'import',   label: '↓ Importa listino', primary: true },
+        { id: 'new-item', label: '+ Aggiungi a mano' }
+      ]
+    },
+    hr: {
+      title: '👥 Come funziona Candidature',
+      intro: 'Hai aperto questo workspace per gestire candidature. Funziona così:',
+      steps: [
+        { emoji: '✏️', title: 'Aggiungi i candidati',
+          body: 'Clicca <strong>+ Nuovo</strong> per ogni candidato:<br>- Nome: cognome e nome<br>- Categoria: ruolo (es. Commerciale, Tecnico)<br>- Descrizione: sintesi CV<br>- Link: URL al CV<br>- Tag: provenienza' },
+        { emoji: '🎯', title: 'Smista in 3 stati',
+          body: '👀 <strong>Considerare</strong> — CV interessante, da approfondire<br>💬 <strong>Intervistare</strong> — proseguire al colloquio<br>❌ <strong>Scartare</strong> — non in linea' },
+        { emoji: '🎯', title: 'Filtra per ruolo',
+          body: 'Clicca chip categoria per vedere solo candidati di un ruolo.' }
+      ],
+      tip: '💡 I dati restano sul tuo dispositivo. Privacy-first per informazioni sensibili.',
+      actions: [
+        { id: 'new-item', label: '+ Aggiungi primo candidato', primary: true },
+        { id: 'import',   label: '↓ Importa CSV' }
+      ]
+    },
+    ideas: {
+      title: '💡 Come funziona Idee progetto',
+      intro: 'Hai aperto questo workspace per gestire idee, progetti e opportunità. Funziona così:',
+      steps: [
+        { emoji: '✏️', title: 'Aggiungi le idee',
+          body: 'Clicca <strong>+ Nuovo</strong> per ogni idea:<br>- Nome: titolo<br>- Descrizione: cosa è, perché può funzionare<br>- Categoria: ambito (Prodotto, Marketing, Interno)<br>- Valore: impatto stimato (1-10) o fatturato potenziale' },
+        { emoji: '🎯', title: 'Smista in 3 stati',
+          body: '🚀 <strong>Sviluppare</strong> — da iniziare ora, ROI alto<br>🅿️ <strong>Parcheggiare</strong> — buona idea, non è il momento<br>🗑️ <strong>Scartare</strong> — non funziona, archivia' },
+        { emoji: '🔄', title: 'Rivedi periodicamente',
+          body: 'Le idee parcheggiate possono diventare urgenti. Apri TriageHub ogni mese e rivaluta gli stati.' }
+      ],
+      tip: '💡 Funziona bene anche per backlog personali, romanzi da scrivere, viaggi da fare.',
+      actions: [
+        { id: 'new-item', label: '+ Aggiungi prima idea', primary: true },
+        { id: 'import',   label: '↓ Importa CSV' }
+      ]
+    },
+    blank: {
+      title: '⚪ Workspace personalizzato',
+      intro: 'Hai creato un workspace tutto da configurare. Ecco come iniziare:',
+      steps: [
+        { emoji: '🏷️', title: 'Personalizza gli stati',
+          body: 'Clicca <strong>🏷 Stati</strong> in toolbar. Modifica i 3 stati di default con nomi adatti al tuo flusso.' },
+        { emoji: '📁', title: 'Crea le categorie',
+          body: 'Clicca <strong>🗂 Categorie</strong> in toolbar. Aggiungi le tue categorie per raggruppare gli item.' },
+        { emoji: '✏️', title: 'Aggiungi gli item',
+          body: 'Clicca <strong>+ Nuovo</strong> per ogni item che vuoi smistare.' }
+      ],
+      tip: '💡 Non sai da dove partire? Prova uno degli altri 7 template precaricati. Spesso si adattano meglio del previsto.',
+      actions: [
+        { id: 'statuses',   label: '🏷 Stati', primary: true },
+        { id: 'categories', label: '🗂 Categorie' },
+        { id: 'new-item',   label: '+ Aggiungi item' }
+      ]
+    }
+  },
+  en: {
+    cleanup: {
+      title: '📂 How File & Desktop cleanup works',
+      intro: "You opened this workspace to tidy up your Desktop or a cluttered folder. It works in 3 steps:",
+      steps: [
+        { emoji: '📥', title: 'Load the files to triage',
+          body: "Click the button below: a system dialog opens. Go to your Desktop, select the files (Cmd+A picks all of them), confirm. The app reads name and size of each file." },
+        { emoji: '🎯', title: 'Sort into 3 states',
+          body: 'For each file click one of the 3 states:<br>📌 <strong>Keep</strong> — files that belong where they are<br>🗄️ <strong>Archive</strong> — files to move into proper folders<br>🗑️ <strong>Trash</strong> — files to throw away' },
+        { emoji: '📋', title: 'Export the report and act',
+          body: "When you're done, click <strong>↑ Export</strong> → Markdown report. Open Finder and follow the report: move 'Archive' files to the right folders, drop 'Trash' files into the Bin." }
+      ],
+      tip: '💡 In 15 minutes your Desktop is clean. 🔒 Files stay where they are — TriageHub never moves anything.',
+      actions: [
+        { id: 'load-files', label: '📥 Load files to triage', primary: true },
+        { id: 'add-manual', label: "✏️ I'll add by hand" }
+      ]
+    },
+    email: {
+      title: '📧 How Email triage works',
+      intro: 'You opened this workspace to triage your inbox. Here is how:',
+      steps: [
+        { emoji: '✏️', title: 'Add the emails',
+          body: 'Click <strong>+ New</strong> for each important message:<br>- Name: sender or subject<br>- Description: what it is about<br>- Tag: date, urgency, or what you need to do' },
+        { emoji: '🎯', title: 'Sort into 3 states',
+          body: '✉️ <strong>To reply</strong> — they need an answer from you<br>⏳ <strong>Waiting</strong> — you are waiting on someone<br>📦 <strong>Archived</strong> — read, nothing to do' },
+        { emoji: '📋', title: 'Use the report as a to-do',
+          body: "Export to Markdown: the 'To reply' list is your to-do for the day." }
+      ],
+      tip: '💡 Works best once a week, not every day.',
+      actions: [
+        { id: 'new-item', label: '+ Add first email', primary: true },
+        { id: 'import',   label: '↓ Import CSV' }
+      ]
+    },
+    leads: {
+      title: '💼 How Sales Leads works',
+      intro: 'You opened this workspace to manage your sales pipeline. Here is how:',
+      steps: [
+        { emoji: '✏️', title: 'Add your leads',
+          body: 'Click <strong>+ New</strong> for each prospect:<br>- Name: company or person<br>- Category: vertical, region, source<br>- Value: revenue estimate in €<br>- Tag: last contact date, product' },
+        { emoji: '🎯', title: 'Sort into 3 states',
+          body: '🔥 <strong>Hot</strong> — ready to close, follow up now<br>☀️ <strong>Warm</strong> — interested, needs follow-up<br>❄️ <strong>Cold</strong> — no response, revisit later' },
+        { emoji: '🎯', title: 'Filter and act',
+          body: "Click the 'Hot' chip on top to see only the hot leads. That's your to-do for the week." }
+      ],
+      tip: "💡 Update states after every contact. Don't leave leads in 'Hot' for more than 7 days.",
+      actions: [
+        { id: 'new-item', label: '+ Add first lead', primary: true },
+        { id: 'import',   label: '↓ Import CSV' }
+      ]
+    },
+    tickets: {
+      title: '🔧 How Support Tickets works',
+      intro: 'You opened this workspace to triage support requests. Here is how:',
+      steps: [
+        { emoji: '✏️', title: 'Add the requests',
+          body: 'Click <strong>+ New</strong> for each call or ticket:<br>- Name: customer or ticket number<br>- Category: machine type or problem area<br>- Description: reported symptom<br>- Tag: urgency, spare part needed' },
+        { emoji: '🎯', title: 'Sort into 3 states',
+          body: '🚨 <strong>Open</strong> — handle now<br>🔧 <strong>In progress</strong> — already contacted<br>✅ <strong>Resolved</strong> — problem closed' },
+        { emoji: '🎯', title: 'Filter by category',
+          body: 'Click a category chip to see only one type of ticket.' }
+      ],
+      tip: '💡 Import CSV if you already have an export from your ticket system.',
+      actions: [
+        { id: 'new-item', label: '+ Add first ticket', primary: true },
+        { id: 'import',   label: '↓ Import CSV' }
+      ]
+    },
+    catalog: {
+      title: '📦 How Product Catalog works',
+      intro: 'You opened this workspace to decide what to publish in your next catalog. Here is how:',
+      steps: [
+        { emoji: '↓', title: 'Import your existing price list',
+          body: 'Got an Excel or CSV with your products? Click <strong>↓ Import</strong> and map the columns: SKU/Name → Name, Category → Category, Price → Value.' },
+        { emoji: '🎯', title: 'Sort into 3 states',
+          body: '🚀 <strong>Promote</strong> — products to push / include<br>🔍 <strong>Review</strong> — low margin, needs revisit<br>📦 <strong>Out</strong> — drop from catalog' },
+        { emoji: '📊', title: 'Filter and analyze',
+          body: 'The 4 stat cards on top show in real time how many products you have in each state.' }
+      ],
+      tip: '💡 Great at year-end to plan next year price list.',
+      actions: [
+        { id: 'import',   label: '↓ Import price list', primary: true },
+        { id: 'new-item', label: '+ Add by hand' }
+      ]
+    },
+    hr: {
+      title: '👥 How Job Applications works',
+      intro: 'You opened this workspace to triage job applications. Here is how:',
+      steps: [
+        { emoji: '✏️', title: 'Add the candidates',
+          body: 'Click <strong>+ New</strong> for each candidate:<br>- Name: first and last<br>- Category: role (e.g. Sales, Tech)<br>- Description: CV summary<br>- Link: CV URL<br>- Tag: source' },
+        { emoji: '🎯', title: 'Sort into 3 states',
+          body: '👀 <strong>Consider</strong> — interesting CV, dig deeper<br>💬 <strong>Interview</strong> — move to interview<br>❌ <strong>Reject</strong> — not a fit' },
+        { emoji: '🎯', title: 'Filter by role',
+          body: 'Click a category chip to see only candidates for one role.' }
+      ],
+      tip: '💡 Data stays on your device. Privacy-first for sensitive info.',
+      actions: [
+        { id: 'new-item', label: '+ Add first candidate', primary: true },
+        { id: 'import',   label: '↓ Import CSV' }
+      ]
+    },
+    ideas: {
+      title: '💡 How Project Ideas works',
+      intro: 'You opened this workspace to manage ideas, projects and opportunities. Here is how:',
+      steps: [
+        { emoji: '✏️', title: 'Add the ideas',
+          body: 'Click <strong>+ New</strong> for each idea:<br>- Name: title<br>- Description: what it is, why it can work<br>- Category: area (Product, Marketing, Internal)<br>- Value: impact estimate (1-10) or potential revenue' },
+        { emoji: '🎯', title: 'Sort into 3 states',
+          body: '🚀 <strong>Develop</strong> — start now, high ROI<br>🅿️ <strong>Park</strong> — good idea, not now<br>🗑️ <strong>Drop</strong> — does not work, archive' },
+        { emoji: '🔄', title: 'Revisit periodically',
+          body: 'Parked ideas can become urgent. Open TriageHub every month and re-evaluate the states.' }
+      ],
+      tip: '💡 Works well also for personal backlogs, books to write, trips to plan.',
+      actions: [
+        { id: 'new-item', label: '+ Add first idea', primary: true },
+        { id: 'import',   label: '↓ Import CSV' }
+      ]
+    },
+    blank: {
+      title: '⚪ Custom workspace',
+      intro: 'You created a workspace from scratch. Here is how to get started:',
+      steps: [
+        { emoji: '🏷️', title: 'Customize the states',
+          body: 'Click <strong>🏷 States</strong> in the toolbar. Edit the 3 default states with names that fit your flow.' },
+        { emoji: '📁', title: 'Create the categories',
+          body: 'Click <strong>🗂 Categories</strong> in the toolbar. Add categories to group your items.' },
+        { emoji: '✏️', title: 'Add the items',
+          body: 'Click <strong>+ New</strong> for each item you want to triage.' }
+      ],
+      tip: '💡 Not sure where to start? Try one of the other 7 ready-made templates. They often fit better than expected.',
+      actions: [
+        { id: 'statuses',   label: '🏷 States', primary: true },
+        { id: 'categories', label: '🗂 Categories' },
+        { id: 'new-item',   label: '+ Add item' }
+      ]
+    }
+  }
+};
+
+function getMicroGuide(ws) {
+  if (!ws) return null;
+  const key = ws.templateId && MICRO_GUIDES[currentLang][ws.templateId] ? ws.templateId : 'blank';
+  return MICRO_GUIDES[currentLang][key] || MICRO_GUIDES.it[key];
+}
+
+// ============================================
+// MANUAL — contenuto del manuale in-app (v1.2.2)
+// ============================================
+const MANUAL_HTML = {
+  it: [
+    { id: 's1', title: "Cos'è TriageHub", body:
+`<p>TriageHub è un'app per <strong>smistare cose</strong>. Quando hai una lista di item (email, lead, file, idee, candidati, prodotti) e devi decidere cosa fare di ciascuno, TriageHub ti aiuta a farlo in modo veloce e visivo.</p>
+<p>Si chiama 'triage' come quello del pronto soccorso: davanti a tante richieste, decidi una per volta cosa fa quella richiesta in 3 categorie. Niente di più, niente di meno.</p>
+<h4>Perché solo 3 stati?</h4>
+<p>Tre è il numero magico delle decisioni veloci. Se hai 5 stati ti blocchi a pensare, se ne hai 2 non hai sfumature. Tre è l'equilibrio: 'sì / forse / no', 'caldo / tiepido / freddo', 'tieni / archivia / butta'.</p>
+<h4>Quando NON ti serve TriageHub</h4>
+<p>Se hai già deciso cosa fare con i tuoi item, l'app non serve. TriageHub è per il momento del DECIDERE, non dell'esecuzione.</p>` },
+
+    { id: 's2', title: 'Come usare l\'app in 60 secondi', body:
+`<ol>
+<li>Clicca <strong>+ Nuovo workspace</strong> nelle cards in alto (o <strong>✨ Template</strong> in toolbar).</li>
+<li>Scegli un template che ti somiglia (Email, Lead, Pulizia Desktop, ecc.). L'app crea un workspace con categorie e stati pre-configurati.</li>
+<li>Aggiungi i tuoi item: clicca <strong>+ Nuovo</strong>, oppure importa un CSV con <strong>↓ Importa</strong>.</li>
+<li>Smista cliccando lo stato di ogni item (le card colorate).</li>
+<li>Quando hai finito, clicca <strong>↑ Esporta</strong> per scaricare il report.</li>
+</ol>
+<p>Fine. Niente account, niente cloud, niente sincronizzazione: i tuoi dati restano sul tuo dispositivo.</p>` },
+
+    { id: 's3', title: 'Workspace, Categorie, Stati', body:
+`<p>TriageHub si basa su 3 concetti, dal più grande al più piccolo:</p>
+<h4>🗂 Workspace</h4>
+<p>Un workspace è un container indipendente con i suoi item, le sue categorie, i suoi 3 stati. Hai più workspace per gestire più flussi in parallelo: uno per Email, uno per Lead, uno per Listino, uno per il Desktop. Si vedono come <strong>cards</strong> sopra la search bar.</p>
+<h4>📁 Categorie</h4>
+<p>Le categorie raggruppano i tuoi item. Sono filtri: clicchi una categoria e vedi solo gli item di quella. Le crei e gestisci in <strong>📁 Categorie</strong>.</p>
+<h4>🎯 Stati</h4>
+<p>I 3 stati personalizzabili (con nomi, emoji, colori a tua scelta). Sono il <strong>cuore</strong> dell'app: ogni item finisce in uno dei 3 stati. Puoi modificarli da <strong>🏷️ Stati</strong>.</p>
+<h4>✏️ Item</h4>
+<p>I singoli elementi che smisti. Ogni item ha:</p>
+<ul>
+<li><strong>Nome</strong> (obbligatorio)</li>
+<li><strong>Descrizione</strong> (libera)</li>
+<li><strong>Categoria</strong> (per raggruppare)</li>
+<li><strong>Valore numerico</strong> (es. €, MB, score)</li>
+<li><strong>Tag</strong> (testo libero per note rapide)</li>
+<li><strong>Link</strong> (URL utili)</li>
+</ul>` },
+
+    { id: 's4', title: 'Tutorial: ripulire il Desktop in 15 minuti', body:
+`<p>Caso pratico universale. Hai un Desktop con decine o centinaia di file accumulati. Vuoi metterlo in ordine.</p>
+<h4>Step 1: crea il workspace</h4>
+<p>Apri TriageHub, clicca <strong>+ Nuovo workspace</strong> e scegli <strong>📂 Pulizia file & Desktop</strong>.</p>
+<h4>Step 2: carica i file</h4>
+<p>Nell'empty state vedi il bottone <strong>📥 Carica file da smistare</strong>. Click. Si apre la finestra del Mac. Vai sul Desktop, seleziona i file (Cmd+A per tutti), conferma. L'app legge nome, dimensione e data di ogni file.</p>
+<p><strong>🔒 Importante:</strong> i file NON vengono caricati da nessuna parte. Restano sul tuo Desktop, intatti. L'app legge solo i metadata.</p>
+<h4>Step 3: smista</h4>
+<p>Per ogni file vedrai una card. Clicca lo stato giusto:</p>
+<ul>
+<li><strong>📌 Tieni</strong> — è al posto giusto, lascialo</li>
+<li><strong>🗄️ Archivia</strong> — vale la pena conservarlo, ma non sul Desktop</li>
+<li><strong>🗑️ Cestina</strong> — non serve più</li>
+</ul>
+<h4>Step 4: esporta e agisci</h4>
+<p>Quando hai smistato tutto, clicca <strong>↑ Esporta → Report Markdown</strong>. Si scarica un file con 3 liste:</p>
+<ul>
+<li>I file da tenere (lasciali stare)</li>
+<li>I file da archiviare (sposta in cartelle Documenti, Foto, ecc.)</li>
+<li>I file da cestinare (mandali nel Cestino)</li>
+</ul>
+<p>Apri il Finder e segui il report. In 15 minuti il Desktop è pulito.</p>` },
+
+    { id: 's5', title: 'Gli 8 template precaricati', body:
+`<p>TriageHub include 8 template pronti, uno per ogni caso d'uso comune.</p>
+<h4>⚪ Vuoto</h4>
+<p>Workspace tutto da configurare. Categorie e stati di default, li personalizzi tu.</p>
+<h4>📧 Email</h4>
+<p>Per smistare la casella di posta. Stati: Da rispondere / In attesa / Archiviata. Funziona meglio una volta a settimana che ogni giorno.</p>
+<h4>💼 Lead commerciali</h4>
+<p>Per la pipeline vendite. Stati: Caldo / Tiepido / Freddo. Filtra per 'Caldo' per ottenere la to-do della settimana.</p>
+<h4>🔧 Ticket assistenza</h4>
+<p>Per smistare richieste tecniche. Stati: Aperto / In lavorazione / Risolto. Filtra per categoria (tipo macchina, area problema).</p>
+<h4>📦 Listino prodotti</h4>
+<p>Per decidere il prossimo catalogo. Stati: Spingere / Da valutare / Out. Importa CSV dal gestionale, smista, esporta.</p>
+<h4>👥 Candidature</h4>
+<p>Per la selezione del personale. Stati: Considerare / Intervistare / Scartare. I dati restano sul tuo dispositivo, privacy-first.</p>
+<h4>💡 Idee progetto</h4>
+<p>Backlog di idee da valutare. Stati: Sviluppare / Parcheggiare / Scartare. Rivedi ogni mese: le idee parcheggiate possono diventare urgenti.</p>
+<h4>📂 Pulizia file & Desktop</h4>
+<p>Per mettere ordine in una cartella. Stati: Tieni / Archivia / Cestina. Usa il bottone <strong>Carica file</strong> per leggere i file dal disco senza Terminale.</p>` },
+
+    { id: 's6', title: 'Importare ed esportare i dati', body:
+`<h4>↓ Importare CSV</h4>
+<p>Clicca <strong>↓ Importa</strong> in toolbar. Carica un file CSV (puoi crearlo da Excel, Google Sheets, ecc.). L'app ti chiede di mappare le colonne ai campi item:</p>
+<ul>
+<li>Una colonna del CSV → Nome (obbligatorio)</li>
+<li>Una colonna → Descrizione (opzionale)</li>
+<li>Una colonna → Categoria (opzionale)</li>
+<li>Una colonna → Valore (opzionale, deve essere numerico)</li>
+<li>Una colonna → Tag (opzionale)</li>
+</ul>
+<h4>↓ Importare JSON</h4>
+<p>I file JSON che TriageHub esporta come backup possono essere re-importati per ripristinare i dati. Click su <strong>↓ Importa</strong> e scegli il file .json.</p>
+<h4>↑ Esportare</h4>
+<p>3 formati disponibili:</p>
+<ul>
+<li><strong>JSON</strong>: backup completo (tutti i workspace). Usalo per fare backup periodici.</li>
+<li><strong>Markdown</strong>: report leggibile, organizzato per stato. Usalo come to-do o per condividere con altri.</li>
+<li><strong>CSV</strong>: tabella, una riga per item. Usalo per re-importare in Excel o altri tool.</li>
+</ul>` },
+
+    { id: 's7', title: 'Privacy e backup', body:
+`<h4>I tuoi dati sono sul tuo dispositivo</h4>
+<p>TriageHub salva tutto in <strong>localStorage</strong>, una memoria locale del tuo browser. Niente server, niente cloud, nessun dato viene trasmesso da nessuna parte.</p>
+<h4>Cosa succede se cambio dispositivo</h4>
+<p>I dati NON si sincronizzano automaticamente. Per passare da Mac a iPhone o viceversa:</p>
+<ol>
+<li>Sul dispositivo di partenza: <strong>↑ Esporta → JSON</strong></li>
+<li>Mandati il file via email o AirDrop</li>
+<li>Sul nuovo dispositivo: <strong>↓ Importa</strong></li>
+</ol>
+<h4>Fai backup regolari</h4>
+<p>Se cancelli la cronologia del browser, perdi i dati. Esporta un backup JSON una volta a settimana, salvalo in una cartella sicura.</p>
+<h4>Dati sensibili</h4>
+<p>TriageHub è privacy-first per design. Puoi usarlo per dati sensibili (CV candidati, listini riservati, ticket clienti) senza preoccuparti: non ci sono terze parti che leggono.</p>` },
+
+    { id: 's8', title: 'Domande frequenti', body:
+`<details><summary>Posso avere più di 3 stati?</summary><p>No. Tre è una scelta di design, è la firma di TriageHub. Se ti serve di più, probabilmente non vuoi un'app di triage ma di project management.</p></details>
+<details><summary>Posso usarlo offline?</summary><p>Sì. TriageHub è una PWA (Progressive Web App) con Service Worker: una volta caricata la prima volta, funziona anche senza connessione.</p></details>
+<details><summary>Posso installarlo come app?</summary><p>Sì, sia su iPhone (Safari → bottone Condividi → Aggiungi a Home) che su Mac (Chrome → menu → Installa TriageHub).</p></details>
+<details><summary>Cosa succede se cancello la cronologia browser?</summary><p>Perdi i dati. Per questo è importante esportare backup JSON regolarmente.</p></details>
+<details><summary>Posso modificare gli stati di un template?</summary><p>Sì. Dopo aver applicato un template, clicca 🏷️ Stati in toolbar e modifica nome, emoji, colore di ogni stato. La struttura a 3 stati resta.</p></details>
+<details><summary>Quanti workspace posso avere?</summary><p>Tecnicamente illimitati, ma per usabilità consigliamo 5-10. Più di così è difficile da gestire.</p></details>
+<details><summary>Posso condividere un workspace con qualcuno?</summary><p>Non esiste sync. Puoi esportare il workspace in JSON e mandarlo via email/Slack/Drive. Chi lo riceve lo importa.</p></details>
+<details><summary>L'app costa qualcosa?</summary><p>No. È gratuita, open source (MIT license), nessun account. Made in Italy by Alessandro Pezzali.</p></details>` }
+  ],
+  en: [
+    { id: 's1', title: 'What is TriageHub', body:
+`<p>TriageHub is an app to <strong>sort things</strong>. When you have a list of items (emails, leads, files, ideas, candidates, products) and you must decide what to do with each one, TriageHub helps you do it fast and visually.</p>
+<p>It is called 'triage' like in the ER: in front of many requests, you decide one at a time which of 3 categories that request belongs to. Nothing more, nothing less.</p>
+<h4>Why only 3 states?</h4>
+<p>Three is the magic number of fast decisions. With 5 states you stop to think; with 2 you have no nuance. Three is the balance: 'yes / maybe / no', 'hot / warm / cold', 'keep / archive / trash'.</p>
+<h4>When you don't need TriageHub</h4>
+<p>If you have already decided what to do with your items, the app is not useful. TriageHub is for the moment of DECIDING, not of executing.</p>` },
+
+    { id: 's2', title: 'How to use the app in 60 seconds', body:
+`<ol>
+<li>Click <strong>+ New workspace</strong> in the cards on top (or <strong>✨ Templates</strong> in the toolbar).</li>
+<li>Pick a template that fits (Email, Leads, Desktop cleanup, etc.). The app creates a workspace with categories and states pre-configured.</li>
+<li>Add your items: click <strong>+ New</strong>, or import a CSV with <strong>↓ Import</strong>.</li>
+<li>Sort by clicking the state of each item (the colored cards).</li>
+<li>When you're done, click <strong>↑ Export</strong> to download the report.</li>
+</ol>
+<p>That's it. No accounts, no cloud, no sync: your data stays on your device.</p>` },
+
+    { id: 's3', title: 'Workspaces, Categories, States', body:
+`<p>TriageHub is built on 3 concepts, from biggest to smallest:</p>
+<h4>🗂 Workspace</h4>
+<p>A workspace is a self-contained container with its items, categories, 3 states. You have multiple workspaces to manage parallel flows: one for Email, one for Leads, one for Catalog, one for Desktop. They appear as <strong>cards</strong> above the search bar.</p>
+<h4>📁 Categories</h4>
+<p>Categories group your items. They are filters: click a category and you see only items in it. Manage them under <strong>📁 Categories</strong>.</p>
+<h4>🎯 States</h4>
+<p>The 3 customizable states (names, emoji, colors of your choice). They are the <strong>core</strong> of the app: every item ends up in one of the 3. Edit them under <strong>🏷️ States</strong>.</p>
+<h4>✏️ Items</h4>
+<p>The single elements you triage. Each item has:</p>
+<ul>
+<li><strong>Name</strong> (required)</li>
+<li><strong>Description</strong> (free text)</li>
+<li><strong>Category</strong> (to group)</li>
+<li><strong>Numeric value</strong> (e.g. €, MB, score)</li>
+<li><strong>Tag</strong> (free text for quick notes)</li>
+<li><strong>Links</strong> (useful URLs)</li>
+</ul>` },
+
+    { id: 's4', title: 'Tutorial: tidy the Desktop in 15 minutes', body:
+`<p>Universal practical case. You have a Desktop with dozens or hundreds of files piled up. You want to clean it up.</p>
+<h4>Step 1: create the workspace</h4>
+<p>Open TriageHub, click <strong>+ New workspace</strong> and pick <strong>📂 File & Desktop cleanup</strong>.</p>
+<h4>Step 2: load the files</h4>
+<p>In the empty state you see the button <strong>📥 Load files to triage</strong>. Click. The system dialog opens. Go to the Desktop, select files (Cmd+A for all), confirm. The app reads name, size and date of each file.</p>
+<p><strong>🔒 Important:</strong> files are NOT uploaded anywhere. They stay on your Desktop, untouched. The app reads only metadata.</p>
+<h4>Step 3: triage</h4>
+<p>For each file you'll see a card. Click the right state:</p>
+<ul>
+<li><strong>📌 Keep</strong> — it belongs there, leave it</li>
+<li><strong>🗄️ Archive</strong> — worth keeping, but not on the Desktop</li>
+<li><strong>🗑️ Trash</strong> — no longer needed</li>
+</ul>
+<h4>Step 4: export and act</h4>
+<p>When you're done, click <strong>↑ Export → Markdown report</strong>. A file with 3 lists is downloaded:</p>
+<ul>
+<li>Files to keep (leave them alone)</li>
+<li>Files to archive (move to Documents, Photos, etc.)</li>
+<li>Files to trash (drop them in the Bin)</li>
+</ul>
+<p>Open Finder and follow the report. In 15 minutes the Desktop is clean.</p>` },
+
+    { id: 's5', title: 'The 8 ready-made templates', body:
+`<p>TriageHub includes 8 ready templates, one for each common use case.</p>
+<h4>⚪ Blank</h4>
+<p>A workspace from scratch. Default categories and states, you customize them.</p>
+<h4>📧 Email</h4>
+<p>To triage your inbox. States: To reply / Waiting / Archived. Works better once a week than every day.</p>
+<h4>💼 Sales Leads</h4>
+<p>For the sales pipeline. States: Hot / Warm / Cold. Filter on 'Hot' to get your weekly to-do.</p>
+<h4>🔧 Support Tickets</h4>
+<p>To triage technical requests. States: Open / In progress / Resolved. Filter by category (machine type, problem area).</p>
+<h4>📦 Product Catalog</h4>
+<p>To decide the next catalog. States: Promote / Review / Out. Import CSV from your system, triage, export.</p>
+<h4>👥 Job Applications</h4>
+<p>For HR screening. States: Consider / Interview / Reject. Data stays on your device, privacy-first.</p>
+<h4>💡 Project Ideas</h4>
+<p>Idea backlog. States: Develop / Park / Drop. Revisit monthly: parked ideas can become urgent.</p>
+<h4>📂 File & Desktop cleanup</h4>
+<p>To tidy a folder. States: Keep / Archive / Trash. Use the <strong>Load files</strong> button to read files from disk without the Terminal.</p>` },
+
+    { id: 's6', title: 'Import and export data', body:
+`<h4>↓ Import CSV</h4>
+<p>Click <strong>↓ Import</strong> in the toolbar. Load a CSV file (you can create one from Excel, Google Sheets, etc.). The app asks you to map columns to item fields:</p>
+<ul>
+<li>One CSV column → Name (required)</li>
+<li>One column → Description (optional)</li>
+<li>One column → Category (optional)</li>
+<li>One column → Value (optional, must be numeric)</li>
+<li>One column → Tag (optional)</li>
+</ul>
+<h4>↓ Import JSON</h4>
+<p>JSON files exported by TriageHub as backup can be re-imported to restore data. Click <strong>↓ Import</strong> and pick the .json file.</p>
+<h4>↑ Export</h4>
+<p>3 formats available:</p>
+<ul>
+<li><strong>JSON</strong>: full backup (all workspaces). Use it for periodic backups.</li>
+<li><strong>Markdown</strong>: readable report, grouped by state. Use it as to-do or to share.</li>
+<li><strong>CSV</strong>: table, one row per item. Use it to re-import into Excel or other tools.</li>
+</ul>` },
+
+    { id: 's7', title: 'Privacy and backup', body:
+`<h4>Your data is on your device</h4>
+<p>TriageHub stores everything in <strong>localStorage</strong>, a local memory of your browser. No server, no cloud, no data sent anywhere.</p>
+<h4>What happens if I switch device</h4>
+<p>Data does NOT sync automatically. To go from Mac to iPhone or vice versa:</p>
+<ol>
+<li>On the source device: <strong>↑ Export → JSON</strong></li>
+<li>Send the file to yourself via email or AirDrop</li>
+<li>On the new device: <strong>↓ Import</strong></li>
+</ol>
+<h4>Take regular backups</h4>
+<p>If you clear browser history, you lose data. Export a JSON backup once a week, save it in a safe folder.</p>
+<h4>Sensitive data</h4>
+<p>TriageHub is privacy-first by design. Use it for sensitive data (candidate CVs, confidential price lists, customer tickets) without worry: no third parties read it.</p>` },
+
+    { id: 's8', title: 'Frequently asked questions', body:
+`<details><summary>Can I have more than 3 states?</summary><p>No. Three is a design choice, the signature of TriageHub. If you need more, you probably don't want a triage app but a project management one.</p></details>
+<details><summary>Can I use it offline?</summary><p>Yes. TriageHub is a PWA (Progressive Web App) with Service Worker: once loaded the first time, it works also without connection.</p></details>
+<details><summary>Can I install it as an app?</summary><p>Yes, both on iPhone (Safari → Share button → Add to Home) and on Mac (Chrome → menu → Install TriageHub).</p></details>
+<details><summary>What if I clear browser history?</summary><p>You lose data. That's why exporting JSON backups regularly matters.</p></details>
+<details><summary>Can I edit the states of a template?</summary><p>Yes. After applying a template, click 🏷️ States in the toolbar and edit name, emoji, color of each state. The 3-state structure stays.</p></details>
+<details><summary>How many workspaces can I have?</summary><p>Technically unlimited, but for usability we recommend 5-10. More than that is hard to manage.</p></details>
+<details><summary>Can I share a workspace with someone?</summary><p>There is no sync. You can export the workspace as JSON and send it via email/Slack/Drive. The recipient imports it.</p></details>
+<details><summary>Does the app cost anything?</summary><p>No. It's free, open source (MIT license), no account. Made in Italy by Alessandro Pezzali.</p></details>` }
+  ]
+};
 
 // ============================================
 // STATE — v1.2 schema (workspaces)
@@ -1601,17 +2298,35 @@ function renderItems() {
   if (!ws) { main.innerHTML = ''; return; }
 
   if (ws.items.length === 0) {
-    // Galleria già visibile: niente bottone "Scegli un template" qui.
-    main.innerHTML = `
-      <div class="empty-state">
-        <span class="empty-state-emoji">🎯</span>
-        <h2>${t('emptyTitle')}</h2>
-        <p>${escapeHtml(t('emptyText'))}</p>
-        <div class="empty-actions">
-          <button class="btn primary" onclick="document.getElementById('btn-add').click()">${escapeHtml(t('emptyAddBtn'))}</button>
-          <button class="btn" onclick="document.getElementById('btn-import').click()">${escapeHtml(t('emptyImportBtn'))}</button>
-        </div>
-      </div>`;
+    // 1) Guida contestuale, se non disabilitata.
+    let html = '';
+    if (!ws.hideGuide) html += renderMicroGuide(ws);
+    // 2) Empty state classico — variante speciale per template "cleanup".
+    if (ws.templateId === 'cleanup') {
+      html += `
+        <div class="empty-state">
+          <span class="empty-state-emoji">📂</span>
+          <h2>${t('emptyTitle')}</h2>
+          <div class="empty-actions">
+            <button class="btn primary" data-guide-action="load-files">${escapeHtml(t('desktopLoadFiles'))}</button>
+            <button class="btn" data-guide-action="new-item">${escapeHtml(t('guideAddManually'))}</button>
+          </div>
+          <p class="micro-guide-privacy" style="margin-top:14px">${escapeHtml(t('desktopLoadFilesPrivacy'))}</p>
+        </div>`;
+    } else {
+      html += `
+        <div class="empty-state">
+          <span class="empty-state-emoji">🎯</span>
+          <h2>${t('emptyTitle')}</h2>
+          <p>${escapeHtml(t('emptyText'))}</p>
+          <div class="empty-actions">
+            <button class="btn primary" data-guide-action="new-item">${escapeHtml(t('emptyAddBtn'))}</button>
+            <button class="btn" data-guide-action="import">${escapeHtml(t('emptyImportBtn'))}</button>
+          </div>
+        </div>`;
+    }
+    main.innerHTML = html;
+    wireGuideActions(main);
     return;
   }
 
@@ -2307,6 +3022,155 @@ document.getElementById('btn-ws-delete-confirm').addEventListener('click', () =>
   toast(t('wsDeleted', removedName));
   deleteTargetWsId = null;
   deleteExportedFlag = false;
+});
+
+// ============================================
+// ONBOARDING — micro-guide + file picker (cleanup) + manuale (v1.2.2)
+// ============================================
+
+// Mappa MIME/estensione → categoria del workspace (sui nomi del template cleanup).
+function findCategoryByName(ws, ...names) {
+  if (!ws) return null;
+  const lower = names.map(n => n.toLowerCase());
+  for (const cat of ws.categories) {
+    const v = cat.name;
+    const candidates = (v && typeof v === 'object')
+      ? [v.it, v.en].filter(Boolean)
+      : [v];
+    if (candidates.some(c => lower.includes(String(c).toLowerCase()))) return cat.id;
+  }
+  return null;
+}
+
+function detectFileCategory(file, ws) {
+  const type = (file.type || '').toLowerCase();
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (type.startsWith('image/'))
+    return findCategoryByName(ws, 'Immagini', 'Images');
+  if (type.startsWith('audio/') || type.startsWith('video/'))
+    return findCategoryByName(ws, 'Audio');
+  if (type === 'application/pdf')
+    return findCategoryByName(ws, 'Documenti', 'Documents');
+  if (['xls','xlsx','csv','numbers','ods'].includes(ext)
+      || /excel|spreadsheet|csv/.test(type))
+    return findCategoryByName(ws, 'Excel & Listini', 'Spreadsheets & Pricelists');
+  if (type.startsWith('text/')
+      || /word|document|opendocument/.test(type)
+      || ['doc','docx','rtf','txt','md','pages','odt'].includes(ext))
+    return findCategoryByName(ws, 'Documenti', 'Documents');
+  return findCategoryByName(ws, 'Da capire', 'Unknown');
+}
+
+function formatItalianDate(ts) {
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return '';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+
+// Inserisce N item nel workspace attivo a partire dai File selezionati
+// dall'<input type="file" multiple>. Privacy: leggiamo solo i metadata.
+function handleCleanupFiles(fileList) {
+  const ws = activeWorkspace();
+  if (!ws) return;
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  files.forEach(f => {
+    const sizeMB = Math.round((f.size / (1024 * 1024)) * 100) / 100;
+    ws.items.unshift({
+      id: uid(),
+      name: f.name,
+      desc: '',
+      cat: detectFileCategory(f, ws),
+      tag: f.lastModified ? formatItalianDate(f.lastModified) : '',
+      value: sizeMB,
+      links: [],
+      created: new Date().toISOString()
+    });
+  });
+  saveState();
+  renderAll();
+  toast(t('desktopLoadedFiles', files.length));
+}
+
+function triggerCleanupFilePicker() {
+  document.getElementById('cleanup-files').click();
+}
+document.getElementById('cleanup-files').addEventListener('change', e => {
+  if (e.target.files && e.target.files.length) handleCleanupFiles(e.target.files);
+  e.target.value = ''; // reset così il change si triggera anche con stessa selezione
+});
+
+// Render della micro-guida sopra l'empty state. Restituisce HTML stringa.
+function renderMicroGuide(ws) {
+  const guide = getMicroGuide(ws);
+  if (!guide) return '';
+  const stepsHtml = guide.steps.map((s, i) => `
+    <div class="mg-step">
+      <div class="mg-step-num">${escapeHtml(s.emoji || (i + 1))}</div>
+      <div class="mg-step-body">
+        <div class="mg-step-title">${escapeHtml(s.title)}</div>
+        <div class="mg-step-text">${s.body}</div>
+      </div>
+    </div>`).join('');
+  const actionsHtml = guide.actions.map(a =>
+    `<button class="btn ${a.primary ? 'primary' : ''}" data-guide-action="${escapeHtml(a.id)}">${escapeHtml(a.label)}</button>`
+  ).join('');
+  const isCleanup = ws.templateId === 'cleanup';
+  return `<div class="micro-guide" id="micro-guide">
+    <button class="micro-guide-dismiss" id="micro-guide-dismiss" title="${escapeHtml(t('guideDismiss'))}">${escapeHtml(t('guideDismiss'))}</button>
+    <h3 class="micro-guide-title">${escapeHtml(guide.title)}</h3>
+    <p class="micro-guide-intro">${escapeHtml(guide.intro)}</p>
+    <div class="micro-guide-steps">${stepsHtml}</div>
+    <p class="micro-guide-tip">${escapeHtml(guide.tip)}</p>
+    <div class="micro-guide-actions">${actionsHtml}</div>
+    ${isCleanup ? `<p class="micro-guide-privacy">${escapeHtml(t('desktopLoadFilesPrivacy'))}</p>` : ''}
+  </div>`;
+}
+
+// Aggancia handler ai bottoni [data-guide-action] dentro un container.
+function wireGuideActions(rootEl) {
+  rootEl.querySelectorAll('[data-guide-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.guideAction;
+      const ws = activeWorkspace();
+      if (action === 'load-files')      triggerCleanupFilePicker();
+      else if (action === 'new-item')   openItemDialog();
+      else if (action === 'import')     openDialog('dlg-import');
+      else if (action === 'categories') document.getElementById('btn-categories').click();
+      else if (action === 'statuses')   document.getElementById('btn-statuses').click();
+      else if (action === 'add-manual') {
+        if (ws) { ws.hideGuide = true; saveState(); renderAll(); }
+      }
+    });
+  });
+  const dismiss = rootEl.querySelector('#micro-guide-dismiss');
+  if (dismiss) {
+    dismiss.addEventListener('click', () => {
+      const ws = activeWorkspace();
+      if (!ws) return;
+      ws.hideGuide = true;
+      saveState();
+      renderAll();
+    });
+  }
+}
+
+// ----- Manuale in-app -----
+function renderManual() {
+  const body = document.getElementById('manual-body');
+  const sections = MANUAL_HTML[currentLang] || MANUAL_HTML.it;
+  body.innerHTML = sections.map(s => `
+    <details class="manual-section">
+      <summary>${escapeHtml(s.title)}</summary>
+      <div class="manual-section-body">${s.body}</div>
+    </details>
+  `).join('');
+}
+document.getElementById('btn-help').addEventListener('click', () => {
+  renderManual();
+  openDialog('dlg-manual');
 });
 
 // ============================================

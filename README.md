@@ -24,6 +24,8 @@ I gestionali sono pieni di filtri, ma quando hai una lista di 200 email, 150 lea
 ### Caratteristiche
 
 - 🎯 **7 template precaricati**: Email, Lead commerciali, Ticket assistenza, Listino prodotti, Candidature HR, Idee progetto, **Pulizia file & Desktop**
+- 📚 **Micro-guide contestuali** per ogni template + manuale in-app dal bottone Aiuto
+- 📂 **File picker nativo** per il template Pulizia Desktop: niente Terminale, l'app legge nome e dimensione direttamente dal Finder
 - ✏️ **Tutto personalizzabile**: nome, emoji e colore di stati e categorie
 - 📥 **Import CSV** con auto-rilevamento delle colonne
 - 📤 **Import/Export JSON** per backup completi
@@ -87,6 +89,8 @@ CRMs and inboxes are full of filters, but when you have a list of 200 emails, 15
 ### Features
 
 - 🎯 **7 ready-made templates**: Email, Sales Leads, Support Tickets, Product Catalog, HR Applications, Project Ideas, **File & Desktop cleanup**
+- 📚 **Contextual micro-guides** for every template + in-app manual via the Help button
+- 📂 **Native file picker** for the Desktop cleanup template: no Terminal needed, the app reads name and size from Finder directly
 - ✏️ **Fully customizable**: names, emoji and colors for states and categories
 - 📥 **CSV import** with column auto-detection
 - 📤 **JSON import/export** for full backups
