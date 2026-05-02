@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0071e3">
-<meta name="description" content="TriageHub — Smista qualsiasi cosa in tre stati. PWA gratuita, offline, privacy-first.">
-<title>TriageHub — Smista qualsiasi cosa</title>
+<meta name="description" content="TriageHub — Smista i file del Desktop e le righe Excel in tre stati. 3 template focalizzati con automazione vera. PWA gratuita, offline, privacy-first.">
+<title>TriageHub — Smista file e righe Excel</title>
 
 <!-- PWA -->
 <link rel="manifest" href="./manifest.json">
@@ -20,6 +20,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+<!-- SheetJS (Apache 2.0) — bundled locally, precached by SW for offline-first parsing of .xlsx/.csv/.tsv -->
+<script src="./xlsx.full.min.js" defer></script>
 
 <style>
   :root {
@@ -920,6 +923,23 @@
   .export-advanced[open] .export-advanced-summary::before { transform: rotate(90deg); }
   .export-advanced-desc { margin: 6px 0 12px; }
 
+  /* ===== XLSX item details (v1.3.0) ===== */
+  .item-xlsx-details { margin: 6px 0 12px; }
+  .item-xlsx-summary {
+    cursor: pointer; font-size: 13px; color: var(--text-secondary);
+    padding: 4px 0; user-select: none; list-style: none;
+  }
+  .item-xlsx-summary::-webkit-details-marker { display: none; }
+  .item-xlsx-summary::before { content: "▸ "; display: inline-block; transition: transform .15s ease; }
+  .item-xlsx-details[open] .item-xlsx-summary::before { transform: rotate(90deg); }
+  .item-xlsx-grid {
+    margin-top: 8px; padding: 10px 12px; background: var(--bg-soft, rgba(0,0,0,0.02));
+    border-radius: 8px; display: grid; grid-template-columns: minmax(120px, max-content) 1fr;
+    gap: 4px 12px; font-size: 13px;
+  }
+  .item-xlsx-label { font-weight: 600; color: var(--text-secondary); }
+  .item-xlsx-value { color: var(--text); word-break: break-word; }
+
   /* ===== PDF export (print) — applies only inside the print iframe ===== */
   @media print {
     @page { margin: 18mm 16mm; }
@@ -972,6 +992,7 @@
         <button class="btn" id="btn-export">↑ <span data-i18n="export">Esporta</span></button>
         <button class="btn" id="btn-categories">🗂 <span data-i18n="categories">Categorie</span></button>
         <button class="btn" id="btn-statuses">🏷 <span data-i18n="statuses">Stati</span></button>
+        <button class="btn hidden" id="btn-xlsx-mapping" data-i18n="xlsxMappingBtn">🔧 Mapping colonne</button>
         <button class="btn" id="btn-help">❓ <span data-i18n="helpButton">Aiuto</span></button>
         <button class="btn danger" id="btn-clear" data-i18n-attr="title:resetTitle">↺</button>
       </div>
@@ -1093,6 +1114,10 @@
   <div class="dialog-body">
     <p class="small" style="margin-bottom:14px" data-i18n="exportIntro">Salva il tuo report in un file. Scegli il formato che preferisci.</p>
     <div class="export-options">
+      <button class="export-option export-option--primary hidden" id="exp-xlsx">
+        <span class="export-option-title" data-i18n="xlsxExportLabel">📊 Excel organizzato</span>
+        <span class="export-option-desc" data-i18n="xlsxExportLabelDesc">Scarica un nuovo file .xlsx con la colonna Stato o 3 fogli separati. Solo per workspace Excel.</span>
+      </button>
       <button class="export-option export-option--primary" id="exp-pdf">
         <span class="export-option-title" data-i18n="exportPDF">📄 PDF (consigliato)</span>
         <span class="export-option-desc" data-i18n="exportPDFDesc">Documento stampabile, leggibile su qualsiasi dispositivo. Apre la finestra di stampa: scegli "Salva come PDF".</span>
@@ -1252,6 +1277,57 @@
 <!-- File picker nascosto per il template "Pulizia file & Desktop" -->
 <input type="file" id="cleanup-files" multiple hidden>
 
+<!-- File picker nascosto per il template "Lista Excel" (v1.3.0) -->
+<input type="file" id="xlsx-file" accept=".xlsx,.xls,.csv,.tsv" hidden>
+
+<!-- DIALOG: Mapping colonne Excel -->
+<dialog id="dlg-xlsx-mapping">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="xlsxMappingTitle">Mapping colonne</h2>
+    <button class="dialog-close" data-close="dlg-xlsx-mapping">×</button>
+  </div>
+  <div class="dialog-body">
+    <p class="small" style="margin-bottom:14px" data-i18n="xlsxMappingIntro">Scegli quale colonna usare come nome, raggruppa per categoria, rinomina o nascondi colonne. Le scelte si applicano agli item esistenti.</p>
+    <div class="field" style="margin-bottom:14px">
+      <label data-i18n="xlsxNameCol">Colonna nome</label>
+      <select id="xlsx-name-col"></select>
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label data-i18n="xlsxCatCol">Colonna categoria (opzionale)</label>
+      <select id="xlsx-cat-col"></select>
+      <p class="small" style="margin-top:4px" data-i18n="xlsxCatColHint">Raggruppa gli item per il valore di questa colonna.</p>
+    </div>
+    <div style="margin-bottom:8px"><strong data-i18n="xlsxColumnsTitle">Colonne</strong></div>
+    <p class="small" style="margin-bottom:10px" data-i18n="xlsxColumnsHint">Rinomina o nascondi le colonne. La colonna nome non si nasconde.</p>
+    <ul class="editor-list" id="xlsx-cols-list" style="max-height:300px; overflow-y:auto"></ul>
+  </div>
+  <div class="dialog-footer">
+    <button class="btn" data-close="dlg-xlsx-mapping" data-i18n="cancel">Annulla</button>
+    <button class="btn primary" id="xlsx-mapping-apply" data-i18n="apply">Applica</button>
+  </div>
+</dialog>
+
+<!-- DIALOG: Esporta Excel organizzato (v1.3.0) -->
+<dialog id="dlg-xlsx-export">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="xlsxExportTitle">Excel organizzato</h2>
+    <button class="dialog-close" data-close="dlg-xlsx-export">×</button>
+  </div>
+  <div class="dialog-body">
+    <p class="small" style="margin-bottom:14px" data-i18n="xlsxExportIntro">Scegli come vuoi organizzare il file Excel scaricato.</p>
+    <div class="export-options">
+      <button class="export-option export-option--primary" id="xlsx-exp-single">
+        <span class="export-option-title" data-i18n="xlsxExportSingle">📄 Foglio unico con colonna Stato</span>
+        <span class="export-option-desc" data-i18n="xlsxExportSingleDesc">Tutte le righe nello stesso foglio, con una nuova colonna "Stato" alla fine.</span>
+      </button>
+      <button class="export-option" id="xlsx-exp-multi">
+        <span class="export-option-title" data-i18n="xlsxExportMulti">📚 3 fogli separati per stato</span>
+        <span class="export-option-desc" data-i18n="xlsxExportMultiDesc">Un foglio per "Da tenere", uno per "Da archiviare", uno per "Da cestinare".</span>
+      </button>
+    </div>
+  </div>
+</dialog>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1320,6 +1396,32 @@ const I18N = {
     pdfPrepared: "✓ Apro la finestra di stampa: scegli \"Salva come PDF\"",
     wordSaved: "✓ Documento Word scaricato",
     txtSaved: "✓ Testo scaricato",
+    xlsxMappingTitle: "Mapping colonne",
+    xlsxMappingIntro: "Scegli quale colonna usare come nome, raggruppa per categoria, rinomina o nascondi colonne. Le scelte si applicano agli item esistenti.",
+    xlsxNameCol: "Colonna nome",
+    xlsxCatCol: "Colonna categoria (opzionale)",
+    xlsxCatColHint: "Raggruppa gli item per il valore di questa colonna.",
+    xlsxColumnsTitle: "Colonne",
+    xlsxColumnsHint: "Rinomina o nascondi le colonne. La colonna nome non si nasconde.",
+    xlsxNoCategory: "Nessuna",
+    xlsxColShown: "Mostra", xlsxColHidden: "Nascondi",
+    xlsxLoadFile: "📥 Carica file Excel/CSV",
+    xlsxLoadHint: "Accetta .xlsx, .xls, .csv, .tsv. Il file resta sul tuo dispositivo.",
+    xlsxLoaded: n => `✓ ${n} righe importate`,
+    xlsxParseError: "⚠️ Impossibile leggere il file. Verifica che sia un .xlsx, .csv o .tsv valido.",
+    xlsxLibMissing: "⚠️ Libreria Excel non caricata. Ricarica la pagina.",
+    xlsxMappingApplied: "✓ Mapping aggiornato",
+    xlsxMappingBtn: "🔧 Mapping colonne",
+    xlsxExportTitle: "Excel organizzato",
+    xlsxExportIntro: "Scegli come vuoi organizzare il file Excel scaricato.",
+    xlsxExportSingle: "📄 Foglio unico con colonna Stato",
+    xlsxExportSingleDesc: "Tutte le righe nello stesso foglio, con una nuova colonna \"Stato\" alla fine.",
+    xlsxExportMulti: "📚 3 fogli separati per stato",
+    xlsxExportMultiDesc: "Un foglio per \"Da tenere\", uno per \"Da archiviare\", uno per \"Da cestinare\".",
+    xlsxExportSaved: "✓ Excel scaricato",
+    xlsxExportLabel: "📊 Excel organizzato",
+    xlsxExportLabelDesc: "Scarica un nuovo file .xlsx con la colonna Stato o 3 fogli separati. Solo per workspace Excel.",
+    apply: "Applica",
     nothingToExport: "Nessun dato da esportare", allCleared: "✓ Tutto cancellato",
     storageFull: "⚠️ Spazio esaurito sul dispositivo",
     catManageHint: "Gestisci le categorie dal pulsante 🗂 in toolbar.",
@@ -1424,6 +1526,32 @@ const I18N = {
     pdfPrepared: "✓ Opening the print dialog: choose \"Save as PDF\"",
     wordSaved: "✓ Word document downloaded",
     txtSaved: "✓ Text file downloaded",
+    xlsxMappingTitle: "Column mapping",
+    xlsxMappingIntro: "Pick the name column, group by category, rename or hide columns. Applies to existing items.",
+    xlsxNameCol: "Name column",
+    xlsxCatCol: "Category column (optional)",
+    xlsxCatColHint: "Group items by the value of this column.",
+    xlsxColumnsTitle: "Columns",
+    xlsxColumnsHint: "Rename or hide columns. The name column cannot be hidden.",
+    xlsxNoCategory: "None",
+    xlsxColShown: "Show", xlsxColHidden: "Hide",
+    xlsxLoadFile: "📥 Load Excel/CSV file",
+    xlsxLoadHint: "Accepts .xlsx, .xls, .csv, .tsv. The file stays on your device.",
+    xlsxLoaded: n => `✓ ${n} rows imported`,
+    xlsxParseError: "⚠️ Couldn't read the file. Make sure it's a valid .xlsx, .csv or .tsv.",
+    xlsxLibMissing: "⚠️ Excel library not loaded. Reload the page.",
+    xlsxMappingApplied: "✓ Mapping updated",
+    xlsxMappingBtn: "🔧 Column mapping",
+    xlsxExportTitle: "Organized Excel",
+    xlsxExportIntro: "Pick how to organize the downloaded Excel file.",
+    xlsxExportSingle: "📄 Single sheet with Status column",
+    xlsxExportSingleDesc: "All rows in one sheet with a new \"Status\" column at the end.",
+    xlsxExportMulti: "📚 3 sheets, one per status",
+    xlsxExportMultiDesc: "One sheet for \"To keep\", one for \"To archive\", one for \"To trash\".",
+    xlsxExportSaved: "✓ Excel downloaded",
+    xlsxExportLabel: "📊 Organized Excel",
+    xlsxExportLabelDesc: "Download a new .xlsx with a Status column or 3 separate sheets. Only for Excel workspaces.",
+    apply: "Apply",
     nothingToExport: "Nothing to export", allCleared: "✓ All cleared",
     storageFull: "⚠️ Device storage full",
     catManageHint: "Manage categories from the 🗂 toolbar button.",
@@ -1565,114 +1693,18 @@ const TEMPLATES = [
     blank: true
   },
   {
-    id: 'email', emoji: '📧',
-    name: { it: 'Email', en: 'Email' },
-    desc: { it: 'Triage della casella di posta. Esporta CSV da Outlook/Gmail e importa.', en: 'Inbox triage. Export CSV from Outlook/Gmail then import.' },
+    id: 'xlsx', emoji: '📊',
+    name: { it: 'Lista Excel', en: 'Excel List' },
+    desc: {
+      it: 'Carica .xlsx, .csv o .tsv. Smista le righe in 3 stati. Esporta un nuovo Excel organizzato.',
+      en: 'Upload .xlsx, .csv or .tsv. Sort rows into 3 states. Export a new organized Excel.'
+    },
     statuses: [
-      { label: { it: 'Da rispondere', en: 'To reply' }, emoji: '✉️', color: '#34c759' },
-      { label: { it: 'In attesa', en: 'Waiting' }, emoji: '⏳', color: '#ff9500' },
-      { label: { it: 'Archiviata', en: 'Archived' }, emoji: '📦', color: '#86868b' }
+      { label: { it: 'Da tenere',     en: 'To keep'    }, emoji: '📌',  color: '#34c759' },
+      { label: { it: 'Da archiviare', en: 'To archive' }, emoji: '🗄️', color: '#ff9500' },
+      { label: { it: 'Da cestinare',  en: 'To trash'   }, emoji: '🗑️', color: '#86868b' }
     ],
-    categories: [
-      { name: { it: 'Da clienti', en: 'From clients' }, emoji: '👥' },
-      { name: { it: 'Da fornitori', en: 'From suppliers' }, emoji: '🏢' },
-      { name: { it: 'Team interno', en: 'Internal team' }, emoji: '🧑‍💻' },
-      { name: { it: 'Newsletter', en: 'Newsletter' }, emoji: '📰' },
-      { name: { it: 'Urgenti', en: 'Urgent' }, emoji: '⚠️' },
-      { name: { it: 'Riferimento', en: 'Reference' }, emoji: '🗒' }
-    ],
-    valueUnit: ''
-  },
-  {
-    id: 'leads', emoji: '💼',
-    name: { it: 'Lead commerciali', en: 'Sales leads' },
-    desc: { it: 'Pipeline vendite. Caldo/tiepido/freddo per ogni lead.', en: 'Sales pipeline. Hot/warm/cold for each lead.' },
-    statuses: [
-      { label: { it: 'Caldo', en: 'Hot' }, emoji: '🔥', color: '#ff3b30' },
-      { label: { it: 'Tiepido', en: 'Warm' }, emoji: '☀️', color: '#ff9500' },
-      { label: { it: 'Freddo', en: 'Cold' }, emoji: '❄️', color: '#0071e3' }
-    ],
-    categories: [
-      { name: { it: 'Nord Italia', en: 'North Italy' }, emoji: '⛰️' },
-      { name: { it: 'Centro Italia', en: 'Central Italy' }, emoji: '🏛️' },
-      { name: { it: 'Sud Italia', en: 'South Italy' }, emoji: '🌅' },
-      { name: { it: 'Estero', en: 'International' }, emoji: '🌍' },
-      { name: { it: 'Nuovi', en: 'New' }, emoji: '✨' },
-      { name: { it: 'Da richiamare', en: 'Follow-up' }, emoji: '📞' }
-    ],
-    valueUnit: '€'
-  },
-  {
-    id: 'tickets', emoji: '🔧',
-    name: { it: 'Ticket assistenza', en: 'Support tickets' },
-    desc: { it: 'Smista chiamate di assistenza tecnica per tipo macchina.', en: 'Sort technical support requests by machine type.' },
-    statuses: [
-      { label: { it: 'Aperto', en: 'Open' }, emoji: '🔴', color: '#ff3b30' },
-      { label: { it: 'In lavorazione', en: 'In progress' }, emoji: '🟡', color: '#ff9500' },
-      { label: { it: 'Risolto', en: 'Resolved' }, emoji: '🟢', color: '#34c759' }
-    ],
-    categories: [
-      { name: { it: 'Equilibratrici', en: 'Wheel balancers' }, emoji: '⚙️' },
-      { name: { it: 'Smontagomme', en: 'Tyre changers' }, emoji: '🛞' },
-      { name: { it: 'Sollevatori', en: 'Lifts' }, emoji: '🚗' },
-      { name: { it: 'Allineamento', en: 'Alignment' }, emoji: '📐' },
-      { name: { it: 'Compressori', en: 'Compressors' }, emoji: '🌬️' },
-      { name: { it: 'Altro', en: 'Other' }, emoji: '🛠️' }
-    ],
-    valueUnit: ''
-  },
-  {
-    id: 'catalog', emoji: '📦',
-    name: { it: 'Listino prodotti', en: 'Product catalog' },
-    desc: { it: 'Decide cosa pubblicare nel prossimo catalogo. Importa CSV listino.', en: 'Decide what to publish in your next catalog. Import a price-list CSV.' },
-    statuses: [
-      { label: { it: 'Spingere', en: 'Promote' }, emoji: '🚀', color: '#34c759' },
-      { label: { it: 'Da valutare', en: 'Review' }, emoji: '🔍', color: '#ff9500' },
-      { label: { it: 'Out', en: 'Out' }, emoji: '📦', color: '#86868b' }
-    ],
-    categories: [
-      { name: { it: 'Bestseller', en: 'Bestsellers' }, emoji: '⭐' },
-      { name: { it: 'Novità', en: 'New' }, emoji: '✨' },
-      { name: { it: 'Promozione', en: 'On sale' }, emoji: '🏷️' },
-      { name: { it: 'Stock alto', en: 'High stock' }, emoji: '📊' },
-      { name: { it: 'Margine basso', en: 'Low margin' }, emoji: '⚠️' },
-      { name: { it: 'Da rivedere prezzo', en: 'Reprice' }, emoji: '💸' }
-    ],
-    valueUnit: '€'
-  },
-  {
-    id: 'hr', emoji: '👥',
-    name: { it: 'Candidature', en: 'Job applications' },
-    desc: { it: 'Selezione personale. Considerare/intervistare/scartare.', en: 'HR screening. Consider/interview/reject.' },
-    statuses: [
-      { label: { it: 'Considerare', en: 'Consider' }, emoji: '👀', color: '#0071e3' },
-      { label: { it: 'Intervistare', en: 'Interview' }, emoji: '💬', color: '#34c759' },
-      { label: { it: 'Scartare', en: 'Reject' }, emoji: '🚫', color: '#86868b' }
-    ],
-    categories: [
-      { name: { it: 'Tecnico', en: 'Technical' }, emoji: '🔧' },
-      { name: { it: 'Commerciale', en: 'Sales' }, emoji: '💼' },
-      { name: { it: 'Amministrativo', en: 'Admin' }, emoji: '📋' },
-      { name: { it: 'Stage', en: 'Internship' }, emoji: '🎓' }
-    ],
-    valueUnit: ''
-  },
-  {
-    id: 'ideas', emoji: '💡',
-    name: { it: 'Idee progetto', en: 'Project ideas' },
-    desc: { it: 'Backlog di idee. Sviluppare/parcheggiare/scartare.', en: 'Idea backlog. Develop/park/drop.' },
-    statuses: [
-      { label: { it: 'Sviluppare', en: 'Develop' }, emoji: '🚀', color: '#34c759' },
-      { label: { it: 'Parcheggio', en: 'Parking' }, emoji: '🅿️', color: '#ff9500' },
-      { label: { it: 'Scartare', en: 'Drop' }, emoji: '🗑', color: '#86868b' }
-    ],
-    categories: [
-      { name: { it: 'Prodotto', en: 'Product' }, emoji: '📦' },
-      { name: { it: 'Marketing', en: 'Marketing' }, emoji: '📣' },
-      { name: { it: 'Tecnologia', en: 'Tech' }, emoji: '⚙️' },
-      { name: { it: 'Processo', en: 'Process' }, emoji: '🔄' },
-      { name: { it: 'Esperimenti', en: 'Experiments' }, emoji: '🧪' }
-    ],
+    categories: [],
     valueUnit: ''
   },
   {
@@ -1726,106 +1758,23 @@ const MICRO_GUIDES = {
         { id: 'add-manual', label: '✏️ Aggiungo a mano' }
       ]
     },
-    email: {
-      title: '📧 Come funziona Email',
-      intro: 'Hai aperto questo workspace per smistare la tua casella di posta. Funziona così:',
+    xlsx: {
+      title: '📊 Come funziona Lista Excel',
+      intro: 'Hai aperto questo workspace per smistare le righe di un Excel/CSV. Funziona in 4 passi:',
       steps: [
-        { emoji: '✏️', title: 'Aggiungi le email',
-          body: 'Clicca <strong>+ Nuovo</strong> per ogni messaggio importante:<br>- Nome: mittente o oggetto<br>- Descrizione: di cosa si tratta<br>- Tag: data, urgenza, o cosa devi fare' },
-        { emoji: '🎯', title: 'Smista in 3 stati',
-          body: '✉️ <strong>Da rispondere</strong> — meritano una risposta tua<br>⏳ <strong>In attesa</strong> — aspetti tu una risposta da qualcuno<br>📦 <strong>Archiviata</strong> — letta, niente da fare' },
-        { emoji: '📋', title: 'Usa il report come to-do',
-          body: "Esporta in <strong>📄 PDF</strong>: la lista 'Da rispondere' è la tua to-do della giornata, da stampare o tenere aperta sul telefono." }
+        { emoji: '📥', title: 'Carica il file Excel',
+          body: "Click su <strong>📥 Carica file Excel/CSV</strong>, seleziona il tuo .xlsx, .csv o .tsv. TriageHub legge le righe automaticamente. La prima colonna diventa il nome dell'item." },
+        { emoji: '🔧', title: 'Sistema il mapping (opzionale)',
+          body: "Se la prima colonna non è il nome o vuoi raggruppare per una categoria, click <strong>🔧 Mapping colonne</strong>. Puoi cambiare la colonna nome, scegliere una colonna categoria, rinominare e nascondere colonne." },
+        { emoji: '🎯', title: 'Smista riga per riga',
+          body: '📌 <strong>Da tenere</strong> — righe valide<br>🗄️ <strong>Da archiviare</strong> — vanno spostate altrove<br>🗑️ <strong>Da cestinare</strong> — eliminale dal listino' },
+        { emoji: '📊', title: 'Esporta il nuovo Excel',
+          body: "Click <strong>↑ Esporta</strong> → <strong>📊 Excel organizzato</strong>. Scegli foglio unico con colonna 'Stato' o 3 fogli separati per stato. Apri in Excel/Numbers e usa il file." }
       ],
-      tip: '💡 Funziona meglio se lo fai una volta a settimana, non ogni giorno.',
+      tip: '💡 Funziona con listini, anagrafiche clienti, qualsiasi tabella. 🔒 Il file resta sul tuo dispositivo: niente upload.',
       actions: [
-        { id: 'new-item', label: '+ Aggiungi prima email', primary: true },
-        { id: 'import',   label: '↓ Importa CSV' }
-      ]
-    },
-    leads: {
-      title: '💼 Come funziona Lead commerciali',
-      intro: 'Hai aperto questo workspace per gestire la pipeline vendite. Funziona così:',
-      steps: [
-        { emoji: '✏️', title: 'Aggiungi i tuoi lead',
-          body: 'Clicca <strong>+ Nuovo</strong> per ogni potenziale cliente:<br>- Nome: azienda o persona<br>- Categoria: settore, area, fonte<br>- Valore: stima fatturato in €<br>- Tag: data ultimo contatto, prodotto' },
-        { emoji: '🎯', title: 'Smista in 3 stati',
-          body: '🔥 <strong>Caldo</strong> — pronto a chiudere, segui ora<br>☀️ <strong>Tiepido</strong> — interesse, richiede follow-up<br>❄️ <strong>Freddo</strong> — nessuna risposta, rivaluta dopo' },
-        { emoji: '🎯', title: 'Filtra e agisci',
-          body: "Clicca il chip 'Caldo' in alto per vedere solo i lead caldi. Quella è la tua to-do della settimana." }
-      ],
-      tip: "💡 Aggiorna gli stati dopo ogni contatto. Non lasciare lead in 'Caldo' per più di 7 giorni.",
-      actions: [
-        { id: 'new-item', label: '+ Aggiungi primo lead', primary: true },
-        { id: 'import',   label: '↓ Importa CSV' }
-      ]
-    },
-    tickets: {
-      title: '🔧 Come funziona Ticket assistenza',
-      intro: 'Hai aperto questo workspace per smistare richieste di assistenza. Funziona così:',
-      steps: [
-        { emoji: '✏️', title: 'Aggiungi le richieste',
-          body: 'Clicca <strong>+ Nuovo</strong> per ogni chiamata o ticket:<br>- Nome: cliente o numero ticket<br>- Categoria: tipo macchina o area problema<br>- Descrizione: sintomo riportato<br>- Tag: urgenza, ricambio necessario' },
-        { emoji: '🎯', title: 'Smista in 3 stati',
-          body: '🚨 <strong>Aperto</strong> — da gestire ora<br>🔧 <strong>In lavorazione</strong> — già contattato<br>✅ <strong>Risolto</strong> — problema chiuso' },
-        { emoji: '🎯', title: 'Filtra per categoria',
-          body: 'Clicca un chip categoria per vedere solo i ticket di una tipologia.' }
-      ],
-      tip: '💡 Importa CSV se hai già un export dal gestionale ticket.',
-      actions: [
-        { id: 'new-item', label: '+ Aggiungi primo ticket', primary: true },
-        { id: 'import',   label: '↓ Importa CSV' }
-      ]
-    },
-    catalog: {
-      title: '📦 Come funziona Listino prodotti',
-      intro: 'Hai aperto questo workspace per decidere cosa pubblicare nel prossimo catalogo. Funziona così:',
-      steps: [
-        { emoji: '↓', title: 'Importa il listino esistente',
-          body: 'Hai un Excel o CSV con i tuoi prodotti? Clicca <strong>↓ Importa</strong> e mappa le colonne: Codice/Nome → Nome, Categoria → Categoria, Prezzo → Valore.' },
-        { emoji: '🎯', title: 'Smista in 3 stati',
-          body: '🚀 <strong>Spingere</strong> — prodotti da promuovere/inserire in catalogo<br>🔍 <strong>Da valutare</strong> — margine basso, da rivedere<br>📦 <strong>Out</strong> — fuori catalogo' },
-        { emoji: '📊', title: 'Filtra e analizza',
-          body: 'Le 4 stat card in alto mostrano in tempo reale quanti prodotti hai in ogni stato.' }
-      ],
-      tip: "💡 Ottimo a fine anno per pianificare il listino dell'anno dopo.",
-      actions: [
-        { id: 'import',   label: '↓ Importa listino', primary: true },
-        { id: 'new-item', label: '+ Aggiungi a mano' }
-      ]
-    },
-    hr: {
-      title: '👥 Come funziona Candidature',
-      intro: 'Hai aperto questo workspace per gestire candidature. Funziona così:',
-      steps: [
-        { emoji: '✏️', title: 'Aggiungi i candidati',
-          body: 'Clicca <strong>+ Nuovo</strong> per ogni candidato:<br>- Nome: cognome e nome<br>- Categoria: ruolo (es. Commerciale, Tecnico)<br>- Descrizione: sintesi CV<br>- Link: URL al CV<br>- Tag: provenienza' },
-        { emoji: '🎯', title: 'Smista in 3 stati',
-          body: '👀 <strong>Considerare</strong> — CV interessante, da approfondire<br>💬 <strong>Intervistare</strong> — proseguire al colloquio<br>❌ <strong>Scartare</strong> — non in linea' },
-        { emoji: '🎯', title: 'Filtra per ruolo',
-          body: 'Clicca chip categoria per vedere solo candidati di un ruolo.' }
-      ],
-      tip: '💡 I dati restano sul tuo dispositivo. Privacy-first per informazioni sensibili.',
-      actions: [
-        { id: 'new-item', label: '+ Aggiungi primo candidato', primary: true },
-        { id: 'import',   label: '↓ Importa CSV' }
-      ]
-    },
-    ideas: {
-      title: '💡 Come funziona Idee progetto',
-      intro: 'Hai aperto questo workspace per gestire idee, progetti e opportunità. Funziona così:',
-      steps: [
-        { emoji: '✏️', title: 'Aggiungi le idee',
-          body: 'Clicca <strong>+ Nuovo</strong> per ogni idea:<br>- Nome: titolo<br>- Descrizione: cosa è, perché può funzionare<br>- Categoria: ambito (Prodotto, Marketing, Interno)<br>- Valore: impatto stimato (1-10) o fatturato potenziale' },
-        { emoji: '🎯', title: 'Smista in 3 stati',
-          body: '🚀 <strong>Sviluppare</strong> — da iniziare ora, ROI alto<br>🅿️ <strong>Parcheggiare</strong> — buona idea, non è il momento<br>🗑️ <strong>Scartare</strong> — non funziona, archivia' },
-        { emoji: '🔄', title: 'Rivedi periodicamente',
-          body: 'Le idee parcheggiate possono diventare urgenti. Apri TriageHub ogni mese e rivaluta gli stati.' }
-      ],
-      tip: '💡 Funziona bene anche per backlog personali, romanzi da scrivere, viaggi da fare.',
-      actions: [
-        { id: 'new-item', label: '+ Aggiungi prima idea', primary: true },
-        { id: 'import',   label: '↓ Importa CSV' }
+        { id: 'load-xlsx', label: '📥 Carica file Excel/CSV', primary: true },
+        { id: 'add-manual', label: '✏️ Aggiungo a mano' }
       ]
     },
     blank: {
@@ -1839,7 +1788,7 @@ const MICRO_GUIDES = {
         { emoji: '✏️', title: 'Aggiungi gli item',
           body: 'Clicca <strong>+ Nuovo</strong> per ogni item che vuoi smistare.' }
       ],
-      tip: '💡 Non sai da dove partire? Prova uno degli altri 7 template precaricati. Spesso si adattano meglio del previsto.',
+      tip: '💡 Non sai da dove partire? Prova Lista Excel (per tabelle) o Pulizia Desktop (per file). Sono i template con automazione vera.',
       actions: [
         { id: 'statuses',   label: '🏷 Stati', primary: true },
         { id: 'categories', label: '🗂 Categorie' },
@@ -1865,106 +1814,23 @@ const MICRO_GUIDES = {
         { id: 'add-manual', label: "✏️ I'll add by hand" }
       ]
     },
-    email: {
-      title: '📧 How Email triage works',
-      intro: 'You opened this workspace to triage your inbox. Here is how:',
+    xlsx: {
+      title: '📊 How Excel List works',
+      intro: 'You opened this workspace to triage rows from an Excel/CSV file. It works in 4 steps:',
       steps: [
-        { emoji: '✏️', title: 'Add the emails',
-          body: 'Click <strong>+ New</strong> for each important message:<br>- Name: sender or subject<br>- Description: what it is about<br>- Tag: date, urgency, or what you need to do' },
-        { emoji: '🎯', title: 'Sort into 3 states',
-          body: '✉️ <strong>To reply</strong> — they need an answer from you<br>⏳ <strong>Waiting</strong> — you are waiting on someone<br>📦 <strong>Archived</strong> — read, nothing to do' },
-        { emoji: '📋', title: 'Use the report as a to-do',
-          body: "Export to <strong>📄 PDF</strong>: the 'To reply' list is your to-do for the day, ready to print or keep on your phone." }
+        { emoji: '📥', title: 'Load the Excel file',
+          body: "Click <strong>📥 Load Excel/CSV file</strong>, pick your .xlsx, .csv or .tsv. TriageHub reads the rows automatically. The first column becomes the item name." },
+        { emoji: '🔧', title: 'Adjust mapping (optional)',
+          body: "If the first column isn't the name, or you want to group by a category, click <strong>🔧 Column mapping</strong>. You can change the name column, pick a category column, rename and hide columns." },
+        { emoji: '🎯', title: 'Sort row by row',
+          body: '📌 <strong>To keep</strong> — valid rows<br>🗄️ <strong>To archive</strong> — move them elsewhere<br>🗑️ <strong>To trash</strong> — remove from the list' },
+        { emoji: '📊', title: 'Export the new Excel',
+          body: "Click <strong>↑ Export</strong> → <strong>📊 Organized Excel</strong>. Pick single sheet with a 'Status' column or three sheets per status. Open in Excel/Numbers and use the file." }
       ],
-      tip: '💡 Works best once a week, not every day.',
+      tip: "💡 Works for price lists, customer rosters, any table. 🔒 The file stays on your device: nothing is uploaded.",
       actions: [
-        { id: 'new-item', label: '+ Add first email', primary: true },
-        { id: 'import',   label: '↓ Import CSV' }
-      ]
-    },
-    leads: {
-      title: '💼 How Sales Leads works',
-      intro: 'You opened this workspace to manage your sales pipeline. Here is how:',
-      steps: [
-        { emoji: '✏️', title: 'Add your leads',
-          body: 'Click <strong>+ New</strong> for each prospect:<br>- Name: company or person<br>- Category: vertical, region, source<br>- Value: revenue estimate in €<br>- Tag: last contact date, product' },
-        { emoji: '🎯', title: 'Sort into 3 states',
-          body: '🔥 <strong>Hot</strong> — ready to close, follow up now<br>☀️ <strong>Warm</strong> — interested, needs follow-up<br>❄️ <strong>Cold</strong> — no response, revisit later' },
-        { emoji: '🎯', title: 'Filter and act',
-          body: "Click the 'Hot' chip on top to see only the hot leads. That's your to-do for the week." }
-      ],
-      tip: "💡 Update states after every contact. Don't leave leads in 'Hot' for more than 7 days.",
-      actions: [
-        { id: 'new-item', label: '+ Add first lead', primary: true },
-        { id: 'import',   label: '↓ Import CSV' }
-      ]
-    },
-    tickets: {
-      title: '🔧 How Support Tickets works',
-      intro: 'You opened this workspace to triage support requests. Here is how:',
-      steps: [
-        { emoji: '✏️', title: 'Add the requests',
-          body: 'Click <strong>+ New</strong> for each call or ticket:<br>- Name: customer or ticket number<br>- Category: machine type or problem area<br>- Description: reported symptom<br>- Tag: urgency, spare part needed' },
-        { emoji: '🎯', title: 'Sort into 3 states',
-          body: '🚨 <strong>Open</strong> — handle now<br>🔧 <strong>In progress</strong> — already contacted<br>✅ <strong>Resolved</strong> — problem closed' },
-        { emoji: '🎯', title: 'Filter by category',
-          body: 'Click a category chip to see only one type of ticket.' }
-      ],
-      tip: '💡 Import CSV if you already have an export from your ticket system.',
-      actions: [
-        { id: 'new-item', label: '+ Add first ticket', primary: true },
-        { id: 'import',   label: '↓ Import CSV' }
-      ]
-    },
-    catalog: {
-      title: '📦 How Product Catalog works',
-      intro: 'You opened this workspace to decide what to publish in your next catalog. Here is how:',
-      steps: [
-        { emoji: '↓', title: 'Import your existing price list',
-          body: 'Got an Excel or CSV with your products? Click <strong>↓ Import</strong> and map the columns: SKU/Name → Name, Category → Category, Price → Value.' },
-        { emoji: '🎯', title: 'Sort into 3 states',
-          body: '🚀 <strong>Promote</strong> — products to push / include<br>🔍 <strong>Review</strong> — low margin, needs revisit<br>📦 <strong>Out</strong> — drop from catalog' },
-        { emoji: '📊', title: 'Filter and analyze',
-          body: 'The 4 stat cards on top show in real time how many products you have in each state.' }
-      ],
-      tip: '💡 Great at year-end to plan next year price list.',
-      actions: [
-        { id: 'import',   label: '↓ Import price list', primary: true },
-        { id: 'new-item', label: '+ Add by hand' }
-      ]
-    },
-    hr: {
-      title: '👥 How Job Applications works',
-      intro: 'You opened this workspace to triage job applications. Here is how:',
-      steps: [
-        { emoji: '✏️', title: 'Add the candidates',
-          body: 'Click <strong>+ New</strong> for each candidate:<br>- Name: first and last<br>- Category: role (e.g. Sales, Tech)<br>- Description: CV summary<br>- Link: CV URL<br>- Tag: source' },
-        { emoji: '🎯', title: 'Sort into 3 states',
-          body: '👀 <strong>Consider</strong> — interesting CV, dig deeper<br>💬 <strong>Interview</strong> — move to interview<br>❌ <strong>Reject</strong> — not a fit' },
-        { emoji: '🎯', title: 'Filter by role',
-          body: 'Click a category chip to see only candidates for one role.' }
-      ],
-      tip: '💡 Data stays on your device. Privacy-first for sensitive info.',
-      actions: [
-        { id: 'new-item', label: '+ Add first candidate', primary: true },
-        { id: 'import',   label: '↓ Import CSV' }
-      ]
-    },
-    ideas: {
-      title: '💡 How Project Ideas works',
-      intro: 'You opened this workspace to manage ideas, projects and opportunities. Here is how:',
-      steps: [
-        { emoji: '✏️', title: 'Add the ideas',
-          body: 'Click <strong>+ New</strong> for each idea:<br>- Name: title<br>- Description: what it is, why it can work<br>- Category: area (Product, Marketing, Internal)<br>- Value: impact estimate (1-10) or potential revenue' },
-        { emoji: '🎯', title: 'Sort into 3 states',
-          body: '🚀 <strong>Develop</strong> — start now, high ROI<br>🅿️ <strong>Park</strong> — good idea, not now<br>🗑️ <strong>Drop</strong> — does not work, archive' },
-        { emoji: '🔄', title: 'Revisit periodically',
-          body: 'Parked ideas can become urgent. Open TriageHub every month and re-evaluate the states.' }
-      ],
-      tip: '💡 Works well also for personal backlogs, books to write, trips to plan.',
-      actions: [
-        { id: 'new-item', label: '+ Add first idea', primary: true },
-        { id: 'import',   label: '↓ Import CSV' }
+        { id: 'load-xlsx', label: '📥 Load Excel/CSV file', primary: true },
+        { id: 'add-manual', label: "✏️ I'll add by hand" }
       ]
     },
     blank: {
@@ -1978,7 +1844,7 @@ const MICRO_GUIDES = {
         { emoji: '✏️', title: 'Add the items',
           body: 'Click <strong>+ New</strong> for each item you want to triage.' }
       ],
-      tip: '💡 Not sure where to start? Try one of the other 7 ready-made templates. They often fit better than expected.',
+      tip: '💡 Not sure where to start? Try Excel List (for tabular data) or Desktop Cleanup (for files).',
       actions: [
         { id: 'statuses',   label: '🏷 States', primary: true },
         { id: 'categories', label: '🗂 Categories' },
@@ -2010,7 +1876,7 @@ const MANUAL_HTML = {
     { id: 's2', title: 'Come usare l\'app in 60 secondi', body:
 `<ol>
 <li>Clicca <strong>+ Nuovo workspace</strong> nelle cards in alto (o <strong>✨ Template</strong> in toolbar).</li>
-<li>Scegli un template che ti somiglia (Email, Lead, Pulizia Desktop, ecc.). L'app crea un workspace con categorie e stati pre-configurati.</li>
+<li>Scegli un template (Pulizia Desktop, Lista Excel, Vuoto). L'app crea un workspace con stati pre-configurati.</li>
 <li>Aggiungi i tuoi item: clicca <strong>+ Nuovo</strong>, oppure importa un CSV con <strong>↓ Importa</strong>.</li>
 <li>Smista cliccando lo stato di ogni item (le card colorate).</li>
 <li>Quando hai finito, clicca <strong>↑ Esporta</strong> per scaricare il report.</li>
@@ -2020,7 +1886,7 @@ const MANUAL_HTML = {
     { id: 's3', title: 'Workspace, Categorie, Stati', body:
 `<p>TriageHub si basa su 3 concetti, dal più grande al più piccolo:</p>
 <h4>🗂 Workspace</h4>
-<p>Un workspace è un container indipendente con i suoi item, le sue categorie, i suoi 3 stati. Hai più workspace per gestire più flussi in parallelo: uno per Email, uno per Lead, uno per Listino, uno per il Desktop. Si vedono come <strong>cards</strong> sopra la search bar.</p>
+<p>Un workspace è un container indipendente con i suoi item, le sue categorie, i suoi 3 stati. Hai più workspace per gestire più flussi in parallelo: uno per il Desktop, uno per il listino prodotti Excel, uno per le tue idee personali. Si vedono come <strong>cards</strong> sopra la search bar.</p>
 <h4>📁 Categorie</h4>
 <p>Le categorie raggruppano i tuoi item. Sono filtri: clicchi una categoria e vedi solo gli item di quella. Le crei e gestisci in <strong>📁 Categorie</strong>.</p>
 <h4>🎯 Stati</h4>
@@ -2068,24 +1934,40 @@ const MANUAL_HTML = {
 </ul>
 <p>In 15-20 minuti il Desktop è pulito.</p>` },
 
-    { id: 's5', title: 'Gli 8 template precaricati', body:
-`<p>TriageHub include 8 template pronti, uno per ogni caso d'uso comune.</p>
-<h4>⚪ Vuoto</h4>
-<p>Workspace tutto da configurare. Categorie e stati di default, li personalizzi tu.</p>
-<h4>📧 Email</h4>
-<p>Per smistare la casella di posta. Stati: Da rispondere / In attesa / Archiviata. Funziona meglio una volta a settimana che ogni giorno.</p>
-<h4>💼 Lead commerciali</h4>
-<p>Per la pipeline vendite. Stati: Caldo / Tiepido / Freddo. Filtra per 'Caldo' per ottenere la to-do della settimana.</p>
-<h4>🔧 Ticket assistenza</h4>
-<p>Per smistare richieste tecniche. Stati: Aperto / In lavorazione / Risolto. Filtra per categoria (tipo macchina, area problema).</p>
-<h4>📦 Listino prodotti</h4>
-<p>Per decidere il prossimo catalogo. Stati: Spingere / Da valutare / Out. Importa CSV dal gestionale, smista, esporta.</p>
-<h4>👥 Candidature</h4>
-<p>Per la selezione del personale. Stati: Considerare / Intervistare / Scartare. I dati restano sul tuo dispositivo, privacy-first.</p>
-<h4>💡 Idee progetto</h4>
-<p>Backlog di idee da valutare. Stati: Sviluppare / Parcheggiare / Scartare. Rivedi ogni mese: le idee parcheggiate possono diventare urgenti.</p>
+    { id: 's4b', title: 'Tutorial: smistare un Excel in 10 minuti', body:
+`<p>Hai un foglio Excel di 200 righe (anagrafica clienti, listino, lista contatti) e devi decidere riga per riga cosa farne. Ecco come:</p>
+<h4>Step 1: crea il workspace Excel</h4>
+<p>Click sulla card <strong>📊 Lista Excel</strong> nella galleria template. Si crea un workspace vuoto con i 3 stati Da tenere / Da archiviare / Da cestinare.</p>
+<h4>Step 2: carica il file</h4>
+<p>Click <strong>📥 Carica file Excel/CSV</strong>. Si apre il file picker, scegli il tuo .xlsx, .csv o .tsv. L'app legge le righe in pochi secondi (anche centinaia). La <strong>prima colonna diventa il nome</strong> di ogni item.</p>
+<p><strong>🔒 Privacy</strong>: il file resta sul tuo dispositivo, non viene caricato da nessuna parte.</p>
+<h4>Step 3: (opzionale) sistema il mapping</h4>
+<p>Se la prima colonna non è il nome che vuoi vedere, click <strong>🔧 Mapping colonne</strong>:</p>
+<ul>
+<li><strong>Colonna nome</strong>: scegli quale colonna usare come titolo dell'item</li>
+<li><strong>Colonna categoria</strong>: opzionale. Se la scegli, gli item vengono raggruppati per il valore di quella colonna (es. raggruppa per "Settore" o "Brand")</li>
+<li><strong>Rinomina colonne</strong>: dai nomi più chiari alle intestazioni</li>
+<li><strong>Nascondi colonne</strong>: spunta le colonne che non vuoi vedere nei dettagli (note interne, ID tecnici, ecc.)</li>
+</ul>
+<h4>Step 4: smista riga per riga</h4>
+<p>Per ogni item clicca uno dei 3 stati: <strong>📌 Da tenere</strong>, <strong>🗄️ Da archiviare</strong>, <strong>🗑️ Da cestinare</strong>. Click "Dettagli colonne" per espandere e vedere tutti i dati della riga prima di decidere.</p>
+<h4>Step 5: esporta il nuovo Excel</h4>
+<p>Click <strong>↑ Esporta</strong> → <strong>📊 Excel organizzato</strong>. Scegli:</p>
+<ul>
+<li><strong>Foglio unico con colonna Stato</strong>: tutte le righe nello stesso foglio, con una nuova colonna "Stato" alla fine. Ideale per filtrare in Excel.</li>
+<li><strong>3 fogli separati per stato</strong>: un foglio per ogni stato. Ideale per condividere solo "Da tenere" col team.</li>
+</ul>
+<p>Apri il file scaricato in Excel/Numbers/LibreOffice e usa il risultato. <strong>Il tuo file originale non è stato modificato</strong>: TriageHub crea sempre un nuovo file.</p>` },
+
+    { id: 's5', title: 'I 3 template', body:
+`<p>TriageHub si concentra su <strong>3 template</strong>, ognuno con automazione vera (file picker o Excel parser). Niente filler.</p>
 <h4>📂 Pulizia file & Desktop</h4>
-<p>Per mettere ordine in una cartella. Stati: Tieni / Archivia / Cestina. Usa il bottone <strong>Carica file</strong> per leggere i file dal disco senza Terminale.</p>` },
+<p>Per mettere ordine sul Desktop o in una cartella. File picker nativo: l'app legge nome, dimensione e tipo MIME (categorizzazione automatica in Documenti/Immagini/Audio/Excel). Stati: Da tenere / Da archiviare / Da cestinare. Export PDF con istruzioni passo-passo per macOS, Windows e Linux.</p>
+<h4>📊 Lista Excel</h4>
+<p>Per smistare le righe di un Excel/CSV/TSV. Carica il file, l'app legge la prima colonna come nome (modificabile via mapping). Smisti riga per riga. Esporti un nuovo Excel con la colonna "Stato" aggiunta o tre fogli separati per stato.</p>
+<h4>⚪ Vuoto</h4>
+<p>Workspace pulito, configurazione totalmente tua. Stati e categorie di default, da personalizzare. Per chi sa esattamente cosa vuole smistare e non vuole template precostruiti.</p>
+<p class="small"><em>Nota</em>: i workspace creati con vecchi template (Email, Lead, Ticket, Listino, Candidature, Idee) sono ancora presenti e accessibili dalle workspace card. Solo non puoi più crearne di nuovi da zero — quei template non c'erano abbastanza valore.</p>` },
 
     { id: 's6', title: 'Importare ed esportare i dati', body:
 `<h4>↓ Importare CSV</h4>
@@ -2150,7 +2032,7 @@ const MANUAL_HTML = {
     { id: 's2', title: 'How to use the app in 60 seconds', body:
 `<ol>
 <li>Click <strong>+ New workspace</strong> in the cards on top (or <strong>✨ Templates</strong> in the toolbar).</li>
-<li>Pick a template that fits (Email, Leads, Desktop cleanup, etc.). The app creates a workspace with categories and states pre-configured.</li>
+<li>Pick a template (Desktop cleanup, Excel List, Blank). The app creates a workspace with pre-configured states.</li>
 <li>Add your items: click <strong>+ New</strong>, or import a CSV with <strong>↓ Import</strong>.</li>
 <li>Sort by clicking the state of each item (the colored cards).</li>
 <li>When you're done, click <strong>↑ Export</strong> to download the report.</li>
@@ -2160,7 +2042,7 @@ const MANUAL_HTML = {
     { id: 's3', title: 'Workspaces, Categories, States', body:
 `<p>TriageHub is built on 3 concepts, from biggest to smallest:</p>
 <h4>🗂 Workspace</h4>
-<p>A workspace is a self-contained container with its items, categories, 3 states. You have multiple workspaces to manage parallel flows: one for Email, one for Leads, one for Catalog, one for Desktop. They appear as <strong>cards</strong> above the search bar.</p>
+<p>A workspace is a self-contained container with its items, categories, 3 states. You have multiple workspaces to manage parallel flows: one for the Desktop, one for an Excel price list, one for personal ideas. They appear as <strong>cards</strong> above the search bar.</p>
 <h4>📁 Categories</h4>
 <p>Categories group your items. They are filters: click a category and you see only items in it. Manage them under <strong>📁 Categories</strong>.</p>
 <h4>🎯 States</h4>
@@ -2208,24 +2090,40 @@ const MANUAL_HTML = {
 </ul>
 <p>In 15-20 minutes the Desktop is clean.</p>` },
 
-    { id: 's5', title: 'The 8 ready-made templates', body:
-`<p>TriageHub includes 8 ready templates, one for each common use case.</p>
-<h4>⚪ Blank</h4>
-<p>A workspace from scratch. Default categories and states, you customize them.</p>
-<h4>📧 Email</h4>
-<p>To triage your inbox. States: To reply / Waiting / Archived. Works better once a week than every day.</p>
-<h4>💼 Sales Leads</h4>
-<p>For the sales pipeline. States: Hot / Warm / Cold. Filter on 'Hot' to get your weekly to-do.</p>
-<h4>🔧 Support Tickets</h4>
-<p>To triage technical requests. States: Open / In progress / Resolved. Filter by category (machine type, problem area).</p>
-<h4>📦 Product Catalog</h4>
-<p>To decide the next catalog. States: Promote / Review / Out. Import CSV from your system, triage, export.</p>
-<h4>👥 Job Applications</h4>
-<p>For HR screening. States: Consider / Interview / Reject. Data stays on your device, privacy-first.</p>
-<h4>💡 Project Ideas</h4>
-<p>Idea backlog. States: Develop / Park / Drop. Revisit monthly: parked ideas can become urgent.</p>
+    { id: 's4b', title: 'Tutorial: triage an Excel in 10 minutes', body:
+`<p>You have an Excel with 200 rows (customer roster, price list, contact list) and you must decide row by row what to do with each. Here's how:</p>
+<h4>Step 1: create the Excel workspace</h4>
+<p>Click the <strong>📊 Excel List</strong> card in the template gallery. A blank workspace is created with the 3 states To keep / To archive / To trash.</p>
+<h4>Step 2: load the file</h4>
+<p>Click <strong>📥 Load Excel/CSV file</strong>. The file picker opens, pick your .xlsx, .csv or .tsv. The app reads the rows in seconds (even hundreds). The <strong>first column becomes the name</strong> of each item.</p>
+<p><strong>🔒 Privacy</strong>: the file stays on your device, nothing is uploaded.</p>
+<h4>Step 3: (optional) adjust the mapping</h4>
+<p>If the first column isn't the name you want to see, click <strong>🔧 Column mapping</strong>:</p>
+<ul>
+<li><strong>Name column</strong>: pick which column is the item title</li>
+<li><strong>Category column</strong>: optional. If picked, items are grouped by that column's value (e.g. group by "Sector" or "Brand")</li>
+<li><strong>Rename columns</strong>: give clearer names to headers</li>
+<li><strong>Hide columns</strong>: check the columns you don't want shown in the details (internal notes, technical IDs, etc.)</li>
+</ul>
+<h4>Step 4: sort row by row</h4>
+<p>For each item click one of the 3 states: <strong>📌 To keep</strong>, <strong>🗄️ To archive</strong>, <strong>🗑️ To trash</strong>. Click "Column details" to expand and see all the row data before deciding.</p>
+<h4>Step 5: export the new Excel</h4>
+<p>Click <strong>↑ Export</strong> → <strong>📊 Organized Excel</strong>. Pick:</p>
+<ul>
+<li><strong>Single sheet with Status column</strong>: all rows in one sheet with a new "Status" column at the end. Great for filtering in Excel.</li>
+<li><strong>3 sheets, one per status</strong>: one sheet per status. Great for sharing only "To keep" with the team.</li>
+</ul>
+<p>Open the downloaded file in Excel/Numbers/LibreOffice and use the result. <strong>Your original file is not modified</strong>: TriageHub always creates a new file.</p>` },
+
+    { id: 's5', title: 'The 3 templates', body:
+`<p>TriageHub focuses on <strong>3 templates</strong>, each with real automation (file picker or Excel parser). No filler.</p>
 <h4>📂 File & Desktop cleanup</h4>
-<p>To tidy a folder. States: Keep / Archive / Trash. Use the <strong>Load files</strong> button to read files from disk without the Terminal.</p>` },
+<p>To tidy your Desktop or any folder. Native file picker: the app reads name, size and MIME type (auto-categorize into Documents/Images/Audio/Spreadsheets). States: To keep / To archive / To trash. PDF export with step-by-step instructions for macOS, Windows and Linux.</p>
+<h4>📊 Excel List</h4>
+<p>To triage rows from an Excel/CSV/TSV. Load the file, the app reads the first column as the name (changeable via mapping). Sort row by row. Export a new Excel with a "Status" column added or three separate sheets per status.</p>
+<h4>⚪ Blank</h4>
+<p>Clean workspace, fully customizable. Default states and categories, ready for you to edit. For when you know exactly what to triage and don't want preset structures.</p>
+<p class="small"><em>Note</em>: workspaces created with old templates (Email, Leads, Tickets, Catalog, HR, Ideas) are still present and accessible from the workspace cards. You just can't create new ones from scratch — those templates didn't deliver enough value.</p>` },
 
     { id: 's6', title: 'Import and export data', body:
 `<h4>↓ Import CSV</h4>
@@ -2544,7 +2442,7 @@ function renderItems() {
     // 1) Guida contestuale, se non disabilitata.
     let html = '';
     if (!ws.hideGuide) html += renderMicroGuide(ws);
-    // 2) Empty state classico — variante speciale per template "cleanup".
+    // 2) Empty state classico — varianti speciali per cleanup e xlsx.
     if (ws.templateId === 'cleanup') {
       html += `
         <div class="empty-state">
@@ -2555,6 +2453,17 @@ function renderItems() {
             <button class="btn" data-guide-action="new-item">${escapeHtml(t('guideAddManually'))}</button>
           </div>
           <p class="micro-guide-privacy" style="margin-top:14px">${escapeHtml(t('desktopLoadFilesPrivacy'))}</p>
+        </div>`;
+    } else if (ws.templateId === 'xlsx') {
+      html += `
+        <div class="empty-state">
+          <span class="empty-state-emoji">📊</span>
+          <h2>${t('emptyTitle')}</h2>
+          <div class="empty-actions">
+            <button class="btn primary" data-guide-action="load-xlsx">${escapeHtml(t('xlsxLoadFile'))}</button>
+            <button class="btn" data-guide-action="new-item">${escapeHtml(t('guideAddManually'))}</button>
+          </div>
+          <p class="micro-guide-privacy" style="margin-top:14px">${escapeHtml(t('xlsxLoadHint'))}</p>
         </div>`;
     } else {
       html += `
@@ -2650,6 +2559,18 @@ function renderItems() {
 
       if (it.desc) html += `<div class="item-desc">${escapeHtml(it.desc)}</div>`;
 
+      // Colonne extra del template xlsx (v1.3.0): mostra come <details> espandibile.
+      if (it.xlsxData && ws.xlsxMapping) {
+        const extras = xlsxItemExtraColumns(ws, it);
+        if (extras.length) {
+          html += `<details class="item-xlsx-details"><summary class="item-xlsx-summary">${escapeHtml(currentLang === 'it' ? 'Dettagli colonne' : 'Column details')} (${extras.length})</summary><div class="item-xlsx-grid">`;
+          extras.forEach(({ label, value }) => {
+            html += `<div class="item-xlsx-row"><span class="item-xlsx-label">${escapeHtml(label)}</span><span class="item-xlsx-value">${escapeHtml(value)}</span></div>`;
+          });
+          html += `</div></details>`;
+        }
+      }
+
       if (it.links && it.links.length) {
         html += `<div class="item-links">`;
         it.links.forEach(l => {
@@ -2691,7 +2612,16 @@ function renderItems() {
   });
 }
 
-function renderAll() { renderStats(); renderWorkspaceCards(); renderChips(); renderItems(); renderFloatingGallery(); }
+function renderAll() {
+  renderStats(); renderWorkspaceCards(); renderChips(); renderItems(); renderFloatingGallery();
+  // Mostra il bottone "Mapping colonne" solo per workspace xlsx con dati caricati.
+  const ws = activeWorkspace();
+  const btnMap = document.getElementById('btn-xlsx-mapping');
+  if (btnMap) {
+    const show = ws && ws.templateId === 'xlsx' && ws.xlsxMapping && ws.xlsxMapping.headers;
+    btnMap.classList.toggle('hidden', !show);
+  }
+}
 
 // ============================================
 // DIALOG helpers
@@ -3373,6 +3303,263 @@ document.getElementById('cleanup-files').addEventListener('change', e => {
   e.target.value = ''; // reset così il change si triggera anche con stessa selezione
 });
 
+// ============================================
+// XLSX TEMPLATE (v1.3.0)
+// ============================================
+// SheetJS è caricato come <script src="./xlsx.full.min.js" defer> in <head>.
+// Tutto resta client-side: nessun upload del file Excel.
+
+function triggerXlsxFilePicker() {
+  if (typeof XLSX === 'undefined') { toast(t('xlsxLibMissing')); return; }
+  document.getElementById('xlsx-file').click();
+}
+
+document.getElementById('xlsx-file').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  parseXlsxFile(f);
+});
+
+// Parse di un file Excel/CSV/TSV via SheetJS. Crea N item nel workspace
+// attivo, uno per riga (escluso header). Salva headers + intera row in
+// item.xlsxData per render successivo.
+function parseXlsxFile(file) {
+  if (typeof XLSX === 'undefined') { toast(t('xlsxLibMissing')); return; }
+  const ws = activeWorkspace();
+  if (!ws) return;
+  const reader = new FileReader();
+  reader.onerror = () => toast(t('xlsxParseError'));
+  reader.onload = () => {
+    try {
+      const data = new Uint8Array(reader.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const sheetName = wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      // header:1 = AOA (array of arrays), defval:'' = celle vuote come stringa
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+      if (!rows.length) { toast(t('xlsxParseError')); return; }
+      const headers = (rows[0] || []).map((h, i) => String(h || '').trim() || `Col ${i + 1}`);
+      const dataRows = rows.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
+      if (!dataRows.length) { toast(t('xlsxParseError')); return; }
+      // Inizializza mapping (auto-detect: prima colonna = nome).
+      ws.xlsxMapping = ws.xlsxMapping || {};
+      ws.xlsxMapping.headers = headers;
+      ws.xlsxMapping.nameCol = ws.xlsxMapping.nameCol != null && ws.xlsxMapping.nameCol < headers.length
+        ? ws.xlsxMapping.nameCol : 0;
+      ws.xlsxMapping.catCol = ws.xlsxMapping.catCol != null && ws.xlsxMapping.catCol < headers.length
+        ? ws.xlsxMapping.catCol : null;
+      ws.xlsxMapping.renames = ws.xlsxMapping.renames || {}; // colIndex → newName
+      ws.xlsxMapping.hidden = ws.xlsxMapping.hidden || {};   // colIndex → true
+      // Crea item per ogni riga, salvando l'intera riga in xlsxData.
+      dataRows.forEach(r => {
+        const xd = {};
+        headers.forEach((h, i) => { xd[i] = String(r[i] != null ? r[i] : ''); });
+        const itemName = String(xd[ws.xlsxMapping.nameCol] || '').trim() || `(${currentLang === 'it' ? 'senza nome' : 'no name'})`;
+        ws.items.push({
+          id: uid(),
+          name: itemName,
+          desc: '',
+          cat: null, // la categoria viene calcolata via mapping al render
+          tag: '',
+          value: null,
+          links: [],
+          xlsxData: xd,
+          created: new Date().toISOString()
+        });
+      });
+      // Sync categories dal valore della catCol, se mappata.
+      syncXlsxCategories(ws);
+      saveState();
+      renderAll();
+      toast(t('xlsxLoaded', dataRows.length));
+    } catch (err) {
+      console.warn('xlsx parse error', err);
+      toast(t('xlsxParseError'));
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Quando l'utente sceglie/cambia la colonna categoria, ricava le categorie
+// uniche dalla colonna e crea/riallinea ws.categories. Riassegna it.cat.
+function syncXlsxCategories(ws) {
+  const m = ws.xlsxMapping;
+  if (!m || m.catCol == null) {
+    // Niente colonna categoria: rimuovi cat da tutti gli item xlsx.
+    ws.items.forEach(it => { if (it.xlsxData) it.cat = null; });
+    return;
+  }
+  const colIdx = m.catCol;
+  const seen = new Map(); // value (string) → catId
+  // Mantieni le categorie esistenti che derivano da xlsx (per non perdere customizzazioni)
+  ws.categories.forEach(c => { if (c.xlsxValue != null) seen.set(c.xlsxValue, c.id); });
+  ws.items.forEach(it => {
+    if (!it.xlsxData) return;
+    const val = String(it.xlsxData[colIdx] || '').trim();
+    if (!val) { it.cat = null; return; }
+    if (!seen.has(val)) {
+      const newCat = { id: uid(), name: val, emoji: '🏷️', xlsxValue: val };
+      ws.categories.push(newCat);
+      seen.set(val, newCat.id);
+    }
+    it.cat = seen.get(val);
+  });
+  // Rimuovi categorie xlsx orfane (nessun item le usa più).
+  const used = new Set(ws.items.map(it => it.cat).filter(Boolean));
+  ws.categories = ws.categories.filter(c => !c.xlsxValue || used.has(c.id));
+}
+
+// Apre dialog mapping: popola dropdown e lista colonne col mapping corrente.
+function openXlsxMapping() {
+  const ws = activeWorkspace();
+  if (!ws || !ws.xlsxMapping || !ws.xlsxMapping.headers) {
+    toast(currentLang === 'it' ? 'Carica prima un file Excel/CSV' : 'Load an Excel/CSV file first');
+    return;
+  }
+  const m = ws.xlsxMapping;
+  const headers = m.headers;
+  const nameSel = document.getElementById('xlsx-name-col');
+  const catSel  = document.getElementById('xlsx-cat-col');
+  nameSel.innerHTML = headers.map((h, i) =>
+    `<option value="${i}" ${i === m.nameCol ? 'selected' : ''}>${escapeHtml(h)}</option>`
+  ).join('');
+  catSel.innerHTML = `<option value="">${escapeHtml(t('xlsxNoCategory'))}</option>` +
+    headers.map((h, i) =>
+      `<option value="${i}" ${i === m.catCol ? 'selected' : ''}>${escapeHtml(h)}</option>`
+    ).join('');
+  const list = document.getElementById('xlsx-cols-list');
+  list.innerHTML = headers.map((h, i) => {
+    const renamed = m.renames[i] != null ? m.renames[i] : h;
+    const hidden  = !!m.hidden[i];
+    return `<li class="editor-row" data-col-idx="${i}">
+      <input class="editor-name" data-field="rename" value="${escapeHtml(renamed)}" maxlength="60" placeholder="${escapeHtml(h)}">
+      <label style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--text-secondary)">
+        <input type="checkbox" data-field="hidden" ${hidden ? 'checked' : ''}>
+        ${escapeHtml(t('xlsxColHidden'))}
+      </label>
+    </li>`;
+  }).join('');
+  openDialog('dlg-xlsx-mapping');
+}
+
+document.getElementById('xlsx-mapping-apply').addEventListener('click', () => {
+  const ws = activeWorkspace();
+  if (!ws || !ws.xlsxMapping) return;
+  const m = ws.xlsxMapping;
+  m.nameCol = Number(document.getElementById('xlsx-name-col').value);
+  const catVal = document.getElementById('xlsx-cat-col').value;
+  m.catCol = catVal === '' ? null : Number(catVal);
+  m.renames = {};
+  m.hidden = {};
+  document.querySelectorAll('#xlsx-cols-list [data-col-idx]').forEach(row => {
+    const i = Number(row.dataset.colIdx);
+    const renameInput = row.querySelector('[data-field="rename"]');
+    const hiddenInput = row.querySelector('[data-field="hidden"]');
+    const headerOriginal = m.headers[i];
+    if (renameInput.value.trim() && renameInput.value.trim() !== headerOriginal) {
+      m.renames[i] = renameInput.value.trim();
+    }
+    // La colonna nome non si nasconde
+    if (hiddenInput.checked && i !== m.nameCol) m.hidden[i] = true;
+  });
+  // Aggiorna i nomi degli item con la nuova colonna nome.
+  ws.items.forEach(it => {
+    if (!it.xlsxData) return;
+    it.name = String(it.xlsxData[m.nameCol] || '').trim() || `(${currentLang === 'it' ? 'senza nome' : 'no name'})`;
+  });
+  syncXlsxCategories(ws);
+  saveState();
+  renderAll();
+  closeDialog('dlg-xlsx-mapping');
+  toast(t('xlsxMappingApplied'));
+});
+
+// Restituisce un array [{label, value}] delle colonne aggiuntive di un item xlsx
+// (cioè non name, non cat se mappata, non nascoste). Usato dal renderItems.
+function xlsxItemExtraColumns(ws, it) {
+  if (!it.xlsxData || !ws.xlsxMapping) return [];
+  const m = ws.xlsxMapping;
+  const out = [];
+  m.headers.forEach((h, i) => {
+    if (i === m.nameCol) return;
+    if (m.catCol != null && i === m.catCol) return;
+    if (m.hidden[i]) return;
+    const val = String(it.xlsxData[i] || '').trim();
+    if (!val) return;
+    const label = m.renames[i] || h;
+    out.push({ label, value: val });
+  });
+  return out;
+}
+
+// Export Excel — mode: 'single' = un foglio + colonna Stato, 'multi' = 3 fogli.
+function exportXLSX(ws, mode) {
+  if (typeof XLSX === 'undefined') { toast(t('xlsxLibMissing')); return; }
+  if (!ws.xlsxMapping || !ws.xlsxMapping.headers) {
+    toast(currentLang === 'it' ? 'Nessun file Excel caricato' : 'No Excel file loaded');
+    return;
+  }
+  const m = ws.xlsxMapping;
+  const headerRow = m.headers.map((h, i) => m.renames[i] || h);
+  const statusLabel = currentLang === 'it' ? 'Stato' : 'Status';
+  const isXlsxItem = it => !!it.xlsxData;
+
+  // Map item → row values (in original column order, applying renames only to header).
+  const itemRow = it => m.headers.map((_, i) => it.xlsxData ? String(it.xlsxData[i] || '') : '');
+  const statusOf = it => {
+    const sid = ws.itemStatus[it.id];
+    const st = ws.statuses.find(s => s.id === sid);
+    return st ? localized(st.label) : '';
+  };
+
+  const wb = XLSX.utils.book_new();
+  const safeSheetName = name => String(name || '').replace(/[\\\/\*\?\[\]\:]/g, '').slice(0, 30) || 'Sheet';
+  if (mode === 'single') {
+    const aoa = [headerRow.concat([statusLabel])];
+    ws.items.filter(isXlsxItem).forEach(it => {
+      aoa.push(itemRow(it).concat([statusOf(it)]));
+    });
+    const sheet = XLSX.utils.aoa_to_sheet(aoa);
+    XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(ws.name || 'TriageHub'));
+  } else {
+    // Multi: un foglio per ciascuno dei 3 stati ordinati.
+    ws.statuses.forEach(s => {
+      const aoa = [headerRow.slice()];
+      ws.items.filter(it => isXlsxItem(it) && ws.itemStatus[it.id] === s.id).forEach(it => {
+        aoa.push(itemRow(it));
+      });
+      const sheet = XLSX.utils.aoa_to_sheet(aoa);
+      XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(`${s.emoji || ''} ${localized(s.label)}`.trim()));
+    });
+    // Aggiungi anche un foglio "Senza scelta" se esistono item non triagiati.
+    const unsorted = ws.items.filter(it => isXlsxItem(it) && !ws.itemStatus[it.id]);
+    if (unsorted.length) {
+      const aoa = [headerRow.slice()];
+      unsorted.forEach(it => aoa.push(itemRow(it)));
+      const sheet = XLSX.utils.aoa_to_sheet(aoa);
+      XLSX.utils.book_append_sheet(wb, sheet, safeSheetName(currentLang === 'it' ? 'Senza scelta' : 'Unsorted'));
+    }
+  }
+  const out = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  const dateShort = new Date().toISOString().slice(0, 10);
+  const safeName = (ws.name || 'triagehub').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+  downloadFile(out, `triagehub-${safeName}-${dateShort}.xlsx`,
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast(t('xlsxExportSaved'));
+  closeDialog('dlg-xlsx-export');
+  closeDialog('dlg-export');
+}
+
+document.getElementById('xlsx-exp-single').addEventListener('click', () => {
+  const ws = activeWorkspace(); if (!ws) return;
+  exportXLSX(ws, 'single');
+});
+document.getElementById('xlsx-exp-multi').addEventListener('click', () => {
+  const ws = activeWorkspace(); if (!ws) return;
+  exportXLSX(ws, 'multi');
+});
+
 // Render della micro-guida sopra l'empty state. Restituisce HTML stringa.
 function renderMicroGuide(ws) {
   const guide = getMicroGuide(ws);
@@ -3407,6 +3594,7 @@ function wireGuideActions(rootEl) {
       const action = btn.dataset.guideAction;
       const ws = activeWorkspace();
       if (action === 'load-files')      triggerCleanupFilePicker();
+      else if (action === 'load-xlsx')  triggerXlsxFilePicker();
       else if (action === 'new-item')   openItemDialog();
       else if (action === 'import')     openDialog('dlg-import');
       else if (action === 'categories') document.getElementById('btn-categories').click();
@@ -3621,6 +3809,9 @@ function renderStatusEditor() {
 }
 document.getElementById('btn-statuses').addEventListener('click', () => {
   renderStatusEditor(); openDialog('dlg-statuses');
+});
+document.getElementById('btn-xlsx-mapping').addEventListener('click', () => {
+  openXlsxMapping();
 });
 document.getElementById('value-unit').addEventListener('change', e => {
   const ws = activeWorkspace();
@@ -3918,7 +4109,20 @@ document.getElementById('btn-import').addEventListener('click', () => openDialog
 document.getElementById('btn-export').addEventListener('click', () => {
   const ws = activeWorkspace();
   if (!ws || ws.items.length === 0) { toast(t('nothingToExport')); return; }
+  // L'opzione "Excel organizzato" appare solo per workspace xlsx con dati caricati,
+  // e diventa l'azione primaria. PDF/Word/Text sono comunque disponibili sotto.
+  const isXlsx = ws.templateId === 'xlsx' && ws.xlsxMapping && ws.xlsxMapping.headers;
+  const xlsxBtn = document.getElementById('exp-xlsx');
+  const pdfBtn = document.getElementById('exp-pdf');
+  if (xlsxBtn) xlsxBtn.classList.toggle('hidden', !isXlsx);
+  // Per gli xlsx workspaces, sposta il "primary" su Excel: rimuovi modifier su PDF.
+  if (pdfBtn) pdfBtn.classList.toggle('export-option--primary', !isXlsx);
   openDialog('dlg-export');
+});
+
+document.getElementById('exp-xlsx').addEventListener('click', () => {
+  closeDialog('dlg-export');
+  openDialog('dlg-xlsx-export');
 });
 
 // JSON = backup COMPLETO di tutti i workspace (formato v1.2).
