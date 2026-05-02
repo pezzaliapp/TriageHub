@@ -821,6 +821,13 @@
     }
   }
 
+  /* Wide desktop: la galleria si allarga così la 3ª colonna ha respiro
+     e le descrizioni dei template non vengono troncate a metà parola. */
+  @media (min-width: 1024px) {
+    .fg-panel { width: 900px; }
+    .fg-desc { -webkit-line-clamp: 3; }
+  }
+
   /* RESPONSIVE */
   @media (max-width: 640px) {
     header.app-header { padding: 36px 0 22px; }
