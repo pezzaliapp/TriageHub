@@ -1826,7 +1826,7 @@ const I18N = {
     cleanupDisclaimerTitle: "📂 Pulizia file & Desktop",
     cleanupDisclaimerConfirm: "Ho capito, procedi",
     cleanupDisclaimerDontShow: "Non mostrare più questo messaggio",
-    cleanupBanner: "💡 <strong>Modalità avanzata v1.4</strong>: usa <strong>📁 Apri cartella</strong> (Chrome/Edge desktop) per cancellare e spostare file VERI. Su Safari/iPhone/Android, usa <strong>📥 Carica file</strong> + esporta <strong>📦 ZIP organizzato</strong>: i file da cestinare non vengono inclusi, gli altri sì.",
+    cleanupBanner: "💡 <strong>Modalità avanzata v1.5</strong>: usa <strong>📁 Apri cartella</strong> (Chrome/Edge desktop) per scansionare (anche le sottocartelle), vedere i gruppi e i suggerimenti, poi cancellare e spostare file VERI. Su Safari/iPhone/Android, usa <strong>📥 Carica file</strong> + esporta <strong>📦 ZIP organizzato</strong>: i file da cestinare non vengono inclusi, gli altri sì.",
     // v1.4.0 — File System Access API & ZIP organizzato
     cleanupLoadFolder: "📁 Apri cartella (cancella file veri)",
     cleanupLoadFolderHint: "Solo Chrome / Edge / Opera desktop. Su Safari, iPhone, Android usa \"Carica file\" + ZIP organizzato.",
@@ -2044,7 +2044,7 @@ const I18N = {
     cleanupDisclaimerTitle: "📂 File & Desktop cleanup",
     cleanupDisclaimerConfirm: "Got it, proceed",
     cleanupDisclaimerDontShow: "Don't show this message again",
-    cleanupBanner: "💡 <strong>Advanced mode v1.4</strong>: use <strong>📁 Open folder</strong> (Chrome/Edge desktop) to delete and move REAL files. On Safari/iPhone/Android, use <strong>📥 Load files</strong> + export <strong>📦 Organized ZIP</strong>: trashed files are excluded, the rest is included.",
+    cleanupBanner: "💡 <strong>Advanced mode v1.5</strong>: use <strong>📁 Open folder</strong> (Chrome/Edge desktop) to scan (subfolders too), see groups and suggestions, then delete and move REAL files. On Safari/iPhone/Android, use <strong>📥 Load files</strong> + export <strong>📦 Organized ZIP</strong>: trashed files are excluded, the rest is included.",
     // v1.4.0 — File System Access API & Organized ZIP
     cleanupLoadFolder: "📁 Open folder (delete real files)",
     cleanupLoadFolderHint: "Chrome / Edge / Opera desktop only. On Safari, iPhone, Android use \"Load files\" + Organized ZIP.",
@@ -4652,7 +4652,7 @@ function buildZipReadme(keep, archive, skip, missing) {
     '   il risultato finale, sostituisci la cartella originale con',
     '   il contenuto di questo ZIP (oppure cancella la vecchia e usa questa).',
     '',
-    'Generato da TriageHub v1.4.0 — https://github.com/pezzaliapp/TriageHub'
+    'Generato da TriageHub v1.5.0 — https://github.com/pezzaliapp/TriageHub'
   ].filter(Boolean).join('\n');
 }
 
