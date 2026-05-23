@@ -4344,6 +4344,9 @@ function canExecuteOnDisk() {
 
 // Applica le decisioni di triage al disco vero: cancella i "trash" e sposta
 // gli "archive" in una sottocartella _TriageHub_Archivio/. I "keep" restano.
+// v1.5: la sorgente di verità è il modello di scansione (cleanupScans), NON
+// ws.items: lo stato vive su fr.statusId e ogni fileRec porta il proprio
+// parentDirHandle/relPath, così funziona anche per file in sottocartelle.
 // Richiede che il workspace abbia una directory handle (FSA API attiva).
 async function executeCleanupOnDisk() {
   const ws = activeWorkspace();
@@ -4353,91 +4356,112 @@ async function executeCleanupOnDisk() {
     toast(t('fsaNoDirHandle'));
     return;
   }
-
-  // Trovo gli status "trash" e "archive" per ID. Heuristic: cerco per nome
-  // localizzato O dal trio standard. Se l'utente li ha rinominati ma non i
-  // colori/posizione, faccio fallback su posizione (3° = trash, 2° = archive).
-  const statusMap = mapStatusRoles(ws);
-
-  const trashItems = [];
-  const archiveItems = [];
-  Object.keys(ws.itemStatus).forEach(itemId => {
-    const stId = ws.itemStatus[itemId];
-    if (!stId) return;
-    if (stId === statusMap.trash)   trashItems.push(itemId);
-    if (stId === statusMap.archive) archiveItems.push(itemId);
-  });
-
-  if (!trashItems.length && !archiveItems.length) {
+  const scan = cleanupScans.get(ws.id);
+  if (!scan || !scan.files.length) {
     toast(t('fsaNothingToDo'));
     return;
   }
 
-  // Conferma esplicita: l'azione è distruttiva.
-  const summary = t('fsaConfirmSummary', trashItems.length, archiveItems.length);
+  // Trovo gli status "trash"/"archive" per ID (per nome canonico o posizione)
+  // e raccolgo i fileRec dal modello di scansione.
+  const roles = mapStatusRoles(ws);
+  const trashFiles   = scan.files.filter(f => f.statusId === roles.trash);
+  const archiveFiles = scan.files.filter(f => f.statusId === roles.archive);
+
+  if (!trashFiles.length && !archiveFiles.length) {
+    toast(t('fsaNothingToDo'));
+    return;
+  }
+
+  // Conferma esplicita: l'azione è distruttiva. Conteggi dal modello scan.
+  const summary = t('fsaConfirmSummary', trashFiles.length, archiveFiles.length);
   if (!confirm(summary)) return;
 
   let deleted = 0, moved = 0, errors = 0;
+  const done = new Set(); // id dei fileRec processati, da rimuovere dal modello
 
-  // 1) Cancello i "trash"
-  for (const itemId of trashItems) {
-    const rec = cleanupFileRegistry.get(itemId);
-    if (!rec || !rec.handle) { errors++; continue; }
+  // 1) Cancello i "trash". removeEntry vuole il NOME del file e va invocato sul
+  //    suo parent: la FSA API non accetta percorsi multi-livello.
+  for (const fr of trashFiles) {
+    const parent = fr.parentDirHandle || dirHandle;
     try {
-      // dirHandle.removeEntry richiede il NOME del file, non l'handle
-      await dirHandle.removeEntry(rec.relPath || rec.file.name);
-      deleted++;
-      // Rimuovo l'item dal workspace
-      const idx = ws.items.findIndex(i => i.id === itemId);
-      if (idx !== -1) ws.items.splice(idx, 1);
-      delete ws.itemStatus[itemId];
-      cleanupFileRegistry.delete(itemId);
+      await parent.removeEntry(fr.name);
+      deleted++; done.add(fr.id);
     } catch (err) {
-      console.error('Delete failed for', rec.relPath, err);
+      console.error('Delete failed for', fr.relPath, err);
       errors++;
     }
   }
 
-  // 2) Sposto gli "archive" nella sottocartella _TriageHub_Archivio
-  if (archiveItems.length) {
-    let archiveDir;
+  // 2) Sposto gli "archive" in _TriageHub_Archivio/, RICREANDO il sottopercorso
+  //    di relPath così la struttura originale è preservata. Le sottocartelle
+  //    rimaste vuote dopo la rimozione dei file NON vengono potate (vincolo v1.5).
+  if (archiveFiles.length) {
+    let archiveRoot;
     try {
-      archiveDir = await dirHandle.getDirectoryHandle('_TriageHub_Archivio', { create: true });
+      archiveRoot = await dirHandle.getDirectoryHandle('_TriageHub_Archivio', { create: true });
     } catch (err) {
       console.error('Cannot create archive subdir', err);
-      errors += archiveItems.length;
-      archiveDir = null;
+      errors += archiveFiles.length;
+      archiveRoot = null;
     }
-    if (archiveDir) {
-      for (const itemId of archiveItems) {
-        const rec = cleanupFileRegistry.get(itemId);
-        if (!rec) { errors++; continue; }
+    if (archiveRoot) {
+      for (const fr of archiveFiles) {
         try {
           // "Spostare" via FSA API = copia + cancella (non c'è move() nativo
-          // multi-browser stabile). Uso il File blob già in memoria per scrivere.
-          const newHandle = await archiveDir.getFileHandle(rec.relPath || rec.file.name, { create: true });
+          // multi-browser stabile). Scrivo il blob già in memoria.
+          const destDir = await ensureArchiveSubdir(archiveRoot, fr.relPath);
+          const newHandle = await destDir.getFileHandle(fr.name, { create: true });
           const writable = await newHandle.createWritable();
-          await writable.write(rec.file);
+          await writable.write(fr.file);
           await writable.close();
-          // Ora rimuovo l'originale
-          await dirHandle.removeEntry(rec.relPath || rec.file.name);
-          moved++;
-          // Rimuovo dall'UI: l'item è "fatto"
-          const idx = ws.items.findIndex(i => i.id === itemId);
-          if (idx !== -1) ws.items.splice(idx, 1);
-          delete ws.itemStatus[itemId];
-          cleanupFileRegistry.delete(itemId);
+          // Rimuovo l'originale dal suo parent.
+          const parent = fr.parentDirHandle || dirHandle;
+          await parent.removeEntry(fr.name);
+          moved++; done.add(fr.id);
         } catch (err) {
-          console.error('Move failed for', rec.relPath, err);
+          console.error('Move failed for', fr.relPath, err);
           errors++;
         }
       }
     }
   }
 
+  pruneScanFiles(scan, done); // aggiorna totali e conteggi suggerimenti
   saveState();
   renderAll();
   toast(t('fsaDone', deleted, moved, errors));
+}
+
+// Ricrea il sottopercorso di relPath (es. "Documents/2023/x.jpg") dentro la
+// cartella di archivio e restituisce l'handle della directory finale dove
+// scrivere il file. Per file di primo livello restituisce archiveRoot stesso.
+async function ensureArchiveSubdir(archiveRoot, relPath) {
+  const parts = String(relPath || '').split('/');
+  parts.pop(); // scarto il nome file: restano solo le directory intermedie
+  let dir = archiveRoot;
+  for (const part of parts) {
+    if (!part) continue;
+    dir = await dir.getDirectoryHandle(part, { create: true });
+  }
+  return dir;
+}
+
+// Rimuove dal modello i fileRec già cancellati/spostati, ricalcola i totali e
+// riallinea i conteggi delle regole di suggerimento (senza ri-premarcare nulla).
+function pruneScanFiles(scan, removedIds) {
+  if (!removedIds || !removedIds.size) return;
+  scan.files = scan.files.filter(f => !removedIds.has(f.id));
+  scan.totalFiles = scan.files.length;
+  scan.totalBytes = scan.files.reduce((s, f) => s + (f.size || 0), 0);
+  const sizeById = new Map(scan.files.map(f => [f.id, f.size || 0]));
+  scan.suggestions = (scan.suggestions || []).map(rule => {
+    rule.fileIds = rule.fileIds.filter(id => sizeById.has(id));
+    if (rule.keepIds) rule.keepIds = rule.keepIds.filter(id => sizeById.has(id));
+    rule.count = rule.fileIds.length;
+    rule.reclaimBytes = rule.fileIds.reduce((s, id) => s + (sizeById.get(id) || 0), 0);
+    return rule;
+  }).filter(rule => rule.count > 0 || (rule.keepIds && rule.keepIds.length));
 }
 
 // Heuristic per identificare quale status è "keep", "archive", "trash" nel
@@ -4477,26 +4501,29 @@ async function exportCleanupZip() {
   }
   const ws = activeWorkspace();
   if (!ws) return;
+  // v1.5: sorgente di verità = modello di scansione (lo stato vive su fr.statusId).
+  const scan = cleanupScans.get(ws.id);
+  if (!scan || !scan.files.length) { toast(t('zipEmpty')); return; }
 
-  const statusMap = mapStatusRoles(ws);
+  const roles = mapStatusRoles(ws);
   const zip = new JSZip();
 
   let keepCount = 0, archiveCount = 0, skipCount = 0, missingCount = 0;
   const folderKeep    = zip.folder(t('zipFolderKeep'));
   const folderArchive = zip.folder(t('zipFolderArchive'));
 
-  ws.items.forEach(it => {
-    const rec = cleanupFileRegistry.get(it.id);
-    const stId = ws.itemStatus[it.id];
-    // Senza blob non posso includere il file (es. dopo un reload pagina)
-    if (!rec) { missingCount++; return; }
-    if (stId === statusMap.trash) { skipCount++; return; }
-    if (stId === statusMap.archive) {
-      folderArchive.file(it.name, rec.file);
+  scan.files.forEach(fr => {
+    // Senza blob non posso includere il file (es. dopo un reload pagina).
+    if (!fr.file) { missingCount++; return; }
+    if (fr.statusId === roles.trash) { skipCount++; return; }
+    // Uso relPath: preserva la struttura originale ed evita collisioni di nome
+    // tra file omonimi in sottocartelle diverse.
+    if (fr.statusId === roles.archive) {
+      folderArchive.file(fr.relPath, fr.file);
       archiveCount++;
     } else {
-      // Tutto il resto (keep o non smistato) finisce in "Tenere"
-      folderKeep.file(it.name, rec.file);
+      // Tutto il resto (keep o non smistato) finisce in "Tenere".
+      folderKeep.file(fr.relPath, fr.file);
       keepCount++;
     }
   });
@@ -5880,18 +5907,30 @@ document.getElementById('btn-import').addEventListener('click', () => openDialog
 // ============================================
 document.getElementById('btn-export').addEventListener('click', () => {
   const ws = activeWorkspace();
-  if (!ws || ws.items.length === 0) { toast(t('nothingToExport')); return; }
+  // v1.5: i cleanup workspaces tengono i file nel modello di scansione, non in
+  // ws.items, quindi l'export è valido anche con ws.items vuoto ma scan piena.
+  const cleanupScan = (ws && ws.templateId === 'cleanup') ? cleanupScans.get(ws.id) : null;
+  const hasContent = ws && (ws.items.length > 0 || (cleanupScan && cleanupScan.files.length > 0));
+  if (!hasContent) { toast(t('nothingToExport')); return; }
   // L'opzione "Excel organizzato" appare solo per workspace xlsx con dati caricati,
   // e diventa l'azione primaria. PDF/Word/Text sono comunque disponibili sotto.
   const isXlsx = ws.templateId === 'xlsx' && ws.xlsxMapping && ws.xlsxMapping.headers;
   const xlsxBtn = document.getElementById('exp-xlsx');
   const pdfBtn = document.getElementById('exp-pdf');
   if (xlsxBtn) xlsxBtn.classList.toggle('hidden', !isXlsx);
-  // v1.4.0: bottone "ZIP organizzato" solo per cleanup workspaces con file in memoria
-  const isCleanupWithBlobs = ws.templateId === 'cleanup' &&
-    ws.items.some(it => cleanupFileRegistry.has(it.id));
+  // Bottone "ZIP organizzato" solo per cleanup workspaces con file in memoria.
+  const isCleanupWithBlobs = !!(cleanupScan && cleanupScan.files.some(f => f.file));
   const zipBtn = document.getElementById('exp-zip');
   if (zipBtn) zipBtn.classList.toggle('hidden', !isCleanupWithBlobs);
+  // v1.5: per i cleanup basati su scansione il report Markdown/PDF girerebbe a
+  // vuoto (i dati stanno in scan.files, non in ws.items), quindi nascondo le
+  // opzioni "report" e lascio solo ZIP (primario) + Backup JSON.
+  const scanBasedCleanup = !!(cleanupScan && cleanupScan.files.length);
+  ['exp-word', 'exp-txt', 'exp-md', 'exp-csv'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.classList.toggle('hidden', scanBasedCleanup);
+  });
+  if (pdfBtn) pdfBtn.classList.toggle('hidden', scanBasedCleanup);
   // Per gli xlsx workspaces, sposta il "primary" su Excel: rimuovi modifier su PDF.
   // Per i cleanup con blob, il primary è ZIP: rimuovi modifier su PDF.
   if (pdfBtn) pdfBtn.classList.toggle('export-option--primary', !isXlsx && !isCleanupWithBlobs);
