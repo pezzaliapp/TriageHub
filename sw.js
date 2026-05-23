@@ -1,13 +1,14 @@
 // TriageHub Service Worker
 // Strategy: cache-first per asset statici, network-first per index.html (così gli update arrivano)
 
-const CACHE_VERSION = 'triagehub-v1.5.1-hotfix';
+const CACHE_VERSION = 'triagehub-v1.6.0-meta';
 const CORE_ASSETS = [
   './',
   './index.html',
   './xlsx.full.min.js',
   './jszip.min.js',
-  './manifest.json',
+  './manifest.json?v=160',
+  './og-image.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',

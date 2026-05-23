@@ -1,7 +1,7 @@
 {
-  "name": "TriageHub — Smista qualsiasi cosa",
+  "name": "TriageHub — Smart Scan per file, Desktop ed Excel",
   "short_name": "TriageHub",
-  "description": "Smista qualsiasi cosa in tre stati. Item, categorie e stati personalizzabili. Privacy-first: i dati restano sul tuo dispositivo.",
+  "description": "Analizza cartelle, Desktop, Download e file Excel/CSV. Smart Scan, export avanzati, privacy-first e funzionamento offline.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
@@ -40,5 +40,5 @@
       "type": "image/png"
     }
   ],
-  "version": "1.5.1-hotfix"
+  "version": "1.6.0-meta"
 }

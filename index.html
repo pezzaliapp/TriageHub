@@ -4,11 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0071e3">
-<meta name="description" content="TriageHub — Smista i file del Desktop e le righe Excel in tre stati. 3 template focalizzati con automazione vera. PWA gratuita, offline, privacy-first.">
-<title>TriageHub — Smista file e righe Excel</title>
+<title>TriageHub — Smart Scan per file, Desktop ed Excel</title>
+<meta name="description" content="TriageHub analizza cartelle, Desktop, Download e file Excel/CSV per aiutarti a organizzare, archiviare o eliminare file in modo rapido. Smart Scan, export avanzati, privacy-first e funzionamento offline.">
+
+<meta property="og:title" content="TriageHub — Smart Scan per file, Desktop ed Excel">
+<meta property="og:description" content="Scansiona cartelle e sottocartelle, individua file obsoleti, duplicati, cache e contenuti inutili. Organizza file ed Excel con workflow rapido a tre stati. Tutto resta sul tuo dispositivo.">
+<meta property="og:image" content="https://www.alessandropezzali.it/TriageHub/og-image.png?v=160">
+<meta property="og:url" content="https://www.alessandropezzali.it/TriageHub/">
+<meta property="og:type" content="website">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="TriageHub — Smart Scan per file, Desktop ed Excel">
+<meta name="twitter:description" content="Analizza Desktop, Download, cartelle ed Excel. Trova file vecchi, duplicati e contenuti inutili. Workflow rapido, export avanzati, privacy-first e offline.">
+<meta name="twitter:image" content="https://www.alessandropezzali.it/TriageHub/og-image.png?v=160">
 
 <!-- PWA -->
-<link rel="manifest" href="./manifest.json">
+<link rel="manifest" href="./manifest.json?v=160">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
@@ -6829,7 +6840,7 @@ document.getElementById('btn-clear').addEventListener('click', () => {
 // ============================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js?v=1.5.1-hotfix', { updateViaCache: 'none' })
+    navigator.serviceWorker.register('./sw.js?v=1.6.0-meta', { updateViaCache: 'none' })
       .then(reg => {
         reg.update().catch(() => {});
       })
