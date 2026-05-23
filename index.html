@@ -663,6 +663,25 @@
     .scan-filter-label { width: 100%; padding-top: 0; }
   }
 
+  /* Bulk action (selezione multipla) — v1.5 */
+  .scan-bulk {
+    display: flex; flex-direction: column; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;
+  }
+  .scan-bulk-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .scan-bulk-row .btn { font-size: 13px; padding: 8px 14px; }
+  .scan-bulk-count { font-size: 13px; color: var(--text-secondary); margin-left: auto; }
+  .scan-bulk-apply-label { font-size: 13px; color: var(--text-tertiary); }
+  .scan-bulk-apply .action-btn { font-size: 13px; padding: 7px 12px; }
+  .scan-bulk-apply .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .item-card.selectable .item-head { gap: 8px; }
+  .item-select { width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent); margin: 0; }
+  .item-card.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+  @media (max-width: 640px) {
+    .scan-bulk-count { margin-left: 0; }
+  }
+
   /* Dashboard a gruppi */
   .scan-groups { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
   .scan-group-row {
@@ -1882,7 +1901,12 @@ const I18N = {
     filterSize10: ">10MB", filterSize50: ">50MB", filterSize100: ">100MB",
     filterOriginRoot: "(radice)",
     exploreShown: n => `Visualizzati: ${n}`,
-    exploreNoMatch: "Nessun file con questi filtri."
+    exploreNoMatch: "Nessun file con questi filtri.",
+    // v1.5 — bulk action (selezione multipla)
+    exploreSelected: n => `Selezionati: ${n}`,
+    bulkSelectAllVisible: "✓ Seleziona tutti i visibili",
+    bulkDeselectAll: "Deseleziona tutto",
+    bulkForSelected: "Per i selezionati:"
   },
   en: {
     subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
@@ -2095,7 +2119,12 @@ const I18N = {
     filterSize10: ">10MB", filterSize50: ">50MB", filterSize100: ">100MB",
     filterOriginRoot: "(root)",
     exploreShown: n => `Showing: ${n}`,
-    exploreNoMatch: "No files match these filters."
+    exploreNoMatch: "No files match these filters.",
+    // v1.5 — bulk actions (multi-select)
+    exploreSelected: n => `Selected: ${n}`,
+    bulkSelectAllVisible: "✓ Select all visible",
+    bulkDeselectAll: "Deselect all",
+    bulkForSelected: "For selected:"
   }
 };
 
@@ -3901,7 +3930,7 @@ const CLEANUP_VIEW_KEY = 'triagehub-cleanup-view';
 function getCleanupUi(wsId) {
   if (!cleanupUiState.has(wsId)) {
     const savedView = localStorage.getItem(CLEANUP_VIEW_KEY) === 'list' ? 'list' : 'dashboard';
-    cleanupUiState.set(wsId, { view: savedView, exploreGroup: null, filters: {}, listLimit: 100 });
+    cleanupUiState.set(wsId, { view: savedView, exploreGroup: null, filters: {}, listLimit: 100, selection: new Set() });
   }
   return cleanupUiState.get(wsId);
 }
@@ -4826,6 +4855,7 @@ function wireScanDashboard(ws, scan, ui, root) {
     btn.addEventListener('click', () => {
       ui.exploreGroup = btn.dataset.explore;
       ui.listLimit = 100; ui.filters = {};
+      ui.selection = new Set();
       renderItems();
     });
   });
@@ -4849,11 +4879,13 @@ function renderScanListView(ws, scan, ui) {
 }
 
 // Rende una collezione di fileRec (lista o esplora) con il limite di virtualizzazione.
-function renderScanCards(ws, files, ui) {
+// selectable=true (esplora) aggiunge le checkbox per la selezione multipla.
+function renderScanCards(ws, files, ui, selectable) {
   const limit = ui.listLimit || 100;
   const shown = files.slice(0, limit);
+  const sel = ui.selection || new Set();
   let html = `<div class="item-grid">`;
-  shown.forEach(fr => { html += scanFileCardHtml(ws, fr); });
+  shown.forEach(fr => { html += scanFileCardHtml(ws, fr, selectable, sel.has(fr.id)); });
   html += `</div>`;
   if (files.length > limit) {
     html += `<div style="text-align:center; margin-top:18px">
@@ -4863,14 +4895,18 @@ function renderScanCards(ws, files, ui) {
   return html;
 }
 
-function scanFileCardHtml(ws, fr) {
+function scanFileCardHtml(ws, fr, selectable, selected) {
   const status = fr.statusId ? findStatus(fr.statusId) : null;
-  const cardClass = status ? 'has-status' : '';
+  const classes = ['item-card'];
+  if (status) classes.push('has-status');
+  if (selectable) classes.push('selectable');
+  if (selected) classes.push('is-selected');
   const cardStyle = status ? `--status-color:${escapeHtml(status.color)}` : '';
   const premark = fr.premarkRule && !fr.premarkRule.endsWith('-keep')
     ? ` <span class="sugg-badge">${escapeHtml(t('suggBadge'))}</span>` : '';
-  let html = `<div class="item-card ${cardClass}" style="${cardStyle}">`;
+  let html = `<div class="${classes.join(' ')}" style="${cardStyle}" data-fr-card="${fr.id}">`;
   html += `<div class="item-head">
+    ${selectable ? `<input type="checkbox" class="item-select" data-fr-select="${fr.id}" ${selected ? 'checked' : ''} aria-label="${escapeHtml(fr.name)}">` : ''}
     <div class="item-name">${escapeHtml(fr.name)}${premark}</div>
     <div class="item-value">${escapeHtml(humanSize(fr.size))}</div>
   </div>`;
@@ -5015,6 +5051,35 @@ function renderScanFilters(group, baseFiles, ui) {
   return html;
 }
 
+// Barra bulk: seleziona/deseleziona visibili + applica uno stato ai selezionati.
+function renderScanBulkBar(ws, ui) {
+  const n = (ui.selection || new Set()).size;
+  let statusBtns = '';
+  ws.statuses.forEach(s => {
+    statusBtns += `<button class="action-btn" data-bulk-status="${s.id}" style="--status-color:${escapeHtml(s.color)}" ${n === 0 ? 'disabled' : ''}>${escapeHtml(s.emoji)} ${escapeHtml(localized(s.label))}</button>`;
+  });
+  return `<div class="scan-bulk">
+    <div class="scan-bulk-row">
+      <button class="btn" id="scan-select-all">${escapeHtml(t('bulkSelectAllVisible'))}</button>
+      <button class="btn" id="scan-deselect-all">${escapeHtml(t('bulkDeselectAll'))}</button>
+      <span class="scan-bulk-count" id="scan-sel-count">${escapeHtml(t('exploreSelected', fmtCount(n)))}</span>
+    </div>
+    <div class="scan-bulk-row scan-bulk-apply">
+      <span class="scan-bulk-apply-label">${escapeHtml(t('bulkForSelected'))}</span>
+      ${statusBtns}
+    </div>
+  </div>`;
+}
+
+// Aggiorna in-place il conteggio e lo stato dei bottoni bulk senza re-render
+// (così le anteprime non vengono ricreate a ogni spunta).
+function updateBulkUi(ui, root) {
+  const n = (ui.selection || new Set()).size;
+  const cnt = root.querySelector('#scan-sel-count');
+  if (cnt) cnt.textContent = t('exploreSelected', fmtCount(n));
+  root.querySelectorAll('[data-bulk-status]').forEach(b => { b.disabled = n === 0; });
+}
+
 function renderScanExplore(ws, scan, ui) {
   const main = document.getElementById('main');
   const group = ui.exploreGroup.startsWith('suggestion:') ? null : ui.exploreGroup;
@@ -5031,13 +5096,14 @@ function renderScanExplore(ws, scan, ui) {
   </div>`;
   html += renderScanFilters(group, baseFiles, ui);
   html += `<div class="scan-explore-meta">${escapeHtml(t('exploreShown', fmtCount(filtered.length)))} · ${escapeHtml(humanSize(shownBytes))}</div>`;
+  html += renderScanBulkBar(ws, ui);
   html += filtered.length
-    ? renderScanCards(ws, filtered, ui)
+    ? renderScanCards(ws, filtered, ui, true)
     : `<p class="small" style="text-align:center;color:var(--text-tertiary);padding:24px 0">${escapeHtml(t('exploreNoMatch'))}</p>`;
   main.innerHTML = html;
 
   main.querySelector('#cleanup-back').addEventListener('click', () => {
-    ui.exploreGroup = null; ui.listLimit = 100; ui.filters = {}; renderItems();
+    ui.exploreGroup = null; ui.listLimit = 100; ui.filters = {}; ui.selection = new Set(); renderItems();
   });
   main.querySelectorAll('.scan-filters [data-fkey]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -5047,6 +5113,37 @@ function renderScanExplore(ws, scan, ui) {
       else ui.filters[fkey] = fval;
       ui.listLimit = 100;
       renderItems();
+    });
+  });
+  // Bulk: seleziona tutti i VISIBILI (rispetta i filtri attivi) / deseleziona.
+  main.querySelector('#scan-select-all').addEventListener('click', () => {
+    filtered.forEach(fr => ui.selection.add(fr.id));
+    renderItems();
+  });
+  main.querySelector('#scan-deselect-all').addEventListener('click', () => {
+    ui.selection.clear();
+    renderItems();
+  });
+  // Spunta singola: aggiorno selezione e UI in-place (niente re-render).
+  main.querySelectorAll('[data-fr-select]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.frSelect;
+      if (cb.checked) ui.selection.add(id); else ui.selection.delete(id);
+      const card = main.querySelector(`[data-fr-card="${id}"]`);
+      if (card) card.classList.toggle('is-selected', cb.checked);
+      updateBulkUi(ui, main);
+    });
+  });
+  // Applica uno stato a tutti i selezionati (consuma anche il premark).
+  main.querySelectorAll('[data-bulk-status]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sId = btn.dataset.bulkStatus;
+      if (!ui.selection.size) return;
+      scan.files.forEach(fr => {
+        if (ui.selection.has(fr.id)) { fr.statusId = sId; fr.premarkRule = null; }
+      });
+      ui.selection = new Set();
+      renderStats(); renderWorkspaceCards(); renderItems();
     });
   });
   wireScanFileCards(ws, scan, main);
