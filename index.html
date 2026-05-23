@@ -583,6 +583,121 @@
   .preview-fallback-icon { font-size: 64px; }
   .preview-fallback-msg { margin-top: 12px; font-size: 14px; }
 
+  /* ===== v1.5: SMART SCAN ===== */
+  /* Progress overlay durante la scansione ricorsiva */
+  .scan-progress {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    z-index: 9998;
+    align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .scan-progress.is-open { display: flex; }
+  .scan-progress-card {
+    background: var(--card); color: var(--text);
+    border-radius: 18px; box-shadow: var(--shadow-lg);
+    width: 100%; max-width: 420px;
+    padding: 28px 28px 24px;
+    text-align: center;
+  }
+  .scan-progress-title {
+    font-family: var(--serif); font-style: italic;
+    font-size: 26px; letter-spacing: -0.01em; margin-bottom: 18px;
+  }
+  .scan-bar {
+    height: 10px; border-radius: 6px; background: var(--bg);
+    overflow: hidden; margin-bottom: 14px; border: 1px solid var(--border);
+  }
+  .scan-bar-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.2s ease;
+  }
+  .scan-bar.indeterminate .scan-bar-fill {
+    width: 35% !important;
+    animation: scanIndeterminate 1.1s ease-in-out infinite;
+  }
+  @keyframes scanIndeterminate {
+    0% { margin-left: -35%; }
+    100% { margin-left: 100%; }
+  }
+  .scan-progress-stats {
+    font-size: 15px; font-weight: 600; margin-bottom: 4px;
+  }
+  .scan-progress-current {
+    font-size: 13px; color: var(--text-tertiary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 18px; min-height: 18px;
+  }
+
+  /* Riepilogo scansione (header dashboard / vista lista) */
+  .scan-summary {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 18px; margin-bottom: 16px;
+  }
+  .scan-summary-line {
+    font-family: var(--serif); font-size: 22px; font-style: italic;
+    letter-spacing: -0.01em; line-height: 1.2; margin-bottom: 12px;
+  }
+  .scan-summary-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .scan-summary-actions .btn { font-size: 13px; padding: 8px 14px; }
+  .scan-truncated-note {
+    margin-top: 10px; font-size: 13px; color: #a05a00;
+    background: #fff8e1; border: 1px solid #f9c74f;
+    border-radius: 8px; padding: 8px 12px;
+  }
+
+  /* Dashboard a gruppi */
+  .scan-groups { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
+  .scan-group-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; cursor: pointer; font-family: inherit; color: var(--text);
+    text-align: left; width: 100%; transition: border-color 0.15s, background 0.15s;
+  }
+  .scan-group-row:hover { border-color: var(--accent); background: var(--card-hover); }
+  .scan-group-emoji { font-size: 24px; line-height: 1; flex-shrink: 0; }
+  .scan-group-name { font-family: var(--serif); font-size: 20px; font-style: italic; flex-shrink: 0; }
+  .scan-group-meta { font-size: 13px; color: var(--text-tertiary); margin-left: auto; text-align: right; }
+  .scan-group-go { color: var(--accent); font-size: 14px; font-weight: 500; flex-shrink: 0; }
+
+  /* Pannello suggerimenti */
+  .sugg-panel {
+    background: #fff8e1; border: 1px solid #f9c74f; border-radius: 14px;
+    padding: 16px 18px; margin-bottom: 22px;
+  }
+  .sugg-panel-title { font-family: var(--serif); font-style: italic; font-size: 22px; margin-bottom: 6px; }
+  .sugg-panel-intro { font-size: 13px; color: #4a3b00; line-height: 1.5; margin-bottom: 14px; }
+  .sugg-list { display: flex; flex-direction: column; gap: 10px; }
+  .sugg-item {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.65); border: 1px solid rgba(249,199,79,0.6);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .sugg-item.is-disabled { opacity: 0.5; }
+  .sugg-item-text { flex: 1; min-width: 0; }
+  .sugg-item-label { font-weight: 600; font-size: 14px; }
+  .sugg-item-reclaim { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .sugg-item-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+  .sugg-item-actions .btn { font-size: 12px; padding: 6px 12px; }
+  .sugg-badge {
+    display: inline-block; vertical-align: 1px;
+    background: rgba(255,59,48,0.12); color: #d70015;
+    font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 8px;
+  }
+
+  /* Footer azioni cleanup (Applica al disco / Esporta ZIP) */
+  .cleanup-footer {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end;
+    padding-top: 16px; border-top: 1px solid var(--border); margin-top: 4px;
+  }
+  @media (max-width: 640px) {
+    .sugg-item { flex-direction: column; align-items: flex-start; }
+    .cleanup-footer .btn { flex: 1; justify-content: center; }
+  }
+
   /* MICRO-GUIDE — onboarding contestuale sopra l'empty state */
   .micro-guide {
     position: relative;
@@ -1428,6 +1543,40 @@
   <div class="preview-caption" id="cleanup-preview-caption"></div>
 </div>
 
+<!-- v1.5: DIALOG — opzioni di scansione (ricorsiva?) -->
+<dialog id="dlg-scan-options">
+  <div class="dialog-header">
+    <h2 class="dialog-title" data-i18n="scanOptionsTitle">📁 Scansione cartella</h2>
+    <button class="dialog-close" data-close="dlg-scan-options">×</button>
+  </div>
+  <div class="dialog-body">
+    <p style="margin-bottom:6px"><strong id="scan-opt-folder"></strong></p>
+    <p class="small" id="scan-opt-counts" style="margin-bottom:18px"></p>
+    <label style="display:flex; gap:10px; align-items:flex-start; cursor:pointer">
+      <input type="checkbox" id="scan-opt-recursive" style="margin-top:3px">
+      <span>
+        <span data-i18n="scanRecursive">Scansiona anche tutte le sottocartelle</span><br>
+        <span class="small" data-i18n="scanRecursiveWarn">⚠ Può richiedere tempo su cartelle con migliaia di file</span>
+      </span>
+    </label>
+  </div>
+  <div class="dialog-footer">
+    <button type="button" class="btn" data-close="dlg-scan-options" data-i18n="cancel">Annulla</button>
+    <button type="button" class="btn primary" id="scan-opt-start" data-i18n="scanStart">Scansiona</button>
+  </div>
+</dialog>
+
+<!-- v1.5: Progress overlay durante la scansione -->
+<div class="scan-progress" id="scan-progress" role="dialog" aria-modal="true" aria-live="polite">
+  <div class="scan-progress-card">
+    <div class="scan-progress-title" data-i18n="scanProgressTitle">Sto scansionando…</div>
+    <div class="scan-bar indeterminate" id="scan-bar"><div class="scan-bar-fill" id="scan-bar-fill"></div></div>
+    <div class="scan-progress-stats" id="scan-progress-stats">0 file · 0 B</div>
+    <div class="scan-progress-current" id="scan-progress-current"></div>
+    <button type="button" class="btn" id="scan-progress-cancel" data-i18n="scanProgressCancel">Annulla</button>
+  </div>
+</div>
+
 <!-- File picker nascosto per il template "Pulizia file & Desktop" -->
 <input type="file" id="cleanup-files" multiple hidden>
 
@@ -1671,7 +1820,47 @@ const I18N = {
     zipExportLabel: "📦 ZIP organizzato (con i file veri)",
     zipExportLabelDesc: "Scarica un .zip con i file caricati, organizzati in cartelle Tenere/Archiviare. I 'Da cestinare' non vengono inclusi.",
     previewNoBlob: "⚠️ Anteprima non disponibile (file non più in memoria, ricarica il file)",
-    previewUnsupported: "Anteprima non disponibile per questo tipo di file"
+    previewUnsupported: "Anteprima non disponibile per questo tipo di file",
+    // v1.5 — Smart Scan
+    scanOptionsTitle: "📁 Scansione cartella",
+    scanOptFolder: name => `Hai selezionato: ${name}`,
+    scanOptCounts: (subs, files) => `Contiene ${subs} sottocartell${subs === 1 ? 'a' : 'e'} e ${files} file nel primo livello`,
+    scanRecursive: "Scansiona anche tutte le sottocartelle",
+    scanRecursiveWarn: "⚠ Può richiedere tempo su cartelle con migliaia di file",
+    scanStart: "Scansiona",
+    scanProgressTitle: "Sto scansionando…",
+    scanProgressCancel: "Annulla",
+    scanProgressStats: (files, size) => `${files} file · ${size}`,
+    scanProgressCurrent: path => path ? `Cartella corrente: ${path}` : '',
+    scanCancelled: "Scansione annullata",
+    scanTruncated: max => `⚠️ Cartella troppo grande: scansione fermata a ${max} file. Dividi in parti più piccole.`,
+    scanSummary: (files, size, subs) => subs > 0
+      ? `${files} file · ${size} · da ${subs} sottocartell${subs === 1 ? 'a' : 'e'}`
+      : `${files} file · ${size}`,
+    scanRescan: "🔄 Riscansiona",
+    scanListView: "📋 Vista lista",
+    scanDashboardView: "📊 Dashboard gruppi",
+    scanLoadMore: rem => `Carica altri 100 (${rem} rimanenti)`,
+    scanFromOrigin: "da",
+    cleanupNewScan: "📁 Nuova scansione",
+    group_photo: "Foto", group_video: "Video", group_document: "Documenti",
+    group_audio: "Audio", group_archive: "Archivi", group_other: "Altro",
+    subtype_screenshot: "Screenshot", subtype_camera: "Foto fotocamera", subtype_other: "Altre",
+    sugg_screenshots: n => `${n} screenshot più vecchi di 2 anni`,
+    sugg_duplicates: n => `${n} duplicati per nome+dimensione`,
+    sugg_giants: n => `${n} file più grandi di 500 MB`,
+    sugg_untitled: n => `${n} file "untitled" / "Senza titolo"`,
+    suggReclaim: size => `→ ${size} recuperabili`,
+    suggReclaimMaybe: size => `→ ${size} se non ti servono`,
+    exploreArrow: "Esplora →",
+    exploreBack: "← Torna ai gruppi",
+    suggPanelTitle: "💡 Suggerimenti TriageHub",
+    suggPanelIntro: "I file qui sotto sono PRE-MARCATI come «Cestinare». Non verranno cancellati finché non confermi con «⚡ Applica al disco» o «📦 Esporta ZIP».",
+    suggExplore: "Esplora",
+    suggDeselect: "Deseleziona",
+    suggReselect: "Riseleziona",
+    suggNone: "Nessun suggerimento per questa cartella. 🎉",
+    suggBadge: "🗑 pre-marcato"
   },
   en: {
     subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
@@ -1836,7 +2025,47 @@ const I18N = {
     zipExportLabel: "📦 Organized ZIP (with real files)",
     zipExportLabelDesc: "Download a .zip with the loaded files, organized into Keep/Archive folders. 'To trash' files are not included.",
     previewNoBlob: "⚠️ Preview unavailable (file no longer in memory, reload the file)",
-    previewUnsupported: "Preview not available for this file type"
+    previewUnsupported: "Preview not available for this file type",
+    // v1.5 — Smart Scan
+    scanOptionsTitle: "📁 Folder scan",
+    scanOptFolder: name => `You selected: ${name}`,
+    scanOptCounts: (subs, files) => `Contains ${subs} subfolder${subs === 1 ? '' : 's'} and ${files} file${files === 1 ? '' : 's'} at the top level`,
+    scanRecursive: "Also scan all subfolders",
+    scanRecursiveWarn: "⚠ May take a while on folders with thousands of files",
+    scanStart: "Scan",
+    scanProgressTitle: "Scanning…",
+    scanProgressCancel: "Cancel",
+    scanProgressStats: (files, size) => `${files} files · ${size}`,
+    scanProgressCurrent: path => path ? `Current folder: ${path}` : '',
+    scanCancelled: "Scan cancelled",
+    scanTruncated: max => `⚠️ Folder too large: scan stopped at ${max} files. Split it into smaller parts.`,
+    scanSummary: (files, size, subs) => subs > 0
+      ? `${files} files · ${size} · from ${subs} subfolder${subs === 1 ? '' : 's'}`
+      : `${files} files · ${size}`,
+    scanRescan: "🔄 Rescan",
+    scanListView: "📋 List view",
+    scanDashboardView: "📊 Group dashboard",
+    scanLoadMore: rem => `Load 100 more (${rem} left)`,
+    scanFromOrigin: "in",
+    cleanupNewScan: "📁 New scan",
+    group_photo: "Photos", group_video: "Video", group_document: "Documents",
+    group_audio: "Audio", group_archive: "Archives", group_other: "Other",
+    subtype_screenshot: "Screenshots", subtype_camera: "Camera photos", subtype_other: "Other",
+    sugg_screenshots: n => `${n} screenshots older than 2 years`,
+    sugg_duplicates: n => `${n} duplicates by name + size`,
+    sugg_giants: n => `${n} files larger than 500 MB`,
+    sugg_untitled: n => `${n} "untitled" files`,
+    suggReclaim: size => `→ ${size} reclaimable`,
+    suggReclaimMaybe: size => `→ ${size} if you don't need them`,
+    exploreArrow: "Explore →",
+    exploreBack: "← Back to groups",
+    suggPanelTitle: "💡 TriageHub suggestions",
+    suggPanelIntro: "The files below are PRE-MARKED as “Trash”. Nothing is deleted until you confirm with “⚡ Apply to disk” or “📦 Export ZIP”.",
+    suggExplore: "Explore",
+    suggDeselect: "Deselect",
+    suggReselect: "Reselect",
+    suggNone: "No suggestions for this folder. 🎉",
+    suggBadge: "🗑 pre-marked"
   }
 };
 
@@ -2634,6 +2863,10 @@ function renderStats() {
   const grid = document.getElementById('stat-grid');
   const ws = activeWorkspace();
   if (!ws) { grid.innerHTML = ''; return; }
+  // v1.5: per il cleanup con scansione attiva, le statistiche vengono dal modello scan.
+  if (ws.templateId === 'cleanup' && cleanupScans.has(ws.id)) {
+    return renderScanStats(ws, cleanupScans.get(ws.id));
+  }
   const total = ws.items.length;
   const counts = ws.statuses.map(s =>
     Object.values(ws.itemStatus).filter(v => v === s.id).length
@@ -2712,6 +2945,13 @@ function renderItems() {
   const main = document.getElementById('main');
   const ws = activeWorkspace();
   if (!ws) { main.innerHTML = ''; return; }
+
+  // v1.5: il template cleanup con una scansione attiva usa la vista dedicata
+  // (dashboard a gruppi / lista), che legge dal modello di scansione in memoria.
+  if (ws.templateId === 'cleanup' && cleanupScans.has(ws.id)) {
+    renderCleanup(ws, cleanupScans.get(ws.id));
+    return;
+  }
 
   if (ws.items.length === 0) {
     // 1) Guida contestuale, se non disabilitata.
@@ -3307,10 +3547,14 @@ function renderWorkspaceCards() {
   const list = Object.values(state.workspaces);
   const cards = list.map(ws => {
     const isActive = ws.id === state.activeWorkspaceId;
-    const total = ws.items.length;
+    // v1.5: per il cleanup con scansione attiva, conteggio e stats dal modello scan.
+    const scan = ws.templateId === 'cleanup' ? cleanupScans.get(ws.id) : null;
+    const total = scan ? scan.totalFiles : ws.items.length;
     // Mini-stats: skip stati con count 0.
     const stats = ws.statuses.map(s => {
-      const count = Object.values(ws.itemStatus).filter(v => v === s.id).length;
+      const count = scan
+        ? scan.files.filter(f => f.statusId === s.id).length
+        : Object.values(ws.itemStatus).filter(v => v === s.id).length;
       return count > 0
         ? `<span class="ws-card-stat">${escapeHtml(s.emoji)}${count}</span>`
         : '';
@@ -3601,54 +3845,422 @@ const cleanupFileRegistry = new Map();
 // così posso cancellare/spostare in-place. Una sola directory attiva per workspace.
 const cleanupDirHandles = new Map(); // workspaceId -> FileSystemDirectoryHandle
 
-// Inserisce N item nel workspace attivo a partire dai File selezionati
-// dall'<input type="file" multiple> oppure da una directory FSA API.
-// v1.4.0: salva anche il File blob in cleanupFileRegistry per usi avanzati.
-// entries: array di { file: File, handle?: FileSystemFileHandle, relPath?: string }
-function handleCleanupFiles(fileList, options) {
+// ============================================
+// v1.5 — SMART SCAN
+// ============================================
+// Modello di scansione in memoria (NON serializzato su localStorage: blob e
+// handle non sono serializzabili e una scansione può avere migliaia di file).
+// Vive per la sessione, ed è la sorgente di verità di dashboard/lista/esplora.
+//   cleanupScans: wsId -> {
+//     rootName, recursive, subfolderCount, totalFiles, totalBytes, truncated,
+//     files:[fileRec], suggestions:[], source:'fsa'|'picker' }
+//   fileRec: { id, name, relPath, depth, size, lastModified, mime,
+//              group, subType, statusId, premarkRule,
+//              file, handle, parentDirHandle }
+const cleanupScans = new Map();
+const SCAN_MAX_DEPTH = 5;       // livelli di profondità massimi
+const SCAN_MAX_FILES = 10000;   // tetto di sicurezza sul numero di file
+let scanCancelRequested = false;
+let pendingScanHandle = null;   // dirHandle in attesa nel dialog opzioni
+
+// Stato UI per workspace cleanup (in memoria). Il toggle dashboard/lista viene
+// anche persistito come preferenza utente in localStorage.
+const cleanupUiState = new Map(); // wsId -> { view, exploreGroup, filters, listLimit }
+const CLEANUP_VIEW_KEY = 'triagehub-cleanup-view';
+
+function getCleanupUi(wsId) {
+  if (!cleanupUiState.has(wsId)) {
+    const savedView = localStorage.getItem(CLEANUP_VIEW_KEY) === 'list' ? 'list' : 'dashboard';
+    cleanupUiState.set(wsId, { view: savedView, exploreGroup: null, filters: {}, listLimit: 100 });
+  }
+  return cleanupUiState.get(wsId);
+}
+
+// Dimensione byte → stringa leggibile (B/KB/MB/GB/TB).
+function humanSize(bytes) {
+  const n = Number(bytes) || 0;
+  if (n < 1024) return `${n} B`;
+  const units = ['KB', 'MB', 'GB', 'TB'];
+  let v = n / 1024, i = 0;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return `${v >= 100 ? Math.round(v) : v.toFixed(1)} ${units[i]}`;
+}
+
+// Numero formattato con separatore di migliaia secondo la lingua corrente.
+function fmtCount(n) {
+  return Number(n || 0).toLocaleString(currentLang === 'it' ? 'it-IT' : 'en-US');
+}
+
+// Data relativa ("2 anni fa" / "2 years ago"). Granularità: anni, mesi, giorni, oggi.
+function relativeTime(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - Number(ts);
+  if (!isFinite(diff)) return '';
+  const day = 86400000;
+  const isIT = currentLang === 'it';
+  const years = Math.floor(diff / (day * 365));
+  if (years >= 1) return isIT ? `${years} ann${years === 1 ? 'o' : 'i'} fa` : `${years} year${years === 1 ? '' : 's'} ago`;
+  const months = Math.floor(diff / (day * 30));
+  if (months >= 1) return isIT ? `${months} mes${months === 1 ? 'e' : 'i'} fa` : `${months} month${months === 1 ? '' : 's'} ago`;
+  const days = Math.floor(diff / day);
+  if (days >= 1) return isIT ? `${days} giorn${days === 1 ? 'o' : 'i'} fa` : `${days} day${days === 1 ? '' : 's'} ago`;
+  return isIT ? 'oggi' : 'today';
+}
+
+// --- Progress overlay ---
+function showScanProgress() {
+  document.getElementById('scan-bar').classList.add('indeterminate');
+  document.getElementById('scan-progress-stats').textContent = t('scanProgressStats', '0', humanSize(0));
+  document.getElementById('scan-progress-current').textContent = '';
+  document.getElementById('scan-progress').classList.add('is-open');
+}
+function updateScanProgress(files, bytes, current) {
+  document.getElementById('scan-progress-stats').textContent = t('scanProgressStats', fmtCount(files), humanSize(bytes));
+  document.getElementById('scan-progress-current').textContent = t('scanProgressCurrent', current || '');
+}
+function hideScanProgress() {
+  document.getElementById('scan-progress').classList.remove('is-open');
+}
+// Cede il controllo al browser per ridipingere (progress) e processare il click di Annulla.
+function yieldFrame() { return new Promise(r => requestAnimationFrame(() => r())); }
+document.getElementById('scan-progress-cancel').addEventListener('click', () => { scanCancelRequested = true; });
+
+// Walk ricorsivo (BFS) con tetti di sicurezza. Salta la cartella di archivio di
+// TriageHub. Aggiorna il progress ogni ~40 file e controlla l'annullamento.
+async function scanDirectory(dirHandle, recursive) {
+  scanCancelRequested = false;
+  const files = [];
+  const subfolders = new Set();
+  let totalBytes = 0, truncated = false, processed = 0;
+  const queue = [{ handle: dirHandle, path: '', depth: 0 }]; // root = depth 0
+
+  while (queue.length) {
+    if (scanCancelRequested) break;
+    const node = queue.shift();
+    let iter;
+    try { iter = node.handle.entries(); } catch (_) { continue; }
+    try {
+      for await (const [name, child] of iter) {
+        if (scanCancelRequested) break;
+        if (child.kind === 'file') {
+          if (files.length >= SCAN_MAX_FILES) { truncated = true; break; }
+          let file;
+          try { file = await child.getFile(); } catch (_) { continue; }
+          const relPath = node.path ? node.path + '/' + name : name;
+          files.push({
+            id: uid(), name, relPath, depth: node.depth,
+            size: file.size, lastModified: file.lastModified, mime: file.type || '',
+            group: null, subType: null, statusId: null, premarkRule: null,
+            file, handle: child, parentDirHandle: node.handle
+          });
+          totalBytes += file.size;
+          if (node.path) subfolders.add(node.path);
+          if (++processed % 40 === 0) {
+            updateScanProgress(files.length, totalBytes, node.path);
+            await yieldFrame();
+          }
+        } else if (child.kind === 'directory') {
+          if (name === '_TriageHub_Archivio' || name === '_TriageHub_Archive') continue;
+          const childPath = node.path ? node.path + '/' + name : name;
+          subfolders.add(childPath);
+          if (recursive && node.depth + 1 <= SCAN_MAX_DEPTH) {
+            queue.push({ handle: child, path: childPath, depth: node.depth + 1 });
+          }
+        }
+      }
+    } catch (_) { /* directory non leggibile, salto */ }
+    if (truncated) break;
+  }
+  updateScanProgress(files.length, totalBytes, '');
+  return { files, subfolderCount: subfolders.size, totalBytes, truncated, cancelled: scanCancelRequested };
+}
+
+// Conta rapidamente file e sottocartelle del PRIMO livello (per il dialog opzioni).
+async function countFirstLevel(dirHandle) {
+  let fileCount = 0, dirCount = 0;
+  for await (const [name, h] of dirHandle.entries()) {
+    if (h.kind === 'file') fileCount++;
+    else if (h.kind === 'directory' && name !== '_TriageHub_Archivio' && name !== '_TriageHub_Archive') dirCount++;
+  }
+  return { fileCount, dirCount };
+}
+
+// Apre il dialog "scansione ricorsiva?" con il conteggio del primo livello.
+function openScanOptionsDialog(dirHandle, fileCount, dirCount) {
+  pendingScanHandle = dirHandle;
+  document.getElementById('scan-opt-folder').textContent = t('scanOptFolder', dirHandle.name);
+  document.getElementById('scan-opt-counts').textContent = t('scanOptCounts', dirCount, fileCount);
+  const cb = document.getElementById('scan-opt-recursive');
+  cb.checked = false;            // default: solo primo livello (come da brief)
+  cb.disabled = dirCount === 0;  // niente sottocartelle → opzione disattivata
+  openDialog('dlg-scan-options');
+}
+
+document.getElementById('scan-opt-start').addEventListener('click', async () => {
+  const handle = pendingScanHandle;
+  const recursive = document.getElementById('scan-opt-recursive').checked;
+  closeDialog('dlg-scan-options');
+  pendingScanHandle = null;
+  if (handle) await startCleanupScan(handle, recursive);
+});
+
+// Esegue la scansione vera, costruisce il modello e mostra i risultati.
+async function startCleanupScan(dirHandle, recursive) {
   const ws = activeWorkspace();
   if (!ws) return;
-  options = options || {};
-  // Normalizzo input: accetto sia un FileList sia un array di entries {file, handle, relPath}
-  const entries = Array.from(fileList || []).map(item => {
-    if (item && item.file instanceof File) return item; // già entry
-    if (item instanceof File) return { file: item };    // FileList classico
-    return null;
-  }).filter(Boolean);
-  if (!entries.length) return;
-  entries.forEach(entry => {
-    const f = entry.file;
-    const sizeMB = Math.round((f.size / (1024 * 1024)) * 100) / 100;
-    const id = uid();
-    ws.items.unshift({
-      id,
-      name: f.name,
-      desc: entry.relPath && entry.relPath !== f.name ? entry.relPath : '',
-      cat: detectFileCategory(f, ws),
-      tag: f.lastModified ? formatItalianDate(f.lastModified) : '',
-      value: sizeMB,
-      links: [],
-      created: new Date().toISOString(),
-      // v1.4.0: marker per UI (non persistito tra sessioni perché il blob no)
-      hasBlob: true,
-      mimeType: f.type || ''
-    });
-    cleanupFileRegistry.set(id, {
-      file: f,
-      handle: entry.handle || null,
-      relPath: entry.relPath || f.name
-    });
-  });
-  saveState();
+  cleanupDirHandles.set(ws.id, dirHandle);
+  showScanProgress();
+  let result;
+  try {
+    result = await scanDirectory(dirHandle, recursive);
+  } catch (err) {
+    console.error(err); hideScanProgress(); toast(t('fsaError')); return;
+  }
+  hideScanProgress();
+  if (result.cancelled) { toast(t('scanCancelled')); return; }
+  if (!result.files.length) { toast(t('fsaEmptyFolder')); return; }
+  const scan = {
+    rootName: dirHandle.name, recursive,
+    subfolderCount: result.subfolderCount,
+    totalFiles: result.files.length,
+    totalBytes: result.totalBytes,
+    truncated: result.truncated,
+    files: result.files,
+    suggestions: [],
+    source: 'fsa'
+  };
+  classifyScanFiles(scan);      // Step 3 — assegna group/subType
+  computeSuggestions(scan, ws); // Step 4 — pre-marca i candidati cestino
+  cleanupScans.set(ws.id, scan);
+  const ui = getCleanupUi(ws.id);
+  ui.exploreGroup = null; ui.listLimit = 100;
   renderAll();
-  toast(t('desktopLoadedFiles', entries.length));
+  if (result.truncated) setTimeout(() => toast(t('scanTruncated', fmtCount(SCAN_MAX_FILES))), 600);
+}
+
+// Riscansiona: riusa l'handle esistente (FSA) o riapre il picker file.
+async function rescanCleanup(ws) {
+  const scan = cleanupScans.get(ws.id);
+  const handle = cleanupDirHandles.get(ws.id);
+  if (handle && supportsFileSystemAccess()) {
+    try {
+      const { fileCount, dirCount } = await countFirstLevel(handle);
+      openScanOptionsDialog(handle, fileCount, dirCount);
+      return;
+    } catch (_) { /* permesso perso: ricado sul picker */ }
+  }
+  if (scan && scan.source === 'picker') triggerCleanupFilePicker();
+  else triggerCleanupDirectoryPicker();
+}
+
+// ============================================
+// v1.5 — RAGGRUPPAMENTO per tipo (Step 3)
+// ============================================
+// I gruppi sono mostrati in quest'ordine nella dashboard. Le etichette sono i18n.
+const SCAN_GROUPS = [
+  { id: 'photo',    emoji: '🖼' },
+  { id: 'video',    emoji: '🎬' },
+  { id: 'document', emoji: '📄' },
+  { id: 'audio',    emoji: '🎵' },
+  { id: 'archive',  emoji: '📦' },
+  { id: 'other',    emoji: '❓' }
+];
+function groupEmoji(id) { const g = SCAN_GROUPS.find(x => x.id === id); return g ? g.emoji : '❓'; }
+function groupLabel(id) { return t('group_' + id); }
+
+const RE_SCREENSHOT = /screen.?shot|schermata|cattura/i;
+const RE_CAMERA     = /^(IMG_\d+|DSC\d+|DSCN\d+|P\d{7})/i;
+
+// Sotto-tipo per le Foto: screenshot / fotocamera / altre.
+function detectPhotoSubType(name) {
+  if (RE_SCREENSHOT.test(name)) return 'screenshot';
+  if (RE_CAMERA.test(name))     return 'camera';
+  return 'other';
+}
+
+// Heuristics estensione + MIME. Le liste di estensioni seguono il brief
+// (Documenti = pdf/doc/docx/txt/md/pages/odt/rtf/key/ppt/pptx; Archivi =
+// zip/rar/7z/tar/gz/dmg/iso); il MIME, quando presente, ha la precedenza.
+function detectFileGroup(fr) {
+  const mime = (fr.mime || '').toLowerCase();
+  const ext  = (fr.name.split('.').pop() || '').toLowerCase();
+
+  if (mime.startsWith('image/') || ['jpg','jpeg','png','gif','heic','heif','webp','bmp','tif','tiff','svg','raw','dng'].includes(ext))
+    return { group: 'photo', subType: detectPhotoSubType(fr.name) };
+  if (mime.startsWith('video/') || ['mp4','mov','avi','mkv','m4v','webm','wmv','flv','mpg','mpeg'].includes(ext))
+    return { group: 'video', subType: null };
+  if (mime.startsWith('audio/') || ['mp3','wav','aac','flac','m4a','ogg','oga','aiff','wma'].includes(ext))
+    return { group: 'audio', subType: null };
+  // Documenti: lista del brief + fogli di calcolo (xls/xlsx/csv/numbers/ods),
+  // più intuitivi qui che in "Altro" per un'app che tratta listini.
+  if (mime === 'application/pdf'
+      || /spreadsheet|excel|csv|msword|officedocument|opendocument|presentation/.test(mime)
+      || ['pdf','doc','docx','txt','md','pages','odt','rtf','key','ppt','pptx','xls','xlsx','csv','tsv','numbers','ods'].includes(ext))
+    return { group: 'document', subType: null };
+  if (['zip','rar','7z','tar','gz','tgz','dmg','iso'].includes(ext))
+    return { group: 'archive', subType: null };
+  return { group: 'other', subType: null };
+}
+
+// Assegna group/subType a ogni fileRec del modello di scansione.
+function classifyScanFiles(scan) {
+  scan.files.forEach(fr => {
+    const { group, subType } = detectFileGroup(fr);
+    fr.group = group;
+    fr.subType = subType;
+  });
+}
+
+// ============================================
+// v1.5 — REGOLE DI SUGGERIMENTO (Step 4)
+// ============================================
+// Ogni regola raccoglie i file candidati e (tranne i "giganti", solo flagged)
+// li PRE-MARCA come Cestinare. Niente viene cancellato finché l'utente non
+// conferma con "Applica al disco" o "Esporta ZIP". Le regole sono opt-in:
+// "Deseleziona" smarca i file ancora pre-marcati da quella regola.
+const TWO_YEARS_MS = 2 * 365 * 86400000;
+const GIANT_BYTES  = 500 * 1024 * 1024;
+const RE_UNTITLED  = /^(untitled|senza titolo|nuovo documento|new document)( ?\(\d+\))?(\.\w+)?$/i;
+
+function makeRule(id, fileRecs, flagOnly) {
+  return {
+    id, flagOnly, enabled: true,
+    fileIds: fileRecs.map(f => f.id),
+    count: fileRecs.length,
+    reclaimBytes: fileRecs.reduce((s, f) => s + (f.size || 0), 0)
+  };
+}
+
+function computeSuggestions(scan, ws) {
+  const files = scan.files;
+  const now = Date.now();
+  const rules = [];
+
+  // 1) Screenshot più vecchi di 2 anni → pre-marca trash.
+  const oldShots = files.filter(f =>
+    f.group === 'photo' && f.subType === 'screenshot' &&
+    f.lastModified && (now - f.lastModified) > TWO_YEARS_MS);
+  if (oldShots.length) rules.push(makeRule('screenshots', oldShots, false));
+
+  // 2) Duplicati per nome+dimensione → tieni il più recente, marca gli altri.
+  const clusters = new Map(); // "name|size" -> [fileRec]
+  files.forEach(f => {
+    const key = f.name + '|' + f.size;
+    if (!clusters.has(key)) clusters.set(key, []);
+    clusters.get(key).push(f);
+  });
+  const dupTrash = [], dupKeep = [];
+  clusters.forEach(arr => {
+    if (arr.length < 2) return;
+    let newest = arr[0];
+    arr.forEach(f => { if ((f.lastModified || 0) > (newest.lastModified || 0)) newest = f; });
+    arr.forEach(f => { (f === newest ? dupKeep : dupTrash).push(f); });
+  });
+  if (dupTrash.length) {
+    const rule = makeRule('duplicates', dupTrash, false);
+    rule.keepIds = dupKeep.map(f => f.id); // i "tenere" associati al cluster
+    rules.push(rule);
+  }
+
+  // 3) File giganti > 500 MB → solo flagged ("controlla se ti serve ancora").
+  const giants = files.filter(f => f.size > GIANT_BYTES);
+  if (giants.length) rules.push(makeRule('giants', giants, true));
+
+  // 4) File "untitled" / "Senza titolo" → pre-marca trash.
+  const untitled = files.filter(f => RE_UNTITLED.test(f.name));
+  if (untitled.length) rules.push(makeRule('untitled', untitled, false));
+
+  scan.suggestions = rules;
+  // Pre-marca iniziale (le regole flagOnly non toccano lo stato).
+  rules.forEach(rule => applySuggestion(scan, ws, rule, true));
+}
+
+// Applica (enabled=true) o rimuove (false) la pre-marca di una regola.
+// Non sovrascrive scelte manuali dell'utente: marca solo file con statusId
+// nullo, e smarca solo quelli ancora pre-marcati da QUESTA regola.
+function applySuggestion(scan, ws, rule, enabled) {
+  rule.enabled = enabled;
+  if (rule.flagOnly) return; // giganti: nessuna pre-marca, solo evidenziati
+  const roles = mapStatusRoles(ws);
+  const byId = new Map(scan.files.map(f => [f.id, f]));
+  if (enabled) {
+    rule.fileIds.forEach(id => {
+      const fr = byId.get(id);
+      if (fr && fr.statusId == null) { fr.statusId = roles.trash; fr.premarkRule = rule.id; }
+    });
+    (rule.keepIds || []).forEach(id => {
+      const fr = byId.get(id);
+      if (fr && fr.statusId == null) { fr.statusId = roles.keep; fr.premarkRule = rule.id + '-keep'; }
+    });
+  } else {
+    rule.fileIds.forEach(id => {
+      const fr = byId.get(id);
+      if (fr && fr.premarkRule === rule.id) { fr.statusId = null; fr.premarkRule = null; }
+    });
+    (rule.keepIds || []).forEach(id => {
+      const fr = byId.get(id);
+      if (fr && fr.premarkRule === rule.id + '-keep') { fr.statusId = null; fr.premarkRule = null; }
+    });
+  }
+}
+
+// Etichetta i18n di una regola (con il conteggio) e spazio recuperabile.
+function suggestionLabel(rule) { return t('sugg_' + rule.id, fmtCount(rule.count)); }
+function suggestionReclaim(rule) {
+  return rule.flagOnly
+    ? t('suggReclaimMaybe', humanSize(rule.reclaimBytes))
+    : t('suggReclaim', humanSize(rule.reclaimBytes));
+}
+
+// v1.5: i file scelti dal picker classico (<input type="file" multiple>)
+// alimentano lo STESSO modello di scansione usato dalla FSA API. Niente handle
+// (browser senza FSA → solo anteprima + ZIP), ma dashboard/lista identiche.
+function buildScanFromPickerFiles(fileList) {
+  const ws = activeWorkspace();
+  if (!ws) return;
+  const arr = Array.from(fileList || []).filter(f => f instanceof File);
+  if (!arr.length) return;
+  const files = [];
+  const subfolders = new Set();
+  let totalBytes = 0;
+  arr.forEach(f => {
+    const relPath = f.webkitRelativePath || f.name;
+    const slash = relPath.lastIndexOf('/');
+    if (slash > -1) subfolders.add(relPath.slice(0, slash));
+    files.push({
+      id: uid(), name: f.name, relPath,
+      depth: (relPath.match(/\//g) || []).length,
+      size: f.size, lastModified: f.lastModified, mime: f.type || '',
+      group: null, subType: null, statusId: null, premarkRule: null,
+      file: f, handle: null, parentDirHandle: null
+    });
+    totalBytes += f.size;
+  });
+  const scan = {
+    rootName: localized(ws.name) || (currentLang === 'it' ? 'File caricati' : 'Loaded files'),
+    recursive: subfolders.size > 0,
+    subfolderCount: subfolders.size,
+    totalFiles: files.length,
+    totalBytes,
+    truncated: false,
+    files,
+    suggestions: [],
+    source: 'picker'
+  };
+  classifyScanFiles(scan);
+  computeSuggestions(scan, ws);
+  cleanupScans.set(ws.id, scan);
+  const ui = getCleanupUi(ws.id);
+  ui.exploreGroup = null; ui.listLimit = 100;
+  renderAll();
+  toast(t('desktopLoadedFiles', files.length));
 }
 
 function triggerCleanupFilePicker() {
   document.getElementById('cleanup-files').click();
 }
 document.getElementById('cleanup-files').addEventListener('change', e => {
-  if (e.target.files && e.target.files.length) handleCleanupFiles(e.target.files);
+  if (e.target.files && e.target.files.length) buildScanFromPickerFiles(e.target.files);
   e.target.value = ''; // reset così il change si triggera anche con stessa selezione
 });
 
@@ -3699,40 +4311,21 @@ async function triggerCleanupDirectoryPicker() {
     }
   } catch (_) { /* alcuni browser non implementano requestPermission, va bene lo stesso */ }
 
-  cleanupDirHandles.set(ws.id, dirHandle);
-
-  // Leggo ricorsivamente i file della cartella (solo primo livello per ora,
-  // così non esplodo su cartelle gigantesche; le sottocartelle vengono
-  // segnalate ma non aperte automaticamente).
-  const entries = [];
-  let skippedSubdirs = 0;
+  // v1.5: conto rapidamente il primo livello e chiedo all'utente se scansionare
+  // anche le sottocartelle. La scansione vera parte da startCleanupScan().
+  let counts;
   try {
-    for await (const [name, handle] of dirHandle.entries()) {
-      if (handle.kind === 'file') {
-        try {
-          const file = await handle.getFile();
-          entries.push({ file, handle, relPath: name });
-        } catch (_) { /* file non leggibile, skip */ }
-      } else if (handle.kind === 'directory') {
-        // Salto la cartella di archivio se già creata da TriageHub
-        if (name === '_TriageHub_Archivio' || name === '_TriageHub_Archive') continue;
-        skippedSubdirs++;
-      }
-    }
+    counts = await countFirstLevel(dirHandle);
   } catch (err) {
     console.error(err);
     toast(t('fsaError'));
     return;
   }
-
-  if (!entries.length) {
+  if (counts.fileCount === 0 && counts.dirCount === 0) {
     toast(t('fsaEmptyFolder'));
     return;
   }
-  handleCleanupFiles(entries);
-  if (skippedSubdirs > 0) {
-    setTimeout(() => toast(t('fsaSkippedSubdirs', skippedSubdirs)), 1200);
-  }
+  openScanOptionsDialog(dirHandle, counts.fileCount, counts.dirCount);
 }
 
 // Restituisce il File blob (se ancora in registry) o null.
@@ -3977,7 +4570,20 @@ function saveFile(blob, filename) {
 function openCleanupPreview(itemId) {
   const rec = cleanupFileRegistry.get(itemId);
   if (!rec) { toast(t('previewNoBlob')); return; }
-  const file = rec.file;
+  showFilePreview(rec.file);
+}
+
+// v1.5: anteprima di un fileRec del modello di scansione.
+function openScanPreview(frId) {
+  const ws = activeWorkspace();
+  const scan = ws && cleanupScans.get(ws.id);
+  const fr = scan && scan.files.find(f => f.id === frId);
+  if (!fr || !fr.file) { toast(t('previewNoBlob')); return; }
+  showFilePreview(fr.file);
+}
+
+// Renderizza un File blob nell'overlay full-screen.
+function showFilePreview(file) {
   const overlay = document.getElementById('cleanup-preview-overlay');
   const content = document.getElementById('cleanup-preview-content');
   const caption = document.getElementById('cleanup-preview-caption');
@@ -4014,6 +4620,289 @@ function closeCleanupPreview() {
   }
   content.innerHTML = '';
   overlay.classList.remove('is-open');
+}
+
+// ============================================
+// v1.5 — RENDER cleanup (legge dal modello di scansione)
+// ============================================
+// Step 1: riepilogo + vista lista minimale (smistamento già funzionante).
+// La dashboard a gruppi (Step 5) e la vista esplora-gruppo (Step 6) si
+// innestano in renderCleanup() leggendo lo stesso modello.
+
+// Statistiche header dal modello scan (sostituiscono ws.items per il cleanup).
+function renderScanStats(ws, scan) {
+  const grid = document.getElementById('stat-grid');
+  const total = scan.files.length;
+  const counts = ws.statuses.map(s => scan.files.filter(f => f.statusId === s.id).length);
+  const assigned = counts.reduce((a, b) => a + b, 0);
+  let html = `<div class="stat-card">
+    <div class="stat-num">${fmtCount(total)}</div>
+    <div class="stat-label">${escapeHtml(t('totalItems'))}</div>
+  </div>`;
+  ws.statuses.forEach((s, i) => {
+    html += `<div class="stat-card" style="--stat-color:${escapeHtml(s.color)}">
+      <div class="stat-num">${fmtCount(counts[i])}</div>
+      <div class="stat-label">${escapeHtml(s.emoji)} ${escapeHtml(localized(s.label))}</div>
+    </div>`;
+  });
+  if (total > 0) {
+    html += `<div class="stat-card">
+      <div class="stat-num" style="color:var(--text-tertiary)">${fmtCount(total - assigned)}</div>
+      <div class="stat-label">⚪ ${escapeHtml(t('noChoice'))}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+// Router: esplora-gruppo (Step 6) > dashboard (default) | vista lista.
+function renderCleanup(ws, scan) {
+  const main = document.getElementById('main');
+  const ui = getCleanupUi(ws.id);
+  if (ui.exploreGroup) { renderScanExplore(ws, scan, ui); return; }
+
+  let html = renderScanSummary(ws, scan, ui);
+  html += (ui.view === 'list')
+    ? renderScanListView(ws, scan, ui)
+    : renderScanDashboard(ws, scan, ui);
+  main.innerHTML = html;
+
+  wireScanSummary(ws, scan, ui, main);
+  if (ui.view === 'list') { wireScanFileCards(ws, scan, main); wireLoadMore(ui, main); }
+  else wireScanDashboard(ws, scan, ui, main);
+}
+
+// Riepilogo + barra azioni (comune a dashboard e lista).
+function renderScanSummary(ws, scan, ui) {
+  const toggleLabel = ui.view === 'list' ? t('scanDashboardView') : t('scanListView');
+  return `<div class="scan-summary">
+    <div class="scan-summary-line">${escapeHtml(t('scanSummary', fmtCount(scan.totalFiles), humanSize(scan.totalBytes), scan.subfolderCount))}</div>
+    <div class="scan-summary-actions">
+      <button class="btn" id="cleanup-rescan">${escapeHtml(t('scanRescan'))}</button>
+      <button class="btn" id="cleanup-view-toggle">${escapeHtml(toggleLabel)}</button>
+      <button class="btn" id="cleanup-export">↑ ${escapeHtml(t('export'))}</button>
+    </div>
+    ${scan.truncated ? `<div class="scan-truncated-note">${escapeHtml(t('scanTruncated', fmtCount(SCAN_MAX_FILES)))}</div>` : ''}
+  </div>`;
+}
+function wireScanSummary(ws, scan, ui, root) {
+  const reBtn = root.querySelector('#cleanup-rescan');
+  if (reBtn) reBtn.addEventListener('click', () => rescanCleanup(ws));
+  const tg = root.querySelector('#cleanup-view-toggle');
+  if (tg) tg.addEventListener('click', () => {
+    ui.view = ui.view === 'list' ? 'dashboard' : 'list';
+    localStorage.setItem(CLEANUP_VIEW_KEY, ui.view);
+    ui.listLimit = 100;
+    renderItems();
+  });
+  const ex = root.querySelector('#cleanup-export');
+  if (ex) ex.addEventListener('click', () => document.getElementById('btn-export').click());
+}
+
+// --- Dashboard a gruppi ---
+function renderScanDashboard(ws, scan, ui) {
+  const agg = new Map(); // group -> { count, bytes }
+  scan.files.forEach(f => {
+    const g = f.group || 'other';
+    if (!agg.has(g)) agg.set(g, { count: 0, bytes: 0 });
+    const a = agg.get(g); a.count++; a.bytes += f.size || 0;
+  });
+
+  let html = `<div class="scan-groups">`;
+  SCAN_GROUPS.forEach(g => {
+    const a = agg.get(g.id);
+    if (!a) return;
+    html += `<button class="scan-group-row" data-explore="${g.id}">
+      <span class="scan-group-emoji">${g.emoji}</span>
+      <span class="scan-group-name">${escapeHtml(groupLabel(g.id))}</span>
+      <span class="scan-group-meta">${fmtCount(a.count)} ${escapeHtml(t('items'))} · ${escapeHtml(humanSize(a.bytes))}</span>
+      <span class="scan-group-go">${escapeHtml(t('exploreArrow'))}</span>
+    </button>`;
+  });
+  html += `</div>`;
+  html += renderSuggestionsPanel(ws, scan);
+  html += renderCleanupFooter(ws, scan);
+  return html;
+}
+
+function renderSuggestionsPanel(ws, scan) {
+  const rules = scan.suggestions || [];
+  if (!rules.length) {
+    return `<div class="sugg-panel">
+      <div class="sugg-panel-title">${escapeHtml(t('suggPanelTitle'))}</div>
+      <p class="small" style="color:#4a3b00">${escapeHtml(t('suggNone'))}</p>
+    </div>`;
+  }
+  let html = `<div class="sugg-panel">
+    <div class="sugg-panel-title">${escapeHtml(t('suggPanelTitle'))}</div>
+    <div class="sugg-panel-intro">⚠ ${escapeHtml(t('suggPanelIntro'))}</div>
+    <div class="sugg-list">`;
+  rules.forEach(rule => {
+    const disabled = !rule.enabled;
+    html += `<div class="sugg-item ${disabled ? 'is-disabled' : ''}">
+      <div class="sugg-item-text">
+        <div class="sugg-item-label">${rule.flagOnly ? '🔎 ' : ''}${escapeHtml(suggestionLabel(rule))}</div>
+        <div class="sugg-item-reclaim">${escapeHtml(suggestionReclaim(rule))}</div>
+      </div>
+      <div class="sugg-item-actions">
+        <button class="btn" data-explore="suggestion:${rule.id}">${escapeHtml(t('suggExplore'))}</button>
+        ${rule.flagOnly ? '' : `<button class="btn" data-sugg-toggle="${rule.id}">${escapeHtml(disabled ? t('suggReselect') : t('suggDeselect'))}</button>`}
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+// Footer: "Applica al disco" solo se c'è una directory handle (FSA); ZIP sempre.
+function renderCleanupFooter(ws, scan) {
+  let html = `<div class="cleanup-footer">`;
+  if (canExecuteOnDisk()) {
+    html += `<button class="btn danger" id="cleanup-apply-disk" title="${escapeHtml(t('cleanupApplyOnDiskHint'))}">${escapeHtml(t('cleanupApplyOnDisk'))}</button>`;
+  }
+  html += `<button class="btn primary" id="cleanup-export-zip">${escapeHtml(t('zipExportLabel'))}</button>`;
+  html += `</div>`;
+  return html;
+}
+
+function wireScanDashboard(ws, scan, ui, root) {
+  root.querySelectorAll('[data-explore]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ui.exploreGroup = btn.dataset.explore;
+      ui.listLimit = 100; ui.filters = {};
+      renderItems();
+    });
+  });
+  root.querySelectorAll('[data-sugg-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const rule = (scan.suggestions || []).find(r => r.id === btn.dataset.suggToggle);
+      if (!rule) return;
+      applySuggestion(scan, ws, rule, !rule.enabled);
+      renderStats(); renderWorkspaceCards(); renderItems();
+    });
+  });
+  const apply = root.querySelector('#cleanup-apply-disk');
+  if (apply) apply.addEventListener('click', () => executeCleanupOnDisk());
+  const zip = root.querySelector('#cleanup-export-zip');
+  if (zip) zip.addEventListener('click', () => exportCleanupZip());
+}
+
+// --- Vista lista (virtualizzata: primi listLimit + "carica altri 100") ---
+function renderScanListView(ws, scan, ui) {
+  return renderScanCards(ws, scan.files, ui);
+}
+
+// Rende una collezione di fileRec (lista o esplora) con il limite di virtualizzazione.
+function renderScanCards(ws, files, ui) {
+  const limit = ui.listLimit || 100;
+  const shown = files.slice(0, limit);
+  let html = `<div class="item-grid">`;
+  shown.forEach(fr => { html += scanFileCardHtml(ws, fr); });
+  html += `</div>`;
+  if (files.length > limit) {
+    html += `<div style="text-align:center; margin-top:18px">
+      <button class="btn" id="cleanup-load-more">${escapeHtml(t('scanLoadMore', files.length - limit))}</button>
+    </div>`;
+  }
+  return html;
+}
+
+function scanFileCardHtml(ws, fr) {
+  const status = fr.statusId ? findStatus(fr.statusId) : null;
+  const cardClass = status ? 'has-status' : '';
+  const cardStyle = status ? `--status-color:${escapeHtml(status.color)}` : '';
+  const premark = fr.premarkRule && !fr.premarkRule.endsWith('-keep')
+    ? ` <span class="sugg-badge">${escapeHtml(t('suggBadge'))}</span>` : '';
+  let html = `<div class="item-card ${cardClass}" style="${cardStyle}">`;
+  html += `<div class="item-head">
+    <div class="item-name">${escapeHtml(fr.name)}${premark}</div>
+    <div class="item-value">${escapeHtml(humanSize(fr.size))}</div>
+  </div>`;
+  // Origine (path relativo) + data relativa.
+  const slash = fr.relPath.lastIndexOf('/');
+  const origin = slash > -1 ? fr.relPath.slice(0, slash) : '';
+  const metaParts = [];
+  if (origin) metaParts.push(escapeHtml(origin));
+  const rel = relativeTime(fr.lastModified);
+  if (rel) metaParts.push(escapeHtml(rel));
+  if (metaParts.length) html += `<div class="item-meta">${metaParts.join(' · ')}</div>`;
+  // Anteprima inline (object URL revocato dentro la virtualizzazione, Step 6).
+  if (fr.mime.startsWith('image/')) {
+    const url = URL.createObjectURL(fr.file);
+    html += `<div class="item-preview"><img class="item-thumb" src="${url}" alt="" loading="lazy" data-fr-preview="${fr.id}"></div>`;
+  } else if (fr.mime.startsWith('video/') || fr.mime.startsWith('audio/') || fr.mime === 'application/pdf') {
+    const icon = fr.mime.startsWith('video/') ? '🎬' : fr.mime.startsWith('audio/') ? '🎵' : '📄';
+    html += `<div class="item-preview-btn-wrap"><button class="item-preview-btn" data-fr-preview="${fr.id}">${icon} ${escapeHtml(t('cleanupPreview'))}</button></div>`;
+  }
+  // Bottoni dei 3 stati.
+  html += `<div class="actions">`;
+  ws.statuses.forEach(s => {
+    const active = fr.statusId === s.id;
+    html += `<button class="action-btn ${active ? 'active' : ''}" data-fr-status="${fr.id}|${s.id}" style="--status-color:${escapeHtml(s.color)}">${escapeHtml(s.emoji)} ${escapeHtml(localized(s.label))}</button>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+// Wiring dei bottoni stato/anteprima sulle card (lista ed esplora).
+function wireScanFileCards(ws, scan, root) {
+  root.querySelectorAll('[data-fr-status]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [frId, sId] = btn.dataset.frStatus.split('|');
+      const fr = scan.files.find(f => f.id === frId);
+      if (!fr) return;
+      // Tocco manuale: stato impostato e premark "consumato" (così Deseleziona non lo ripristina).
+      fr.statusId = (fr.statusId === sId) ? null : sId;
+      fr.premarkRule = null;
+      renderStats(); renderWorkspaceCards(); renderItems();
+    });
+  });
+  root.querySelectorAll('[data-fr-preview]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); openScanPreview(btn.dataset.frPreview); });
+  });
+}
+function wireLoadMore(ui, root) {
+  const moreBtn = root.querySelector('#cleanup-load-more');
+  if (moreBtn) moreBtn.addEventListener('click', () => {
+    ui.listLimit = (ui.listLimit || 100) + 100;
+    renderItems();
+  });
+}
+
+// --- Esplora gruppo (Step 5: versione base; Step 6 aggiunge filtri, selezione
+//     multipla, bulk action e virtualizzazione con revoca degli object URL) ---
+function exploreFiles(scan, exploreGroup) {
+  if (exploreGroup.startsWith('suggestion:')) {
+    const ruleId = exploreGroup.slice('suggestion:'.length);
+    const rule = (scan.suggestions || []).find(r => r.id === ruleId);
+    const ids = new Set(rule ? rule.fileIds : []);
+    return scan.files.filter(f => ids.has(f.id));
+  }
+  return scan.files.filter(f => (f.group || 'other') === exploreGroup);
+}
+function exploreTitle(scan, exploreGroup) {
+  if (exploreGroup.startsWith('suggestion:')) {
+    const rule = (scan.suggestions || []).find(r => 'suggestion:' + r.id === exploreGroup);
+    return rule ? suggestionLabel(rule) : t('suggExplore');
+  }
+  return `${groupEmoji(exploreGroup)} ${groupLabel(exploreGroup)}`;
+}
+function renderScanExplore(ws, scan, ui) {
+  const main = document.getElementById('main');
+  const files = exploreFiles(scan, ui.exploreGroup);
+  const bytes = files.reduce((s, f) => s + (f.size || 0), 0);
+  let html = `<div class="scan-summary">
+    <div class="scan-summary-line">${escapeHtml(exploreTitle(scan, ui.exploreGroup))} · ${fmtCount(files.length)} ${escapeHtml(t('items'))} · ${escapeHtml(humanSize(bytes))}</div>
+    <div class="scan-summary-actions">
+      <button class="btn" id="cleanup-back">${escapeHtml(t('exploreBack'))}</button>
+    </div>
+  </div>`;
+  html += renderScanCards(ws, files, ui);
+  main.innerHTML = html;
+  main.querySelector('#cleanup-back').addEventListener('click', () => {
+    ui.exploreGroup = null; ui.listLimit = 100; renderItems();
+  });
+  wireScanFileCards(ws, scan, main);
+  wireLoadMore(ui, main);
 }
 
 // ============================================
