@@ -23,12 +23,13 @@ Hai una pila di **file sul Desktop** o un **foglio Excel di centinaia di righe**
 
 ### I 3 template
 
-- 📂 **Pulizia file & Desktop** — file picker nativo, MIME-detect automatico, **anteprima inline foto/video/audio/PDF**, **azione vera sui file** (cancella/sposta su disco via File System Access API in Chrome/Edge desktop, oppure export ZIP organizzato ovunque)
+- 📂 **Pulizia file & Desktop** — **Smart Scan ricorsivo** (anche le sottocartelle), dashboard a gruppi, suggerimenti automatici, **anteprima inline foto/video/audio/PDF**, **azione vera sui file** (cancella/sposta su disco via File System Access API in Chrome/Edge desktop, oppure export ZIP organizzato ovunque)
 - 📊 **Lista Excel** — carica `.xlsx`/`.csv`/`.tsv`, smista riga per riga, scarica un nuovo Excel organizzato (foglio unico con colonna *Stato* o 3 fogli separati)
 - ⚪ **Vuoto** — workspace pulito, configurazione totalmente tua
 
 ### Caratteristiche
 
+- 🆕 **v1.5: Smart Scan** — scansione ricorsiva (max 5 livelli / 10.000 file) con barra di avanzamento, dashboard a gruppi (Foto/Video/Documenti/Audio/Archivi/Altro), suggerimenti automatici (screenshot vecchi, duplicati, file giganti, "untitled"), filtri esplora-gruppo (data/origine/dimensione/sotto-tipo) e bulk action multi-selezione
 - 🆕 **v1.4: Cancellazione vera dei file** sul disco (Chrome/Edge desktop) o via export ZIP organizzato (ovunque, incluso iPhone/Safari/Android)
 - 🆕 **v1.4: Anteprima inline** di foto, video, audio e PDF direttamente nell'app
 - 📚 **Micro-guide contestuali** per ogni template + manuale in-app dal bottone Aiuto
@@ -57,16 +58,16 @@ Hai una pila di **file sul Desktop** o un **foglio Excel di centinaia di righe**
 5. Click "↑ Esporta" → "📊 Excel organizzato" → scegli foglio unico con colonna *Stato* o 3 fogli separati
 6. Apri il file in Excel/Numbers/LibreOffice e usalo
 
-### Workflow — Pulizia Desktop (v1.4)
+### Workflow — Pulizia Desktop (v1.5 Smart Scan)
 
 **Modalità A — Azione vera sul disco (Chrome / Edge / Opera desktop)**
 
 1. Apri TriageHub, scegli template "📂 Pulizia file & Desktop"
 2. Click "📁 Apri cartella" nel banner → seleziona la cartella da pulire (es. Desktop)
-3. Conferma il permesso di lettura/scrittura
-4. L'app carica i file della cartella, con anteprime inline per foto/video/PDF
-5. Smisti ogni file in **Da tenere / Da archiviare / Da cestinare**
-6. Click "⚡ Applica al disco" → conferma → l'app **cancella davvero** i file "Da cestinare" e sposta gli "Da archiviare" in `_TriageHub_Archivio/`. Operazione irreversibile (no Cestino di sistema).
+3. Conferma il permesso di lettura/scrittura, poi scegli se **scansionare anche le sottocartelle** (max 5 livelli / 10.000 file)
+4. L'app mostra una **dashboard a gruppi** (Foto/Video/Documenti/Audio/Archivi/Altro) e i **suggerimenti** (screenshot vecchi, duplicati, file giganti, "untitled") già pre-marcati come "Da cestinare" — niente è ancora stato toccato
+5. Esplora un gruppo, **filtra** per data/origine/dimensione/sotto-tipo e usa le **bulk action** (seleziona i visibili → Tenere/Archiviare/Cestinare), oppure smista file per file
+6. Click "⚡ Applica al disco" → conferma → l'app **cancella davvero** i file "Da cestinare" e sposta gli "Da archiviare" in `_TriageHub_Archivio/` (ricreando i sottopercorsi). Operazione irreversibile (no Cestino di sistema).
 
 **Modalità B — Export ZIP organizzato (ovunque: Safari, iPhone, Android, Firefox)**
 
@@ -99,12 +100,13 @@ You have a stack of **files on your Desktop** or a **spreadsheet with hundreds o
 
 ### The 3 templates
 
-- 📂 **File & Desktop cleanup** — native file picker, automatic MIME detection, **inline photo/video/audio/PDF preview**, **real action on files** (delete/move on disk via File System Access API in Chrome/Edge desktop, or organized ZIP export anywhere)
+- 📂 **File & Desktop cleanup** — **recursive Smart Scan** (subfolders too), group dashboard, automatic suggestions, **inline photo/video/audio/PDF preview**, **real action on files** (delete/move on disk via File System Access API in Chrome/Edge desktop, or organized ZIP export anywhere)
 - 📊 **Excel List** — upload `.xlsx`/`.csv`/`.tsv`, sort row by row, download a new organized Excel (single sheet with *Status* column or 3 separate sheets)
 - ⚪ **Blank** — clean workspace, fully customizable
 
 ### Features
 
+- 🆕 **v1.5: Smart Scan** — recursive scan (max 5 levels / 10,000 files) with progress bar, group dashboard (Photos/Video/Documents/Audio/Archives/Other), automatic suggestions (old screenshots, duplicates, huge files, "untitled"), explore-group filters (date/origin/size/subtype) and multi-select bulk actions
 - 🆕 **v1.4: Real file deletion** on disk (Chrome/Edge desktop) or via organized ZIP export (anywhere, including iPhone/Safari/Android)
 - 🆕 **v1.4: Inline preview** of photos, videos, audio and PDFs directly in the app
 - 📚 **Contextual micro-guides** for every template + in-app manual via the Help button
@@ -133,16 +135,16 @@ You have a stack of **files on your Desktop** or a **spreadsheet with hundreds o
 5. Click "↑ Export" → "📊 Organized Excel" → pick single sheet with *Status* column or 3 separate sheets
 6. Open the file in Excel/Numbers/LibreOffice and use it
 
-### Workflow — Desktop Cleanup (v1.4)
+### Workflow — Desktop Cleanup (v1.5 Smart Scan)
 
 **Mode A — Real action on disk (Chrome / Edge / Opera desktop)**
 
 1. Open TriageHub, pick the "📂 File & Desktop cleanup" template
 2. Click "📁 Open folder" in the banner → select the folder to clean (e.g. Desktop)
-3. Confirm the read/write permission
-4. The app loads the folder's files, with inline previews for photos/videos/PDFs
-5. Sort each file into **To keep / To archive / To trash**
-6. Click "⚡ Apply to disk" → confirm → the app **actually deletes** "To trash" files and moves "To archive" ones into `_TriageHub_Archive/`. Irreversible (no system Trash).
+3. Confirm the read/write permission, then choose whether to **scan subfolders too** (max 5 levels / 10,000 files)
+4. The app shows a **group dashboard** (Photos/Video/Documents/Audio/Archives/Other) and **suggestions** (old screenshots, duplicates, huge files, "untitled") already pre-marked as "To trash" — nothing has been touched yet
+5. Explore a group, **filter** by date/origin/size/subtype and use **bulk actions** (select visible → Keep/Archive/Trash), or sort file by file
+6. Click "⚡ Apply to disk" → confirm → the app **actually deletes** "To trash" files and moves "To archive" ones into `_TriageHub_Archive/` (recreating subpaths). Irreversible (no system Trash).
 
 **Mode B — Organized ZIP export (anywhere: Safari, iPhone, Android, Firefox)**
 
@@ -182,9 +184,10 @@ The only network request, after the first load, is for Google Fonts — and even
 - **v1.2** ✅ — Workspaces multipli, galleria flottante, workspace cards, template Pulizia file & Desktop, export multi-formato
 - **v1.3** ✅ — Major refocus: 8 → 3 template focalizzati (Cleanup, Excel, Blank); SheetJS integration; export Excel organizzato
 - **v1.4** ✅ — File System Access API per cancellazione/spostamento file reali; export ZIP organizzato; anteprima foto/video/audio/PDF inline; bundle JSZip
-- **v1.5** — Web Share Target API (mobile: "Share to TriageHub" from any app)
-- **v1.6** — IndexedDB for large datasets & blob persistence across reloads (>5,000 items per workspace)
-- **v1.7** — Optional manual sync via JSON file on Drive/Dropbox/iCloud
+- **v1.5** ✅ — Smart Scan: scansione ricorsiva, dashboard a gruppi, suggerimenti automatici, filtri esplora-gruppo, bulk action multi-selezione
+- **v1.6** — Web Share Target API (mobile: "Share to TriageHub" from any app)
+- **v1.7** — IndexedDB for large datasets & blob persistence across reloads (>5,000 items per workspace)
+- **v1.8** — Optional manual sync via JSON file on Drive/Dropbox/iCloud
 - **v2.0** — Drag & drop reordering, custom fields beyond `value`
 
 ---

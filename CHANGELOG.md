@@ -3,6 +3,31 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] — 2026-05-23
+
+> **Smart Scan**: il template Pulizia file & Desktop smette di mostrare un file alla volta del primo livello e diventa uno scanner ricorsivo con dashboard a gruppi, suggerimenti automatici e azione vera sul disco anche per i file nelle sottocartelle.
+
+### Added — Smart Scan (Cleanup template)
+- 🔍 **Scansione ricorsiva**: aprendo una cartella, un dialog chiede se scansionare anche le sottocartelle. Il walk è BFS con tetti di sicurezza (**max 5 livelli**, **max 10.000 file**); oltre il limite si ferma e avvisa. La cartella di archivio di TriageHub (`_TriageHub_Archivio`) viene saltata. Una barra di avanzamento mostra file trovati, byte totali e sottocartella corrente, ed è annullabile.
+- 📊 **Dashboard a gruppi** (vista primaria): i file scansionati sono aggregati per tipo — 🖼 Foto, 🎬 Video, 📄 Documenti, 🎵 Audio, 📦 Archivi, ❓ Altro — con conteggio e dimensione per gruppo. Toggle **📋 Vista lista** per la modalità classica; la preferenza è salvata in localStorage. La classificazione (`detectFileGroup`) usa MIME + estensione; le Foto hanno sotto-tipi Screenshot / Foto fotocamera / Altre.
+- 💡 **Suggerimenti automatici** (pre-marca come "Cestinare", **niente viene cancellato** finché non confermi): screenshot più vecchi di 2 anni, duplicati per nome+dimensione (tiene il più recente, marca gli altri), file > 500 MB (solo evidenziati), file "untitled"/"Senza titolo". Ogni regola è disattivabile dal pannello (Deseleziona/Riseleziona).
+- 🔎 **Esplora gruppo con filtri**: vista filtrabile per **📅 Data** (Oggi/Settimana/Mese/+1 anno/+2 anni), **📏 Dimensione** (>10/50/100 MB), **📂 Origine** (le directory presenti nel gruppo) e **🏷 Sotto-tipo** (solo Foto). I filtri si combinano in AND; l'intestazione mostra il totale del gruppo e i "Visualizzati" filtrati.
+- ☑️ **Bulk action**: checkbox per file, "✓ Seleziona tutti i visibili" (rispetta i filtri attivi), "Deseleziona tutto" e applicazione di uno dei 3 stati a tutta la selezione in un click. Il conteggio "Selezionati" si aggiorna in-place senza re-render.
+
+### Changed — Bridge apply/export sul modello di scansione
+- ⚡ **Applica al disco** ora legge dal modello `cleanupScans` (lo stato vive su `fr.statusId`), non più da `ws.items`. La cancellazione usa `parentDirHandle.removeEntry(name)` (funziona per i file nelle sottocartelle); l'archiviazione **ricrea i sottopercorsi** (`relPath`) dentro `_TriageHub_Archivio/`. Le sottocartelle rimaste vuote **non** vengono potate. Conferma esplicita via `confirm()` con conteggi presi dal modello; dopo l'operazione i file processati sono rimossi dal modello e i conteggi dei suggerimenti riallineati.
+- 📦 **Export ZIP** ora pacchetta `scan.files` preservando il `relPath` (struttura originale + nessuna collisione di nome), escludendo i "Da cestinare". Il dialog Esporta non si blocca più con `ws.items` vuoto per i cleanup basati su scansione e nasconde le opzioni "report" (PDF/Word/TXT/MD/CSV) che girerebbero a vuoto, lasciando ZIP (primario) + Backup JSON.
+- 🖼 **Object URL delle thumbnail revocati a ogni re-render** (`revokeScanThumbs` in testa a `renderItems`): la vista è virtualizzata (max 100 card + "Carica altri 100") e i blob delle anteprime non si accumulano più in memoria.
+- 📚 **i18n**: nuove stringhe IT + EN per scansione, gruppi, suggerimenti, filtri e bulk action. Banner cleanup aggiornato a "Modalità avanzata v1.5".
+
+### Removed
+- 🧹 **Dead code v1.4**: `cleanupFileRegistry` (e i suoi lettori `getCleanupBlob`, `openCleanupPreview`, il blocco thumbnail legacy in `renderItems` e il wiring `[data-preview]`) non era più popolato da nessun flusso dopo il passaggio al modello di scansione → rimosso.
+
+### Tech notes
+- Cache del Service Worker `triagehub-v1.4.0` → `triagehub-v1.5.0` (l'`activate` ripulisce le vecchie cache).
+- Il modello di scansione vive in memoria (`cleanupScans: wsId → { files:[fileRec], suggestions, … }`), **non** serializzato su localStorage (blob e handle non sono serializzabili e una scansione può avere migliaia di file). Si svuota al reload, come i blob in memoria già in v1.4.
+- Come in v1.4, l'apply al disco è transazionale per singolo file, non per il batch: il toast finale riporta `(deleted, moved, errors)`.
+
 ## [1.4.0] — 2026-05-23
 
 > **Da "report che dice cosa fare" a "fa davvero le cose"**: il template Pulizia file & Desktop passa dalla marcatura cartacea all'azione vera sul disco. Due strade, una per ambiente.
