@@ -1148,6 +1148,12 @@
   }
   footer.app-footer a { color: var(--text-secondary); text-decoration: none; }
   footer.app-footer a:hover { color: var(--accent); }
+  .app-version {
+    font-variant-numeric: tabular-nums; font-weight: 600;
+    background: var(--border); color: var(--text-secondary) !important;
+    padding: 1px 7px; border-radius: 7px; font-size: 12px;
+  }
+  .app-version:hover { background: var(--accent); color: #fff !important; }
 
   /* ===== Export dialog v1.2.5 ===== */
   .export-options { display: flex; flex-direction: column; gap: 10px; }
@@ -1294,7 +1300,7 @@
   <main id="main"></main>
 
   <footer class="app-footer">
-    <p>TriageHub · Open Source · <a href="https://github.com/pezzaliapp/TriageHub" target="_blank" rel="noopener">GitHub</a> · <a href="https://www.alessandropezzali.it" target="_blank" rel="noopener">pezzaliapp</a></p>
+    <p>TriageHub · <a class="app-version" href="https://github.com/pezzaliapp/TriageHub/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="Changelog">v1.5.0</a> · Open Source · <a href="https://github.com/pezzaliapp/TriageHub" target="_blank" rel="noopener">GitHub</a> · <a href="https://www.alessandropezzali.it" target="_blank" rel="noopener">pezzaliapp</a></p>
     <p style="margin-top:6px"><span data-i18n="footerNote">Privacy by design — i tuoi dati non lasciano mai il tuo dispositivo.</span></p>
   </footer>
 </div>
