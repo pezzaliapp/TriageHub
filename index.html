@@ -3000,7 +3000,26 @@ function renderChips() {
 // ============================================
 // RENDER: items
 // ============================================
+// v1.5: object URL delle thumbnail. Le creiamo inline nelle card immagine e le
+// teniamo qui per revocarle a ogni re-render: la virtualizzazione mostra al
+// massimo listLimit card per volta, ma senza revoca i blob si accumulerebbero
+// in memoria su liste grandi (e a ogni "Carica altri 100" / cambio filtro).
+let scanThumbUrls = [];
+function trackThumbUrl(file) {
+  const url = URL.createObjectURL(file);
+  scanThumbUrls.push(url);
+  return url;
+}
+function revokeScanThumbs() {
+  scanThumbUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch (_) {} });
+  scanThumbUrls = [];
+}
+
 function renderItems() {
+  // Revoco le thumbnail del render precedente prima di sostituire il DOM:
+  // il vecchio markup (con le img) è ancora presente e viene rimpiazzato in
+  // modo sincrono subito dopo, quindi non si vedono immagini "rotte".
+  revokeScanThumbs();
   const main = document.getElementById('main');
   const ws = activeWorkspace();
   if (!ws) { main.innerHTML = ''; return; }
@@ -3156,7 +3175,7 @@ function renderItems() {
           // Object URL on-demand: lo creiamo qui ma il browser lo ricicla
           // quando il DOM lo rimuove. Per evitare memory leak su grandi liste,
           // mostriamo l'img solo se la card è "piccola" (max 200 thumbnail).
-          const thumbUrl = URL.createObjectURL(rec.file);
+          const thumbUrl = trackThumbUrl(rec.file);
           html += `<div class="item-preview"><img class="item-thumb" src="${thumbUrl}" alt="" loading="lazy" data-preview="${it.id}" title="${escapeHtml(t('cleanupPreview'))}"></div>`;
         } else if (mime.startsWith('video/') || mime.startsWith('audio/') || mime === 'application/pdf') {
           const icon = mime.startsWith('video/') ? '🎬' : mime.startsWith('audio/') ? '🎵' : '📄';
@@ -4918,9 +4937,9 @@ function scanFileCardHtml(ws, fr, selectable, selected) {
   const rel = relativeTime(fr.lastModified);
   if (rel) metaParts.push(escapeHtml(rel));
   if (metaParts.length) html += `<div class="item-meta">${metaParts.join(' · ')}</div>`;
-  // Anteprima inline (object URL revocato dentro la virtualizzazione, Step 6).
+  // Anteprima inline. L'object URL è registrato e revocato al re-render.
   if (fr.mime.startsWith('image/')) {
-    const url = URL.createObjectURL(fr.file);
+    const url = trackThumbUrl(fr.file);
     html += `<div class="item-preview"><img class="item-thumb" src="${url}" alt="" loading="lazy" data-fr-preview="${fr.id}"></div>`;
   } else if (fr.mime.startsWith('video/') || fr.mime.startsWith('audio/') || fr.mime === 'application/pdf') {
     const icon = fr.mime.startsWith('video/') ? '🎬' : fr.mime.startsWith('audio/') ? '🎵' : '📄';
