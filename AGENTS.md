@@ -1,6 +1,6 @@
 # TriageHub — Briefing per AI Assistant
 
-> Questo file è un briefing tecnico per qualunque AI (Claude Code, Cursor, Copilot, ecc.)
+> Questo file è un briefing tecnico per qualunque AI (Cursor, Copilot o altri strumenti tecnici, ecc.)
 > chiamato a lavorare su questo repo. Leggilo prima di toccare il codice.
 
 ## Contesto progetto

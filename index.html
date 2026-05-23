@@ -1300,7 +1300,7 @@
   <main id="main"></main>
 
   <footer class="app-footer">
-    <p>TriageHub · <a class="app-version" href="https://github.com/pezzaliapp/TriageHub/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="Changelog">v1.5.0</a> · Open Source · <a href="https://github.com/pezzaliapp/TriageHub" target="_blank" rel="noopener">GitHub</a> · <a href="https://www.alessandropezzali.it" target="_blank" rel="noopener">pezzaliapp</a></p>
+    <p>TriageHub · <a class="app-version" href="https://github.com/pezzaliapp/TriageHub/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="Changelog">v1.5.1</a> · Open Source · <a href="https://github.com/pezzaliapp/TriageHub" target="_blank" rel="noopener">GitHub</a> · <a href="https://www.alessandropezzali.it" target="_blank" rel="noopener">pezzaliapp</a></p>
     <p style="margin-top:6px"><span data-i18n="footerNote">Privacy by design — i tuoi dati non lasciano mai il tuo dispositivo.</span></p>
   </footer>
 </div>
@@ -1825,8 +1825,8 @@ const I18N = {
     helpManualTitle: "📖 Manuale TriageHub",
     guideTitle: name => `Come funziona ${name}`,
     guideDismiss: "✕ Nascondi questa guida",
-    desktopLoadFiles: "📥 Carica file da smistare",
-    desktopLoadFilesPrivacy: "🔒 I file restano sul tuo dispositivo, l'app legge solo nome e dimensione.",
+    desktopLoadFiles: "📥 Carica singoli file",
+    desktopLoadFilesPrivacy: "🔒 I file restano sul tuo dispositivo. La lettura avviene solo dopo la tua scelta esplicita.",
     desktopLoadedFiles: n => `✓ ${n} file caricati nel workspace`,
     guideAddManually: "✏️ Aggiungo a mano",
     cleanupDisclaimerTitle: "📂 Pulizia file & Desktop",
@@ -1840,9 +1840,9 @@ const I18N = {
     cleanupApplyOnDisk: "⚡ Applica al disco",
     cleanupApplyOnDiskHint: "Cancella i file 'Da cestinare' e sposta quelli 'Da archiviare' in una sottocartella _TriageHub_Archivio. Azione irreversibile.",
     cleanupPreview: "👁 Anteprima",
-    fsaNotSupported: "⚠️ Il tuo browser non supporta l'accesso diretto alle cartelle. Usa Chrome o Edge desktop, oppure usa \"Carica file\" + esporta ZIP.",
-    fsaError: "❌ Errore nell'apertura della cartella",
-    fsaPermissionDenied: "❌ Permesso negato. Senza accesso non posso modificare i file.",
+    fsaNotSupported: "Il tuo browser non supporta l'accesso diretto alle cartelle. Usa Chrome o Edge desktop, oppure usa \"Carica file\" + esporta ZIP.",
+    fsaError: "Errore nell'apertura della cartella",
+    fsaPermissionDenied: "Permesso negato. Senza accesso non posso modificare i file.",
     fsaEmptyFolder: "📂 Cartella vuota o senza file accessibili",
     fsaSkippedSubdirs: n => `ℹ️ Ho saltato ${n} sottocartell${n === 1 ? 'a' : 'e'}. Apri ogni sottocartella separatamente se vuoi smistarne il contenuto.`,
     fsaNoDirHandle: "⚠️ Questo workspace non ha una cartella attiva. Usa 📁 Apri cartella prima.",
@@ -2043,8 +2043,8 @@ const I18N = {
     helpManualTitle: "📖 TriageHub Manual",
     guideTitle: name => `How to use ${name}`,
     guideDismiss: "✕ Hide this guide",
-    desktopLoadFiles: "📥 Load files to triage",
-    desktopLoadFilesPrivacy: "🔒 Files stay on your device. The app only reads name and size.",
+    desktopLoadFiles: "📥 Load single files",
+    desktopLoadFilesPrivacy: "🔒 Files stay on your device. Reading starts only after your explicit choice.",
     desktopLoadedFiles: n => `✓ ${n} files loaded into the workspace`,
     guideAddManually: "✏️ I'll add by hand",
     cleanupDisclaimerTitle: "📂 File & Desktop cleanup",
@@ -2058,9 +2058,9 @@ const I18N = {
     cleanupApplyOnDisk: "⚡ Apply to disk",
     cleanupApplyOnDiskHint: "Deletes 'To trash' files and moves 'To archive' ones into a _TriageHub_Archive subfolder. Irreversible.",
     cleanupPreview: "👁 Preview",
-    fsaNotSupported: "⚠️ Your browser doesn't support direct folder access. Use desktop Chrome or Edge, or use \"Load files\" + ZIP export.",
-    fsaError: "❌ Error opening the folder",
-    fsaPermissionDenied: "❌ Permission denied. Without access I cannot modify the files.",
+    fsaNotSupported: "Your browser does not support direct folder access. Use desktop Chrome or Edge, or use \"Load files\" + ZIP export.",
+    fsaError: "Error opening the folder",
+    fsaPermissionDenied: "Permission denied. Without access I cannot modify the files.",
     fsaEmptyFolder: "📂 Empty folder or no readable files",
     fsaSkippedSubdirs: n => `ℹ️ Skipped ${n} subfolder${n === 1 ? '' : 's'}. Open each subfolder separately to triage its contents.`,
     fsaNoDirHandle: "⚠️ This workspace has no active folder. Use 📁 Open folder first.",
@@ -2272,7 +2272,7 @@ const TEMPLATES = [
 // ============================================
 // Ogni guida ha: title, intro, steps[{emoji,title,body}], tip, actions[{id,label,primary}].
 // La chiave 'blank' viene usata anche per workspace con templateId === null.
-// Action id supportati: 'load-files' | 'add-manual' | 'new-item' | 'import' |
+// Action id supportati: 'open-folder' | 'load-files' | 'add-manual' | 'new-item' | 'import' |
 // 'categories' | 'statuses'.
 const MICRO_GUIDES = {
   it: {
@@ -2280,16 +2280,17 @@ const MICRO_GUIDES = {
       title: '📂 Come funziona Pulizia file & Desktop',
       intro: 'Hai aperto questo workspace per mettere ordine sul tuo Desktop o in una cartella piena di file. Funziona in 3 passi:',
       steps: [
-        { emoji: '📥', title: 'Carica i file da smistare',
-          body: "Clicca il bottone qui sotto: si aprirà una finestra del Mac. Vai sul Desktop, seleziona i file (anche tutti insieme con Cmd+A), conferma. L'app legge nome e dimensione di ogni file." },
+        { emoji: '📁', title: 'Apri una cartella da scansionare',
+          body: "Clicca il bottone qui sotto: si aprirà la finestra del sistema operativo. Scegli Desktop, Download o una cartella di lavoro. Per sicurezza il browser richiede sempre il tuo consenso prima di leggere una cartella." },
         { emoji: '🎯', title: 'Smista in 3 stati',
           body: 'Per ogni file clicca uno dei 3 stati:<br>📌 <strong>Tieni</strong> — i file che servono al loro posto<br>🗄️ <strong>Archivia</strong> — i file da spostare in altre cartelle<br>🗑️ <strong>Cestina</strong> — i file da buttare via' },
         { emoji: '📋', title: 'Esporta il report PDF e agisci',
           body: "Quando hai finito, clicca <strong>↑ Esporta</strong> → <strong>📄 PDF</strong>. Si apre la finestra di stampa: scegli <em>Salva come PDF</em>. Apri il PDF e segui le istruzioni passo-passo: sposta gli 'Archivia' nelle cartelle giuste, butta i 'Cestina' nel Cestino del Mac." }
       ],
-      tip: '💡 In 15 minuti il tuo Desktop torna pulito. 🔒 I file restano dove sono — TriageHub non sposta nulla.',
+      tip: '💡 TriageHub analizza i file localmente. 🔒 I file restano sul tuo dispositivo e vengono modificati solo se confermi un comando esplicito.',
       actions: [
-        { id: 'load-files', label: '📥 Carica file da smistare', primary: true },
+        { id: 'open-folder', label: '📁 Apri cartella e scansiona', primary: true },
+        { id: 'load-files', label: '📥 Carica singoli file' },
         { id: 'add-manual', label: '✏️ Aggiungo a mano' }
       ]
     },
@@ -2340,16 +2341,17 @@ const MICRO_GUIDES = {
       title: '📂 How File & Desktop cleanup works',
       intro: "You opened this workspace to tidy up your Desktop or a cluttered folder. It works in 3 steps:",
       steps: [
-        { emoji: '📥', title: 'Load the files to triage',
-          body: "Click the button below: a system dialog opens. Go to your Desktop, select the files (Cmd+A picks all of them), confirm. The app reads name and size of each file." },
+        { emoji: '📁', title: 'Open a folder to scan',
+          body: "Click the button below: a system dialog opens. Pick Desktop, Downloads or a work folder. For security reasons, the browser always requires your consent before reading a folder." },
         { emoji: '🎯', title: 'Sort into 3 states',
           body: 'For each file click one of the 3 states:<br>📌 <strong>Keep</strong> — files that belong where they are<br>🗄️ <strong>Archive</strong> — files to move into proper folders<br>🗑️ <strong>Trash</strong> — files to throw away' },
         { emoji: '📋', title: 'Export the PDF report and act',
           body: "When you're done, click <strong>↑ Export</strong> → <strong>📄 PDF</strong>. The print dialog opens: choose <em>Save as PDF</em>. Open the PDF and follow the step-by-step instructions: move 'Archive' files to proper folders, drop 'Trash' files into the Bin." }
       ],
-      tip: '💡 In 15 minutes your Desktop is clean. 🔒 Files stay where they are — TriageHub never moves anything.',
+      tip: '💡 TriageHub analyzes files locally. 🔒 Files stay on your device and are changed only after an explicit confirmation.',
       actions: [
-        { id: 'load-files', label: '📥 Load files to triage', primary: true },
+        { id: 'open-folder', label: '📁 Open folder and scan', primary: true },
+        { id: 'load-files', label: '📥 Load single files' },
         { id: 'add-manual', label: "✏️ I'll add by hand" }
       ]
     },
@@ -3048,7 +3050,8 @@ function renderItems() {
           <span class="empty-state-emoji">📂</span>
           <h2>${t('emptyTitle')}</h2>
           <div class="empty-actions">
-            <button class="btn primary" data-guide-action="load-files">${escapeHtml(t('desktopLoadFiles'))}</button>
+            <button class="btn primary" data-guide-action="open-folder">📁 Apri cartella e scansiona</button>
+            <button class="btn" data-guide-action="load-files">${escapeHtml(t('desktopLoadFiles'))}</button>
             <button class="btn" data-guide-action="new-item">${escapeHtml(t('guideAddManually'))}</button>
           </div>
           <p class="micro-guide-privacy" style="margin-top:14px">${escapeHtml(t('desktopLoadFilesPrivacy'))}</p>
@@ -3488,6 +3491,11 @@ function applyTemplate(tplId) {
   }
   closeGallery();
   createWorkspaceFromTemplate(tpl);
+  if (tpl.id === 'cleanup') {
+    setTimeout(() => {
+      triggerCleanupDirectoryPicker();
+    }, 400);
+  }
 }
 
 document.getElementById('btn-cleanup-confirm').addEventListener('click', () => {
@@ -3497,6 +3505,9 @@ document.getElementById('btn-cleanup-confirm').addEventListener('click', () => {
   if (pendingCleanupTemplate) {
     createWorkspaceFromTemplate(pendingCleanupTemplate);
     pendingCleanupTemplate = null;
+    setTimeout(() => {
+      triggerCleanupDirectoryPicker();
+    }, 400);
   }
 });
 
@@ -4624,7 +4635,7 @@ function buildZipReadme(keep, archive, skip, missing) {
     '   il risultato finale, sostituisci la cartella originale con',
     '   il contenuto di questo ZIP (oppure cancella la vecchia e usa questa).',
     '',
-    'Generato da TriageHub v1.5.0 — https://github.com/pezzaliapp/TriageHub'
+    'Generato da TriageHub v1.5.1 — https://github.com/pezzaliapp/TriageHub'
   ].filter(Boolean).join('\n');
 }
 
@@ -5593,7 +5604,8 @@ function wireGuideActions(rootEl) {
     btn.addEventListener('click', () => {
       const action = btn.dataset.guideAction;
       const ws = activeWorkspace();
-      if (action === 'load-files')      triggerCleanupFilePicker();
+      if (action === 'open-folder')     triggerCleanupDirectoryPicker();
+      else if (action === 'load-files') triggerCleanupFilePicker();
       else if (action === 'load-xlsx')  triggerXlsxFilePicker();
       else if (action === 'new-item')   openItemDialog();
       else if (action === 'import')     openDialog('dlg-import');
@@ -6817,9 +6829,13 @@ document.getElementById('btn-clear').addEventListener('click', () => {
 // ============================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => {
-      console.warn('SW registration failed:', err);
-    });
+    navigator.serviceWorker.register('./sw.js?v=1.5.1-hotfix', { updateViaCache: 'none' })
+      .then(reg => {
+        reg.update().catch(() => {});
+      })
+      .catch(err => {
+        console.warn('SW registration failed:', err);
+      });
   });
 }
 

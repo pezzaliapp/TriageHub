@@ -3,9 +3,9 @@
 > **Smista qualsiasi cosa in tre stati.** PWA gratuita, offline, privacy-first.
 > *Triage anything into three states.* Free PWA, offline, privacy-first.
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![PWA](https://img.shields.io/badge/PWA-installable-brightgreen.svg)](#installazione)
-[![Privacy](https://img.shields.io/badge/Privacy-100%25_client--side-success.svg)](#privacy)
+[[License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[[PWA](https://img.shields.io/badge/PWA-installable-brightgreen.svg)](#installazione)
+[[Privacy](https://img.shields.io/badge/Privacy-100%25_client--side-success.svg)](#privacy)
 
 🌐 **Live:** [pezzaliapp.github.io/TriageHub](https://pezzaliapp.github.io/TriageHub/) · [alessandropezzali.it/TriageHub](https://www.alessandropezzali.it/TriageHub/)
 

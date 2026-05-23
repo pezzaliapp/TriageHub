@@ -1,6 +1,6 @@
 # Brief TriageHub v1.5 — "Smart Scan"
 
-> Specifiche complete per il prossimo upgrade. Da dare in pasto a Claude Code dentro la cartella `~/Desktop/TriageHub`.
+> Specifiche complete per il prossimo upgrade. Da usare come brief tecnico dentro la cartella `~/Desktop/TriageHub`.
 
 ## Contesto
 

@@ -270,4 +270,4 @@ Tutti in `/tmp/triagehub-fact-check/`. Riproducibili con SheetJS Node. Non commi
 
 ---
 
-*Fatto generato con Claude Code da Alessandro Pezzali. Decisione di prodotto a discrezione dell'autore.*
+*Documento tecnico generato e validato da Alessandro Pezzali. Decisione di prodotto a discrezione dell'autore.*

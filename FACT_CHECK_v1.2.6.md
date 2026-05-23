@@ -119,7 +119,7 @@ Numeri reali misurati: `buildCleanupMarkdown` 280 LOC, `handleCleanupFiles` 22, 
 
 **Cosa NON fa**:
 - Non parsing dei listini reali (XLS multi-sheet, listini Excel con header su righe diverse, codici nidificati).
-- Non si integra con CSVXpress, FleXiPrice, gli altri tool dell'ecosistema dell'autore — sarebbe un'integrazione naturale!
+- Non si integra con CSVXpress, FleXiPrice, gli altri tool dell'ecosistema dell'autore — sarebbe un'integrazione naturale
 - Il PDF risultato è una lista di codici/descrizioni con prezzo. **Marketing usa il PDF?** No: marketing usa Excel per filtrare, calcolare margini, simulare scenari.
 
 **Test funzionale reale**: listino 500 prodotti CSV → import → smistare uno per uno **500 prodotti**? Manualmente? Stop dopo 30. La feature "smista a batch per categoria" non esiste.
@@ -204,4 +204,4 @@ L'attuale stato (template generici con un tickets verticalissimo) è la peggior 
 
 ---
 
-*Fatto generato con Claude Code da Alessandro Pezzali. Decisione di prodotto a discrezione dell'autore.*
+*Documento tecnico generato e validato da Alessandro Pezzali. Decisione di prodotto a discrezione dell'autore.*
