@@ -3165,23 +3165,9 @@ function renderItems() {
 
       if (it.desc) html += `<div class="item-desc">${escapeHtml(it.desc)}</div>`;
 
-      // v1.4.0: anteprima file per workspace cleanup. Per immagini mostra
-      // una thumbnail cliccabile; per audio/video/pdf un bottone Anteprima.
-      // Possibile solo se il blob è ancora in memoria (cleanupFileRegistry).
-      if (ws.templateId === 'cleanup' && cleanupFileRegistry.has(it.id)) {
-        const rec = cleanupFileRegistry.get(it.id);
-        const mime = (rec.file && rec.file.type) || '';
-        if (mime.startsWith('image/')) {
-          // Object URL on-demand: lo creiamo qui ma il browser lo ricicla
-          // quando il DOM lo rimuove. Per evitare memory leak su grandi liste,
-          // mostriamo l'img solo se la card è "piccola" (max 200 thumbnail).
-          const thumbUrl = trackThumbUrl(rec.file);
-          html += `<div class="item-preview"><img class="item-thumb" src="${thumbUrl}" alt="" loading="lazy" data-preview="${it.id}" title="${escapeHtml(t('cleanupPreview'))}"></div>`;
-        } else if (mime.startsWith('video/') || mime.startsWith('audio/') || mime === 'application/pdf') {
-          const icon = mime.startsWith('video/') ? '🎬' : mime.startsWith('audio/') ? '🎵' : '📄';
-          html += `<div class="item-preview-btn-wrap"><button class="item-preview-btn" data-preview="${it.id}">${icon} ${escapeHtml(t('cleanupPreview'))}</button></div>`;
-        }
-      }
+      // (v1.5) Le anteprime/thumbnail dei file cleanup vivono ora nella vista
+      // di scansione (renderCleanup → scanFileCardHtml). Gli item manuali del
+      // template cleanup in questa lista classica non hanno blob associati.
 
       // Colonne extra del template xlsx (v1.3.0): mostra come <details> espandibile.
       if (it.xlsxData && ws.xlsxMapping) {
@@ -3242,13 +3228,6 @@ function renderItems() {
   if (btnLoadFiles) btnLoadFiles.addEventListener('click', triggerCleanupFilePicker);
   const btnApplyDisk = main.querySelector('#cleanup-btn-apply-disk');
   if (btnApplyDisk) btnApplyDisk.addEventListener('click', executeCleanupOnDisk);
-  // v1.4.0: bottoni anteprima sulle card
-  main.querySelectorAll('[data-preview]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      openCleanupPreview(btn.dataset.preview);
-    });
-  });
 }
 
 function renderAll() {
@@ -3912,13 +3891,6 @@ function formatItalianDate(ts) {
   return `${dd}/${mm}/${d.getFullYear()}`;
 }
 
-// v1.4.0: registro in-memory dei File blob caricati nel template cleanup.
-// Chiave = item.id, valore = { file: File, handle?: FileSystemFileHandle, dirHandle?: FileSystemDirectoryHandle }.
-// NON va in localStorage (File non è serializzabile e sarebbe enorme).
-// Vive solo per la sessione, ma è quello che serve per anteprima foto/video,
-// export ZIP organizzato, e cancellazione/spostamento via File System Access API.
-const cleanupFileRegistry = new Map();
-
 // Per i file caricati via showDirectoryPicker, salvo anche il directoryHandle
 // così posso cancellare/spostare in-place. Una sola directory attiva per workspace.
 const cleanupDirHandles = new Map(); // workspaceId -> FileSystemDirectoryHandle
@@ -4406,12 +4378,6 @@ async function triggerCleanupDirectoryPicker() {
   openScanOptionsDialog(dirHandle, counts.fileCount, counts.dirCount);
 }
 
-// Restituisce il File blob (se ancora in registry) o null.
-function getCleanupBlob(itemId) {
-  const rec = cleanupFileRegistry.get(itemId);
-  return rec ? rec.file : null;
-}
-
 // Restituisce true se posso ESEGUIRE davvero le azioni (delete/move) sul disco,
 // cioè se il workspace ha una directory handle attiva.
 function canExecuteOnDisk() {
@@ -4668,14 +4634,6 @@ function saveFile(blob, filename) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, 100);
-}
-
-// Apre un overlay con anteprima del file. Funziona per immagini, video, audio
-// e PDF (se il browser sa renderli inline). Per gli altri, mostra solo info.
-function openCleanupPreview(itemId) {
-  const rec = cleanupFileRegistry.get(itemId);
-  if (!rec) { toast(t('previewNoBlob')); return; }
-  showFilePreview(rec.file);
 }
 
 // v1.5: anteprima di un fileRec del modello di scansione.
