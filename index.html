@@ -649,6 +649,20 @@
     border-radius: 8px; padding: 8px 12px;
   }
 
+  /* Filtri esplora-gruppo (v1.5) */
+  .scan-filters {
+    display: flex; flex-direction: column; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;
+  }
+  .scan-filter-row { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+  .scan-filter-label { font-size: 12px; color: var(--text-tertiary); flex-shrink: 0; width: 96px; padding-top: 6px; }
+  .scan-filter-chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+  .scan-explore-meta { font-size: 13px; color: var(--text-secondary); margin: 0 0 14px; }
+  @media (max-width: 640px) {
+    .scan-filter-label { width: 100%; padding-top: 0; }
+  }
+
   /* Dashboard a gruppi */
   .scan-groups { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
   .scan-group-row {
@@ -1860,7 +1874,15 @@ const I18N = {
     suggDeselect: "Deseleziona",
     suggReselect: "Riseleziona",
     suggNone: "Nessun suggerimento per questa cartella. 🎉",
-    suggBadge: "🗑 pre-marcato"
+    suggBadge: "🗑 pre-marcato",
+    // v1.5 — filtri esplora-gruppo
+    filterDate: "📅 Data", filterOrigin: "📂 Origine", filterSize: "📏 Dimensione", filterSubtype: "🏷 Sotto-tipo",
+    filterAll: "Tutte", filterToday: "Oggi", filterWeek: "Settimana", filterMonth: "Mese",
+    filterOlder1y: "+1 anno", filterOlder2y: "+2 anni",
+    filterSize10: ">10MB", filterSize50: ">50MB", filterSize100: ">100MB",
+    filterOriginRoot: "(radice)",
+    exploreShown: n => `Visualizzati: ${n}`,
+    exploreNoMatch: "Nessun file con questi filtri."
   },
   en: {
     subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
@@ -2065,7 +2087,15 @@ const I18N = {
     suggDeselect: "Deselect",
     suggReselect: "Reselect",
     suggNone: "No suggestions for this folder. 🎉",
-    suggBadge: "🗑 pre-marked"
+    suggBadge: "🗑 pre-marked",
+    // v1.5 — explore-group filters
+    filterDate: "📅 Date", filterOrigin: "📂 Origin", filterSize: "📏 Size", filterSubtype: "🏷 Subtype",
+    filterAll: "All", filterToday: "Today", filterWeek: "Week", filterMonth: "Month",
+    filterOlder1y: "+1 year", filterOlder2y: "+2 years",
+    filterSize10: ">10MB", filterSize50: ">50MB", filterSize100: ">100MB",
+    filterOriginRoot: "(root)",
+    exploreShown: n => `Showing: ${n}`,
+    exploreNoMatch: "No files match these filters."
   }
 };
 
@@ -4913,20 +4943,111 @@ function exploreTitle(scan, exploreGroup) {
   }
   return `${groupEmoji(exploreGroup)} ${groupLabel(exploreGroup)}`;
 }
+// Origine = directory che contiene il file (path relativo senza il nome).
+// '' per i file di primo livello.
+function fileOrigin(fr) {
+  const slash = fr.relPath.lastIndexOf('/');
+  return slash > -1 ? fr.relPath.slice(0, slash) : '';
+}
+
+// Soglie del filtro Dimensione, in MB.
+const FILTER_SIZE_MB = { '10': 10, '50': 50, '100': 100 };
+
+// Applica i filtri attivi (data/origine/dimensione/sotto-tipo) in AND.
+// Filtro assente (null/undefined) = "Tutte".
+function applyExploreFilters(files, filters) {
+  const f = filters || {};
+  const now = Date.now();
+  const day = 86400000;
+  return files.filter(fr => {
+    if (f.date) {
+      const age = now - (fr.lastModified || 0);
+      if (f.date === 'today' && age >= day) return false;
+      if (f.date === 'week'  && age >= 7 * day) return false;
+      if (f.date === 'month' && age >= 30 * day) return false;
+      if (f.date === 'y1'    && age <= 365 * day) return false;
+      if (f.date === 'y2'    && age <= 2 * 365 * day) return false;
+    }
+    if (f.origin != null && fileOrigin(fr) !== f.origin) return false;
+    if (f.size && (fr.size || 0) <= FILTER_SIZE_MB[f.size] * 1024 * 1024) return false;
+    if (f.subType && (fr.subType || 'other') !== f.subType) return false;
+    return true;
+  });
+}
+
+// Controlli filtro per l'esplora-gruppo. Le opzioni Origine sono derivate dai
+// file presenti nel gruppo; il Sotto-tipo appare solo per il gruppo Foto.
+function renderScanFilters(group, baseFiles, ui) {
+  const f = ui.filters || {};
+  const chip = (fkey, val, label, active) =>
+    `<button class="chip ${active ? 'active' : ''}" data-fkey="${fkey}" data-fval="${escapeHtml(String(val))}">${escapeHtml(label)}</button>`;
+  const row = (labelKey, chipsHtml) =>
+    `<div class="scan-filter-row"><div class="scan-filter-label">${escapeHtml(t(labelKey))}</div><div class="scan-filter-chips">${chipsHtml}</div></div>`;
+
+  const dateOpts = [['__all__', t('filterAll')], ['today', t('filterToday')], ['week', t('filterWeek')],
+    ['month', t('filterMonth')], ['y1', t('filterOlder1y')], ['y2', t('filterOlder2y')]];
+  const dateChips = dateOpts.map(([v, l]) => chip('date', v, l, v === '__all__' ? f.date == null : f.date === v)).join('');
+
+  const sizeOpts = [['__all__', t('filterAll')], ['10', t('filterSize10')], ['50', t('filterSize50')], ['100', t('filterSize100')]];
+  const sizeChips = sizeOpts.map(([v, l]) => chip('size', v, l, v === '__all__' ? f.size == null : f.size === v)).join('');
+
+  let html = `<div class="scan-filters">`;
+  html += row('filterDate', dateChips);
+  html += row('filterSize', sizeChips);
+
+  const origins = [...new Set(baseFiles.map(fileOrigin))].sort();
+  if (origins.length > 1) {
+    let originChips = chip('origin', '__all__', t('filterAll'), f.origin == null);
+    origins.forEach(o => {
+      const val = o === '' ? '__root__' : o;
+      const label = o === '' ? t('filterOriginRoot') : o;
+      originChips += chip('origin', val, label, f.origin === o);
+    });
+    html += row('filterOrigin', originChips);
+  }
+  if (group === 'photo') {
+    const subOpts = [['__all__', t('filterAll')], ['screenshot', t('subtype_screenshot')],
+      ['camera', t('subtype_camera')], ['other', t('subtype_other')]];
+    const subChips = subOpts.map(([v, l]) => chip('subType', v, l, v === '__all__' ? f.subType == null : f.subType === v)).join('');
+    html += row('filterSubtype', subChips);
+  }
+  html += `</div>`;
+  return html;
+}
+
 function renderScanExplore(ws, scan, ui) {
   const main = document.getElementById('main');
-  const files = exploreFiles(scan, ui.exploreGroup);
-  const bytes = files.reduce((s, f) => s + (f.size || 0), 0);
+  const group = ui.exploreGroup.startsWith('suggestion:') ? null : ui.exploreGroup;
+  const baseFiles = exploreFiles(scan, ui.exploreGroup);
+  const baseBytes = baseFiles.reduce((s, f) => s + (f.size || 0), 0);
+  const filtered = applyExploreFilters(baseFiles, ui.filters);
+  const shownBytes = filtered.reduce((s, f) => s + (f.size || 0), 0);
+
   let html = `<div class="scan-summary">
-    <div class="scan-summary-line">${escapeHtml(exploreTitle(scan, ui.exploreGroup))} · ${fmtCount(files.length)} ${escapeHtml(t('items'))} · ${escapeHtml(humanSize(bytes))}</div>
+    <div class="scan-summary-line">${escapeHtml(exploreTitle(scan, ui.exploreGroup))} · ${fmtCount(baseFiles.length)} ${escapeHtml(t('items'))} · ${escapeHtml(humanSize(baseBytes))}</div>
     <div class="scan-summary-actions">
       <button class="btn" id="cleanup-back">${escapeHtml(t('exploreBack'))}</button>
     </div>
   </div>`;
-  html += renderScanCards(ws, files, ui);
+  html += renderScanFilters(group, baseFiles, ui);
+  html += `<div class="scan-explore-meta">${escapeHtml(t('exploreShown', fmtCount(filtered.length)))} · ${escapeHtml(humanSize(shownBytes))}</div>`;
+  html += filtered.length
+    ? renderScanCards(ws, filtered, ui)
+    : `<p class="small" style="text-align:center;color:var(--text-tertiary);padding:24px 0">${escapeHtml(t('exploreNoMatch'))}</p>`;
   main.innerHTML = html;
+
   main.querySelector('#cleanup-back').addEventListener('click', () => {
-    ui.exploreGroup = null; ui.listLimit = 100; renderItems();
+    ui.exploreGroup = null; ui.listLimit = 100; ui.filters = {}; renderItems();
+  });
+  main.querySelectorAll('.scan-filters [data-fkey]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const { fkey, fval } = btn.dataset;
+      if (fval === '__all__') delete ui.filters[fkey];
+      else if (fkey === 'origin') ui.filters.origin = (fval === '__root__') ? '' : fval;
+      else ui.filters[fkey] = fval;
+      ui.listLimit = 100;
+      renderItems();
+    });
   });
   wireScanFileCards(ws, scan, main);
   wireLoadMore(ui, main);
