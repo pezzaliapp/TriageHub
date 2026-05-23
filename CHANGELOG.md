@@ -3,6 +3,29 @@
 All notable changes to TriageHub are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] — 2026-05-23
+
+> **Da "report che dice cosa fare" a "fa davvero le cose"**: il template Pulizia file & Desktop passa dalla marcatura cartacea all'azione vera sul disco. Due strade, una per ambiente.
+
+### Added — Azione vera sui file (Cleanup template)
+- 📁 **Apri cartella (Chrome/Edge/Opera desktop)**: nuovo bottone nel banner cleanup che usa la `File System Access API` (`showDirectoryPicker`). L'utente concede il permesso, l'app legge i file del primo livello della cartella e li carica nel workspace con i `FileSystemHandle` associati. Le sottocartelle vengono segnalate e saltate (apri ognuna separatamente se vuoi smistarla).
+- ⚡ **Applica al disco**: bottone che compare solo dopo aver aperto una cartella. Una volta finito di smistare, **cancella davvero** i file marcati "Da cestinare" via `dirHandle.removeEntry()` e **sposta** quelli marcati "Da archiviare" in una sottocartella `_TriageHub_Archivio/` (copia il blob, scrive il nuovo handle, rimuove l'originale). I file "Da tenere" restano dove sono. L'azione richiede conferma esplicita via `confirm()` con il conteggio puntuale (le cancellazioni FSA **non passano dal Cestino di sistema**: è permanente).
+- 📦 **Export ZIP organizzato** (funziona ovunque, anche iPhone/Safari/Android/Firefox): nuova opzione nel dialog Esporta, attiva solo per workspace cleanup con file caricati. Genera un `.zip` con sottocartelle `Tenere/` e `Archiviare/`. I file "Da cestinare" **non vengono inclusi** → di fatto cancellati nel risultato finale. Include un `README.txt` che spiega come usare l'archivio. Implementazione client-side con JSZip 3.10.1 (MIT, ~96KB) bundled localmente, precached dal Service Worker per il fallback offline.
+- 👁 **Anteprima foto/video/audio/PDF inline**: nelle card del workspace cleanup, i file immagine mostrano una thumbnail cliccabile; audio/video/PDF mostrano un bottone "Anteprima". Click apre un overlay full-screen con il contenuto renderizzato dal browser (object URL su `File` blob, revocato alla chiusura). ESC o click fuori per chiudere.
+- 🎯 **mapStatusRoles()**: helper che identifica quale dei 3 stati del workspace ricopre il ruolo "keep / archive / trash" anche se l'utente li ha rinominati. Strategia: regex per nomi canonici IT+EN, fallback su posizione (1°=keep, 2°=archive, 3°=trash).
+- 🌐 **Rilevamento browser automatico**: `supportsFileSystemAccess()` controlla `window.showDirectoryPicker` e su browser senza supporto il bottone "Apri cartella" appare disabilitato con un tooltip che spiega l'alternativa (ZIP organizzato).
+
+### Changed
+- 💡 **Banner cleanup riscritto**: prima diceva "TriageHub non sposta i file" — ora spiega le due modalità avanzate (Apri cartella + Applica al disco su Chrome/Edge; Carica file + ZIP organizzato ovunque).
+- 🔒 **Privacy invariata**: nessun cambiamento sull'architettura zero-server. I file restano sul dispositivo. I blob in memoria (`cleanupFileRegistry`) non vengono mai serializzati su localStorage e si svuotano al reload della pagina (il workspace persiste, ma le anteprime e l'export ZIP richiedono di ricaricare i file).
+- 📚 **i18n**: ~20 nuove stringhe per IT + EN (modalità avanzata banner, errori FSA, dialog di conferma cancellazione, label bottoni, messaggi toast del flusso ZIP).
+- 🎨 **CSS**: nuovi stili per `.cleanup-banner-actions`, `.btn.danger`, `.item-thumb`, `.item-preview-btn`, `.preview-overlay` (modale full-screen per anteprime), `.preview-fallback`.
+
+### Tech notes
+- JSZip 3.10.1 aggiunto ai `CORE_ASSETS` del service worker, cache versionata `triagehub-v1.4.0`.
+- Tutti i file blob restano in un `Map` in memoria (`cleanupFileRegistry`); persistenza esplicitamente non implementata perché serializzare blob in localStorage è impraticabile e IndexedDB era fuori scope per v1.4 (è ancora roadmap v1.5).
+- `executeCleanupOnDisk()` è transazionale per singolo file ma non per il batch: se 5 cancellazioni vanno a buon fine e la 6ª fallisce, le prime 5 sono già committate. Il toast finale riporta `(deleted, moved, errors)` per trasparenza.
+
 ## [1.3.4] — Unreleased
 
 ### Fixed

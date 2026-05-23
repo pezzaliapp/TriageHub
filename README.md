@@ -23,15 +23,17 @@ Hai una pila di **file sul Desktop** o un **foglio Excel di centinaia di righe**
 
 ### I 3 template
 
-- 📂 **Pulizia file & Desktop** — file picker nativo, MIME-detect automatico, report PDF con istruzioni concrete macOS/Windows/Linux per spostare e cestinare
+- 📂 **Pulizia file & Desktop** — file picker nativo, MIME-detect automatico, **anteprima inline foto/video/audio/PDF**, **azione vera sui file** (cancella/sposta su disco via File System Access API in Chrome/Edge desktop, oppure export ZIP organizzato ovunque)
 - 📊 **Lista Excel** — carica `.xlsx`/`.csv`/`.tsv`, smista riga per riga, scarica un nuovo Excel organizzato (foglio unico con colonna *Stato* o 3 fogli separati)
 - ⚪ **Vuoto** — workspace pulito, configurazione totalmente tua
 
 ### Caratteristiche
 
+- 🆕 **v1.4: Cancellazione vera dei file** sul disco (Chrome/Edge desktop) o via export ZIP organizzato (ovunque, incluso iPhone/Safari/Android)
+- 🆕 **v1.4: Anteprima inline** di foto, video, audio e PDF direttamente nell'app
 - 📚 **Micro-guide contestuali** per ogni template + manuale in-app dal bottone Aiuto
 - 📥 **File picker nativo** sia per Desktop cleanup che per Excel: niente Terminale, niente upload
-- 📊 **Export multi-formato**: PDF (consigliato), Word (.rtf), Testo, Excel (.xlsx), JSON, CSV, Markdown
+- 📊 **Export multi-formato**: PDF (consigliato), Word (.rtf), Testo, Excel (.xlsx), ZIP (.zip con file veri), JSON, CSV, Markdown
 - ✏️ **Tutto personalizzabile**: nome, emoji e colore di stati e categorie; mapping colonne Excel rinominabili
 - 🔍 **Ricerca full-text** + filtri per categoria e stato
 - 💾 **Tutto offline** dopo il primo caricamento
@@ -55,18 +57,33 @@ Hai una pila di **file sul Desktop** o un **foglio Excel di centinaia di righe**
 5. Click "↑ Esporta" → "📊 Excel organizzato" → scegli foglio unico con colonna *Stato* o 3 fogli separati
 6. Apri il file in Excel/Numbers/LibreOffice e usalo
 
-### Workflow — Pulizia Desktop
+### Workflow — Pulizia Desktop (v1.4)
+
+**Modalità A — Azione vera sul disco (Chrome / Edge / Opera desktop)**
+
+1. Apri TriageHub, scegli template "📂 Pulizia file & Desktop"
+2. Click "📁 Apri cartella" nel banner → seleziona la cartella da pulire (es. Desktop)
+3. Conferma il permesso di lettura/scrittura
+4. L'app carica i file della cartella, con anteprime inline per foto/video/PDF
+5. Smisti ogni file in **Da tenere / Da archiviare / Da cestinare**
+6. Click "⚡ Applica al disco" → conferma → l'app **cancella davvero** i file "Da cestinare" e sposta gli "Da archiviare" in `_TriageHub_Archivio/`. Operazione irreversibile (no Cestino di sistema).
+
+**Modalità B — Export ZIP organizzato (ovunque: Safari, iPhone, Android, Firefox)**
 
 1. Apri TriageHub, scegli template "📂 Pulizia file & Desktop"
 2. Click "📥 Carica file da smistare", seleziona i file dal Desktop (Cmd+A per tutti)
-3. L'app categorizza automaticamente per tipo (immagini, audio, documenti, excel)
+3. L'app categorizza automaticamente per tipo e mostra anteprime di foto/video
 4. Smisti ogni file in **Da tenere / Da archiviare / Da cestinare**
-5. Click "↑ Esporta" → "📄 PDF" → ottieni un manuale operativo cross-platform (macOS/Windows/Linux) con destinazioni consigliate, scorciatoie tastiera, calcolo spazio recuperabile
-6. Segui il PDF nel Finder/Esplora File/file manager
+5. Click "↑ Esporta" → "📦 ZIP organizzato" → scarichi un `.zip` con cartelle `Tenere/` e `Archiviare/`. I "Da cestinare" non sono inclusi.
+6. Estrai lo ZIP e sostituisci la cartella originale (oppure usa il PDF report come prima).
+
+**Modalità C — Report PDF (come prima)**
+
+Funziona ancora come in v1.3: l'app produce un manuale operativo cross-platform e tu agisci manualmente nel Finder/Esplora File.
 
 ### Tecnologie
 
-Vanilla HTML/CSS/JavaScript. SheetJS (Apache 2.0, ~950KB) bundlato localmente per parsing Excel. Service Worker per offline. localStorage per la persistenza. *Instrument Serif* via Google Fonts.
+Vanilla HTML/CSS/JavaScript. SheetJS (Apache 2.0, ~950KB) e JSZip (MIT, ~96KB) bundlati localmente per parsing Excel e generazione archivi `.zip`. File System Access API per cancellazione/spostamento di file reali (Chrome/Edge/Opera desktop). Service Worker per offline. localStorage per la persistenza del workspace (i file blob restano in memoria di sessione). *Instrument Serif* via Google Fonts.
 
 ---
 
@@ -82,15 +99,17 @@ You have a stack of **files on your Desktop** or a **spreadsheet with hundreds o
 
 ### The 3 templates
 
-- 📂 **File & Desktop cleanup** — native file picker, automatic MIME detection, PDF report with concrete macOS/Windows/Linux instructions for moving and trashing
+- 📂 **File & Desktop cleanup** — native file picker, automatic MIME detection, **inline photo/video/audio/PDF preview**, **real action on files** (delete/move on disk via File System Access API in Chrome/Edge desktop, or organized ZIP export anywhere)
 - 📊 **Excel List** — upload `.xlsx`/`.csv`/`.tsv`, sort row by row, download a new organized Excel (single sheet with *Status* column or 3 separate sheets)
 - ⚪ **Blank** — clean workspace, fully customizable
 
 ### Features
 
+- 🆕 **v1.4: Real file deletion** on disk (Chrome/Edge desktop) or via organized ZIP export (anywhere, including iPhone/Safari/Android)
+- 🆕 **v1.4: Inline preview** of photos, videos, audio and PDFs directly in the app
 - 📚 **Contextual micro-guides** for every template + in-app manual via the Help button
 - 📥 **Native file picker** for both Desktop cleanup and Excel: no Terminal, no uploads
-- 📊 **Multi-format export**: PDF (recommended), Word (.rtf), Text, Excel (.xlsx), JSON, CSV, Markdown
+- 📊 **Multi-format export**: PDF (recommended), Word (.rtf), Text, Excel (.xlsx), ZIP (.zip with real files), JSON, CSV, Markdown
 - ✏️ **Fully customizable**: names, emoji and colors for states and categories; renamable Excel column mapping
 - 🔍 **Full-text search** + category & status filters
 - 💾 **Fully offline** after first load
@@ -114,18 +133,33 @@ You have a stack of **files on your Desktop** or a **spreadsheet with hundreds o
 5. Click "↑ Export" → "📊 Organized Excel" → pick single sheet with *Status* column or 3 separate sheets
 6. Open the file in Excel/Numbers/LibreOffice and use it
 
-### Workflow — Desktop Cleanup
+### Workflow — Desktop Cleanup (v1.4)
+
+**Mode A — Real action on disk (Chrome / Edge / Opera desktop)**
 
 1. Open TriageHub, pick the "📂 File & Desktop cleanup" template
-2. Click "📥 Load files to triage", select files from your Desktop (Cmd+A for all)
-3. The app auto-categorizes by type (images, audio, documents, spreadsheets)
+2. Click "📁 Open folder" in the banner → select the folder to clean (e.g. Desktop)
+3. Confirm the read/write permission
+4. The app loads the folder's files, with inline previews for photos/videos/PDFs
+5. Sort each file into **To keep / To archive / To trash**
+6. Click "⚡ Apply to disk" → confirm → the app **actually deletes** "To trash" files and moves "To archive" ones into `_TriageHub_Archive/`. Irreversible (no system Trash).
+
+**Mode B — Organized ZIP export (anywhere: Safari, iPhone, Android, Firefox)**
+
+1. Open TriageHub, pick the "📂 File & Desktop cleanup" template
+2. Click "📥 Load files to triage", select files from Desktop (Cmd+A picks all)
+3. The app auto-categorizes by type and shows previews of photos/videos
 4. Sort each file into **To keep / To archive / To trash**
-5. Click "↑ Export" → "📄 PDF" → get a cross-platform (macOS/Windows/Linux) operations manual with recommended destinations, keyboard shortcuts, reclaimable space estimate
-6. Follow the PDF in Finder/File Explorer/file manager
+5. Click "↑ Export" → "📦 Organized ZIP" → download a `.zip` with `Keep/` and `Archive/` folders. "To trash" files are not included.
+6. Extract the ZIP and replace the original folder (or use the PDF report as before).
+
+**Mode C — PDF report (as before)**
+
+Still works as in v1.3: the app produces a cross-platform operations manual and you act manually in Finder/File Explorer.
 
 ### Tech
 
-Vanilla HTML/CSS/JS. SheetJS (Apache 2.0, ~950KB) bundled locally for Excel parsing. Service Worker for offline. localStorage for persistence. *Instrument Serif* via Google Fonts.
+Vanilla HTML/CSS/JS. SheetJS (Apache 2.0, ~950KB) and JSZip (MIT, ~96KB) bundled locally for Excel parsing and `.zip` generation. File System Access API for real file deletion/move (Chrome/Edge/Opera desktop). Service Worker for offline. localStorage for workspace persistence (file blobs live in session memory). *Instrument Serif* via Google Fonts.
 
 ---
 
@@ -147,9 +181,10 @@ The only network request, after the first load, is for Google Fonts — and even
 
 - **v1.2** ✅ — Workspaces multipli, galleria flottante, workspace cards, template Pulizia file & Desktop, export multi-formato
 - **v1.3** ✅ — Major refocus: 8 → 3 template focalizzati (Cleanup, Excel, Blank); SheetJS integration; export Excel organizzato
-- **v1.4** — Web Share Target API (mobile: "Share to TriageHub" from any app)
-- **v1.5** — IndexedDB for large datasets (>5,000 items per workspace)
-- **v1.6** — Optional manual sync via JSON file on Drive/Dropbox/iCloud
+- **v1.4** ✅ — File System Access API per cancellazione/spostamento file reali; export ZIP organizzato; anteprima foto/video/audio/PDF inline; bundle JSZip
+- **v1.5** — Web Share Target API (mobile: "Share to TriageHub" from any app)
+- **v1.6** — IndexedDB for large datasets & blob persistence across reloads (>5,000 items per workspace)
+- **v1.7** — Optional manual sync via JSON file on Drive/Dropbox/iCloud
 - **v2.0** — Drag & drop reordering, custom fields beyond `value`
 
 ---

@@ -24,6 +24,9 @@
 <!-- SheetJS (Apache 2.0) — bundled locally, precached by SW for offline-first parsing of .xlsx/.csv/.tsv -->
 <script src="./xlsx.full.min.js" defer></script>
 
+<!-- JSZip (MIT) — bundled locally, used to package real file contents (Cleanup template v1.4.0) into a downloadable .zip -->
+<script src="./jszip.min.js" defer></script>
+
 <style>
   :root {
     --bg: #f5f5f7;
@@ -463,6 +466,122 @@
     line-height: 1.5;
   }
   .cleanup-banner strong { color: #1d1d1f; }
+  /* v1.4.0: actions bar inside cleanup banner */
+  .cleanup-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .cleanup-banner-actions .btn {
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+  .btn.danger {
+    background: #ff3b30;
+    color: #fff;
+    border-color: #ff3b30;
+  }
+  .btn.danger:hover { background: #d70015; border-color: #d70015; }
+  .btn.danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* v1.4.0: item preview (thumbnail + button) */
+  .item-preview {
+    margin: 8px 0 4px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f0f0f2;
+    max-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .item-thumb {
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    cursor: zoom-in;
+    display: block;
+    transition: transform 0.15s ease;
+  }
+  .item-thumb:hover { transform: scale(1.02); }
+  .item-preview-btn-wrap { margin: 8px 0 4px; }
+  .item-preview-btn {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+    background: #f5f5f7;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-family: inherit;
+    transition: all 0.15s ease;
+  }
+  .item-preview-btn:hover {
+    background: #eaeaee;
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* v1.4.0: full-screen preview overlay */
+  .preview-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    flex-direction: column;
+  }
+  .preview-overlay.is-open { display: flex; }
+  .preview-overlay-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 0;
+    font-size: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .preview-overlay-close:hover { background: rgba(255,255,255,0.25); }
+  .preview-content {
+    max-width: 100%;
+    max-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .preview-content img,
+  .preview-content video { max-width: 100%; max-height: 80vh; border-radius: 8px; background: #000; }
+  .preview-caption {
+    color: #fff;
+    margin-top: 14px;
+    font-size: 13px;
+    opacity: 0.85;
+    text-align: center;
+    word-break: break-all;
+    max-width: 80%;
+  }
+  .preview-fallback {
+    background: #fff;
+    border-radius: 12px;
+    padding: 40px 60px;
+    text-align: center;
+    color: var(--text);
+  }
+  .preview-fallback-icon { font-size: 64px; }
+  .preview-fallback-msg { margin-top: 12px; font-size: 14px; }
 
   /* MICRO-GUIDE — onboarding contestuale sopra l'empty state */
   .micro-guide {
@@ -1142,6 +1261,10 @@
         <span class="export-option-title" data-i18n="xlsxExportLabel">📊 Excel organizzato</span>
         <span class="export-option-desc" data-i18n="xlsxExportLabelDesc">Scarica un nuovo file .xlsx con la colonna Stato o 3 fogli separati. Solo per workspace Excel.</span>
       </button>
+      <button class="export-option export-option--primary hidden" id="exp-zip">
+        <span class="export-option-title" data-i18n="zipExportLabel">📦 ZIP organizzato (con i file veri)</span>
+        <span class="export-option-desc" data-i18n="zipExportLabelDesc">Scarica un .zip con i file caricati, organizzati in cartelle Tenere/Archiviare. I 'Da cestinare' non vengono inclusi.</span>
+      </button>
       <button class="export-option export-option--primary" id="exp-pdf">
         <span class="export-option-title" data-i18n="exportPDF">📄 PDF (consigliato)</span>
         <span class="export-option-desc" data-i18n="exportPDFDesc">Documento stampabile, leggibile su qualsiasi dispositivo. Apre la finestra di stampa: scegli "Salva come PDF".</span>
@@ -1297,6 +1420,13 @@
   </div>
   <div class="dialog-body" id="manual-body"></div>
 </dialog>
+
+<!-- v1.4.0: Preview overlay for cleanup file thumbnails / video / pdf -->
+<div class="preview-overlay" id="cleanup-preview-overlay" role="dialog" aria-modal="true">
+  <button class="preview-overlay-close" id="cleanup-preview-close" aria-label="Close">×</button>
+  <div class="preview-content" id="cleanup-preview-content"></div>
+  <div class="preview-caption" id="cleanup-preview-caption"></div>
+</div>
 
 <!-- File picker nascosto per il template "Pulizia file & Desktop" -->
 <input type="file" id="cleanup-files" multiple hidden>
@@ -1514,7 +1644,34 @@ const I18N = {
     cleanupDisclaimerTitle: "📂 Pulizia file & Desktop",
     cleanupDisclaimerConfirm: "Ho capito, procedi",
     cleanupDisclaimerDontShow: "Non mostrare più questo messaggio",
-    cleanupBanner: "💡 <strong>Promemoria</strong>: TriageHub non sposta i file da solo. Le scelte qui sono marcature per il report finale. Quando hai finito di smistare, clicca <strong>↑ Esporta</strong> → <strong>📄 PDF</strong>: il report ti guiderà passo-passo nello spostamento e cancellazione dei file sul tuo computer."
+    cleanupBanner: "💡 <strong>Modalità avanzata v1.4</strong>: usa <strong>📁 Apri cartella</strong> (Chrome/Edge desktop) per cancellare e spostare file VERI. Su Safari/iPhone/Android, usa <strong>📥 Carica file</strong> + esporta <strong>📦 ZIP organizzato</strong>: i file da cestinare non vengono inclusi, gli altri sì.",
+    // v1.4.0 — File System Access API & ZIP organizzato
+    cleanupLoadFolder: "📁 Apri cartella (cancella file veri)",
+    cleanupLoadFolderHint: "Solo Chrome / Edge / Opera desktop. Su Safari, iPhone, Android usa \"Carica file\" + ZIP organizzato.",
+    cleanupOpenFolder: "📁 Apri cartella",
+    cleanupApplyOnDisk: "⚡ Applica al disco",
+    cleanupApplyOnDiskHint: "Cancella i file 'Da cestinare' e sposta quelli 'Da archiviare' in una sottocartella _TriageHub_Archivio. Azione irreversibile.",
+    cleanupPreview: "👁 Anteprima",
+    fsaNotSupported: "⚠️ Il tuo browser non supporta l'accesso diretto alle cartelle. Usa Chrome o Edge desktop, oppure usa \"Carica file\" + esporta ZIP.",
+    fsaError: "❌ Errore nell'apertura della cartella",
+    fsaPermissionDenied: "❌ Permesso negato. Senza accesso non posso modificare i file.",
+    fsaEmptyFolder: "📂 Cartella vuota o senza file accessibili",
+    fsaSkippedSubdirs: n => `ℹ️ Ho saltato ${n} sottocartell${n === 1 ? 'a' : 'e'}. Apri ogni sottocartella separatamente se vuoi smistarne il contenuto.`,
+    fsaNoDirHandle: "⚠️ Questo workspace non ha una cartella attiva. Usa 📁 Apri cartella prima.",
+    fsaNothingToDo: "ℹ️ Nessun file marcato come Da archiviare o Da cestinare. Niente da fare sul disco.",
+    fsaConfirmSummary: (trash, arch) => `Sto per modificare il disco:\n\n• Cancellare ${trash} file (Da cestinare)\n• Spostare ${arch} file nella cartella _TriageHub_Archivio\n\nL'operazione è irreversibile (i file cancellati NON finiscono nel Cestino di sistema).\n\nProcedo?`,
+    fsaDone: (del, mov, err) => `✓ ${del} cancellati, ${mov} archiviati${err ? `, ${err} errori` : ''}`,
+    zipLibMissing: "❌ Libreria ZIP non caricata. Ricarica la pagina.",
+    zipBuilding: "⏳ Creo lo ZIP…",
+    zipDone: (k, a, s) => `✓ ZIP scaricato: ${k} tenere, ${a} archiviare, ${s} esclusi (cestinati)`,
+    zipEmpty: "ℹ️ Nessun file da includere nello ZIP",
+    zipError: "❌ Errore nella creazione dello ZIP",
+    zipFolderKeep: "Tenere",
+    zipFolderArchive: "Archiviare",
+    zipExportLabel: "📦 ZIP organizzato (con i file veri)",
+    zipExportLabelDesc: "Scarica un .zip con i file caricati, organizzati in cartelle Tenere/Archiviare. I 'Da cestinare' non vengono inclusi.",
+    previewNoBlob: "⚠️ Anteprima non disponibile (file non più in memoria, ricarica il file)",
+    previewUnsupported: "Anteprima non disponibile per questo tipo di file"
   },
   en: {
     subtitle: "Triage anything into three states. Items, categories and states fully customizable.",
@@ -1652,7 +1809,34 @@ const I18N = {
     cleanupDisclaimerTitle: "📂 File & Desktop cleanup",
     cleanupDisclaimerConfirm: "Got it, proceed",
     cleanupDisclaimerDontShow: "Don't show this message again",
-    cleanupBanner: "💡 <strong>Reminder</strong>: TriageHub doesn't move files for you. Your choices here are markers for the final report. When done sorting, click <strong>↑ Export</strong> → <strong>📄 PDF</strong>: the report will guide you step-by-step through moving and deleting files on your computer."
+    cleanupBanner: "💡 <strong>Advanced mode v1.4</strong>: use <strong>📁 Open folder</strong> (Chrome/Edge desktop) to delete and move REAL files. On Safari/iPhone/Android, use <strong>📥 Load files</strong> + export <strong>📦 Organized ZIP</strong>: trashed files are excluded, the rest is included.",
+    // v1.4.0 — File System Access API & Organized ZIP
+    cleanupLoadFolder: "📁 Open folder (delete real files)",
+    cleanupLoadFolderHint: "Chrome / Edge / Opera desktop only. On Safari, iPhone, Android use \"Load files\" + Organized ZIP.",
+    cleanupOpenFolder: "📁 Open folder",
+    cleanupApplyOnDisk: "⚡ Apply to disk",
+    cleanupApplyOnDiskHint: "Deletes 'To trash' files and moves 'To archive' ones into a _TriageHub_Archive subfolder. Irreversible.",
+    cleanupPreview: "👁 Preview",
+    fsaNotSupported: "⚠️ Your browser doesn't support direct folder access. Use desktop Chrome or Edge, or use \"Load files\" + ZIP export.",
+    fsaError: "❌ Error opening the folder",
+    fsaPermissionDenied: "❌ Permission denied. Without access I cannot modify the files.",
+    fsaEmptyFolder: "📂 Empty folder or no readable files",
+    fsaSkippedSubdirs: n => `ℹ️ Skipped ${n} subfolder${n === 1 ? '' : 's'}. Open each subfolder separately to triage its contents.`,
+    fsaNoDirHandle: "⚠️ This workspace has no active folder. Use 📁 Open folder first.",
+    fsaNothingToDo: "ℹ️ No files marked as To archive or To trash. Nothing to do on disk.",
+    fsaConfirmSummary: (trash, arch) => `About to modify the disk:\n\n• Delete ${trash} files (To trash)\n• Move ${arch} files to the _TriageHub_Archive folder\n\nThis is irreversible (deleted files do NOT go to system Trash).\n\nProceed?`,
+    fsaDone: (del, mov, err) => `✓ ${del} deleted, ${mov} archived${err ? `, ${err} errors` : ''}`,
+    zipLibMissing: "❌ ZIP library not loaded. Reload the page.",
+    zipBuilding: "⏳ Building ZIP…",
+    zipDone: (k, a, s) => `✓ ZIP downloaded: ${k} kept, ${a} archived, ${s} excluded (trashed)`,
+    zipEmpty: "ℹ️ No files to include in the ZIP",
+    zipError: "❌ Error building the ZIP",
+    zipFolderKeep: "Keep",
+    zipFolderArchive: "Archive",
+    zipExportLabel: "📦 Organized ZIP (with real files)",
+    zipExportLabelDesc: "Download a .zip with the loaded files, organized into Keep/Archive folders. 'To trash' files are not included.",
+    previewNoBlob: "⚠️ Preview unavailable (file no longer in memory, reload the file)",
+    previewUnsupported: "Preview not available for this file type"
   }
 };
 
@@ -2599,9 +2783,22 @@ function renderItems() {
   }
 
   // v1.2.4: nel workspace cleanup, mostra sempre un banner promemoria.
-  const bannerHtml = ws.templateId === 'cleanup'
-    ? `<div class="cleanup-banner">${t('cleanupBanner')}</div>`
-    : '';
+  // v1.4.0: aggiunge bottoni azione (Apri cartella, Applica al disco).
+  let bannerHtml = '';
+  if (ws.templateId === 'cleanup') {
+    const fsaOk = supportsFileSystemAccess();
+    const hasDir = canExecuteOnDisk();
+    const actions = [];
+    actions.push(`<button class="btn primary" id="cleanup-btn-open-folder"${fsaOk ? '' : ' disabled title="' + escapeHtml(t('fsaNotSupported')) + '"'}>${escapeHtml(t('cleanupOpenFolder'))}</button>`);
+    actions.push(`<button class="btn" id="cleanup-btn-load-files">${escapeHtml(t('desktopLoadFiles'))}</button>`);
+    if (hasDir) {
+      actions.push(`<button class="btn danger" id="cleanup-btn-apply-disk" title="${escapeHtml(t('cleanupApplyOnDiskHint'))}">${escapeHtml(t('cleanupApplyOnDisk'))}</button>`);
+    }
+    bannerHtml = `<div class="cleanup-banner">
+      ${t('cleanupBanner')}
+      <div class="cleanup-banner-actions">${actions.join('')}</div>
+    </div>`;
+  }
 
   const groups = new Map();
   filtered.forEach(it => {
@@ -2649,6 +2846,24 @@ function renderItems() {
       </div>`;
 
       if (it.desc) html += `<div class="item-desc">${escapeHtml(it.desc)}</div>`;
+
+      // v1.4.0: anteprima file per workspace cleanup. Per immagini mostra
+      // una thumbnail cliccabile; per audio/video/pdf un bottone Anteprima.
+      // Possibile solo se il blob è ancora in memoria (cleanupFileRegistry).
+      if (ws.templateId === 'cleanup' && cleanupFileRegistry.has(it.id)) {
+        const rec = cleanupFileRegistry.get(it.id);
+        const mime = (rec.file && rec.file.type) || '';
+        if (mime.startsWith('image/')) {
+          // Object URL on-demand: lo creiamo qui ma il browser lo ricicla
+          // quando il DOM lo rimuove. Per evitare memory leak su grandi liste,
+          // mostriamo l'img solo se la card è "piccola" (max 200 thumbnail).
+          const thumbUrl = URL.createObjectURL(rec.file);
+          html += `<div class="item-preview"><img class="item-thumb" src="${thumbUrl}" alt="" loading="lazy" data-preview="${it.id}" title="${escapeHtml(t('cleanupPreview'))}"></div>`;
+        } else if (mime.startsWith('video/') || mime.startsWith('audio/') || mime === 'application/pdf') {
+          const icon = mime.startsWith('video/') ? '🎬' : mime.startsWith('audio/') ? '🎵' : '📄';
+          html += `<div class="item-preview-btn-wrap"><button class="item-preview-btn" data-preview="${it.id}">${icon} ${escapeHtml(t('cleanupPreview'))}</button></div>`;
+        }
+      }
 
       // Colonne extra del template xlsx (v1.3.0): mostra come <details> espandibile.
       if (it.xlsxData && ws.xlsxMapping) {
@@ -2700,6 +2915,21 @@ function renderItems() {
   });
   main.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => openItemDialog(btn.dataset.edit));
+  });
+
+  // v1.4.0: bottoni banner cleanup
+  const btnOpenFolder = main.querySelector('#cleanup-btn-open-folder');
+  if (btnOpenFolder) btnOpenFolder.addEventListener('click', triggerCleanupDirectoryPicker);
+  const btnLoadFiles = main.querySelector('#cleanup-btn-load-files');
+  if (btnLoadFiles) btnLoadFiles.addEventListener('click', triggerCleanupFilePicker);
+  const btnApplyDisk = main.querySelector('#cleanup-btn-apply-disk');
+  if (btnApplyDisk) btnApplyDisk.addEventListener('click', executeCleanupOnDisk);
+  // v1.4.0: bottoni anteprima sulle card
+  main.querySelectorAll('[data-preview]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openCleanupPreview(btn.dataset.preview);
+    });
   });
 }
 
@@ -3360,29 +3590,58 @@ function formatItalianDate(ts) {
   return `${dd}/${mm}/${d.getFullYear()}`;
 }
 
+// v1.4.0: registro in-memory dei File blob caricati nel template cleanup.
+// Chiave = item.id, valore = { file: File, handle?: FileSystemFileHandle, dirHandle?: FileSystemDirectoryHandle }.
+// NON va in localStorage (File non è serializzabile e sarebbe enorme).
+// Vive solo per la sessione, ma è quello che serve per anteprima foto/video,
+// export ZIP organizzato, e cancellazione/spostamento via File System Access API.
+const cleanupFileRegistry = new Map();
+
+// Per i file caricati via showDirectoryPicker, salvo anche il directoryHandle
+// così posso cancellare/spostare in-place. Una sola directory attiva per workspace.
+const cleanupDirHandles = new Map(); // workspaceId -> FileSystemDirectoryHandle
+
 // Inserisce N item nel workspace attivo a partire dai File selezionati
-// dall'<input type="file" multiple>. Privacy: leggiamo solo i metadata.
-function handleCleanupFiles(fileList) {
+// dall'<input type="file" multiple> oppure da una directory FSA API.
+// v1.4.0: salva anche il File blob in cleanupFileRegistry per usi avanzati.
+// entries: array di { file: File, handle?: FileSystemFileHandle, relPath?: string }
+function handleCleanupFiles(fileList, options) {
   const ws = activeWorkspace();
   if (!ws) return;
-  const files = Array.from(fileList || []);
-  if (!files.length) return;
-  files.forEach(f => {
+  options = options || {};
+  // Normalizzo input: accetto sia un FileList sia un array di entries {file, handle, relPath}
+  const entries = Array.from(fileList || []).map(item => {
+    if (item && item.file instanceof File) return item; // già entry
+    if (item instanceof File) return { file: item };    // FileList classico
+    return null;
+  }).filter(Boolean);
+  if (!entries.length) return;
+  entries.forEach(entry => {
+    const f = entry.file;
     const sizeMB = Math.round((f.size / (1024 * 1024)) * 100) / 100;
+    const id = uid();
     ws.items.unshift({
-      id: uid(),
+      id,
       name: f.name,
-      desc: '',
+      desc: entry.relPath && entry.relPath !== f.name ? entry.relPath : '',
       cat: detectFileCategory(f, ws),
       tag: f.lastModified ? formatItalianDate(f.lastModified) : '',
       value: sizeMB,
       links: [],
-      created: new Date().toISOString()
+      created: new Date().toISOString(),
+      // v1.4.0: marker per UI (non persistito tra sessioni perché il blob no)
+      hasBlob: true,
+      mimeType: f.type || ''
+    });
+    cleanupFileRegistry.set(id, {
+      file: f,
+      handle: entry.handle || null,
+      relPath: entry.relPath || f.name
     });
   });
   saveState();
   renderAll();
-  toast(t('desktopLoadedFiles', files.length));
+  toast(t('desktopLoadedFiles', entries.length));
 }
 
 function triggerCleanupFilePicker() {
@@ -3392,6 +3651,370 @@ document.getElementById('cleanup-files').addEventListener('change', e => {
   if (e.target.files && e.target.files.length) handleCleanupFiles(e.target.files);
   e.target.value = ''; // reset così il change si triggera anche con stessa selezione
 });
+
+// ============================================
+// v1.4.0: GESTIONE FILE REALI (cleanup avanzato)
+// ============================================
+// Tre modalità:
+//  A) File System Access API (Chrome/Edge/Opera desktop): apre una cartella,
+//     può leggere/cancellare/spostare file VERI sul disco con permesso utente.
+//  B) Fallback: usa il file picker classico + export ZIP organizzato.
+//  C) Anteprima inline foto/video usando il File blob già in memoria.
+
+function supportsFileSystemAccess() {
+  return typeof window.showDirectoryPicker === 'function';
+}
+
+// Apre il picker di cartella. L'utente sceglie es. il Desktop, l'app legge
+// ricorsivamente tutti i file e li aggiunge al workspace come item con
+// handle disponibile per cancellazione/spostamento successivi.
+async function triggerCleanupDirectoryPicker() {
+  if (!supportsFileSystemAccess()) {
+    toast(t('fsaNotSupported'));
+    return;
+  }
+  const ws = activeWorkspace();
+  if (!ws) return;
+  let dirHandle;
+  try {
+    dirHandle = await window.showDirectoryPicker({
+      mode: 'readwrite',
+      id: 'triagehub-cleanup',
+      startIn: 'desktop'
+    });
+  } catch (err) {
+    if (err && err.name === 'AbortError') return; // utente ha annullato
+    console.error(err);
+    toast(t('fsaError'));
+    return;
+  }
+  // Verifico/richiedo permesso readwrite (alcuni browser separano query/request)
+  try {
+    if (dirHandle.requestPermission) {
+      const perm = await dirHandle.requestPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') {
+        toast(t('fsaPermissionDenied'));
+        return;
+      }
+    }
+  } catch (_) { /* alcuni browser non implementano requestPermission, va bene lo stesso */ }
+
+  cleanupDirHandles.set(ws.id, dirHandle);
+
+  // Leggo ricorsivamente i file della cartella (solo primo livello per ora,
+  // così non esplodo su cartelle gigantesche; le sottocartelle vengono
+  // segnalate ma non aperte automaticamente).
+  const entries = [];
+  let skippedSubdirs = 0;
+  try {
+    for await (const [name, handle] of dirHandle.entries()) {
+      if (handle.kind === 'file') {
+        try {
+          const file = await handle.getFile();
+          entries.push({ file, handle, relPath: name });
+        } catch (_) { /* file non leggibile, skip */ }
+      } else if (handle.kind === 'directory') {
+        // Salto la cartella di archivio se già creata da TriageHub
+        if (name === '_TriageHub_Archivio' || name === '_TriageHub_Archive') continue;
+        skippedSubdirs++;
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    toast(t('fsaError'));
+    return;
+  }
+
+  if (!entries.length) {
+    toast(t('fsaEmptyFolder'));
+    return;
+  }
+  handleCleanupFiles(entries);
+  if (skippedSubdirs > 0) {
+    setTimeout(() => toast(t('fsaSkippedSubdirs', skippedSubdirs)), 1200);
+  }
+}
+
+// Restituisce il File blob (se ancora in registry) o null.
+function getCleanupBlob(itemId) {
+  const rec = cleanupFileRegistry.get(itemId);
+  return rec ? rec.file : null;
+}
+
+// Restituisce true se posso ESEGUIRE davvero le azioni (delete/move) sul disco,
+// cioè se il workspace ha una directory handle attiva.
+function canExecuteOnDisk() {
+  const ws = activeWorkspace();
+  if (!ws) return false;
+  return cleanupDirHandles.has(ws.id);
+}
+
+// Applica le decisioni di triage al disco vero: cancella i "trash" e sposta
+// gli "archive" in una sottocartella _TriageHub_Archivio/. I "keep" restano.
+// Richiede che il workspace abbia una directory handle (FSA API attiva).
+async function executeCleanupOnDisk() {
+  const ws = activeWorkspace();
+  if (!ws) return;
+  const dirHandle = cleanupDirHandles.get(ws.id);
+  if (!dirHandle) {
+    toast(t('fsaNoDirHandle'));
+    return;
+  }
+
+  // Trovo gli status "trash" e "archive" per ID. Heuristic: cerco per nome
+  // localizzato O dal trio standard. Se l'utente li ha rinominati ma non i
+  // colori/posizione, faccio fallback su posizione (3° = trash, 2° = archive).
+  const statusMap = mapStatusRoles(ws);
+
+  const trashItems = [];
+  const archiveItems = [];
+  Object.keys(ws.itemStatus).forEach(itemId => {
+    const stId = ws.itemStatus[itemId];
+    if (!stId) return;
+    if (stId === statusMap.trash)   trashItems.push(itemId);
+    if (stId === statusMap.archive) archiveItems.push(itemId);
+  });
+
+  if (!trashItems.length && !archiveItems.length) {
+    toast(t('fsaNothingToDo'));
+    return;
+  }
+
+  // Conferma esplicita: l'azione è distruttiva.
+  const summary = t('fsaConfirmSummary', trashItems.length, archiveItems.length);
+  if (!confirm(summary)) return;
+
+  let deleted = 0, moved = 0, errors = 0;
+
+  // 1) Cancello i "trash"
+  for (const itemId of trashItems) {
+    const rec = cleanupFileRegistry.get(itemId);
+    if (!rec || !rec.handle) { errors++; continue; }
+    try {
+      // dirHandle.removeEntry richiede il NOME del file, non l'handle
+      await dirHandle.removeEntry(rec.relPath || rec.file.name);
+      deleted++;
+      // Rimuovo l'item dal workspace
+      const idx = ws.items.findIndex(i => i.id === itemId);
+      if (idx !== -1) ws.items.splice(idx, 1);
+      delete ws.itemStatus[itemId];
+      cleanupFileRegistry.delete(itemId);
+    } catch (err) {
+      console.error('Delete failed for', rec.relPath, err);
+      errors++;
+    }
+  }
+
+  // 2) Sposto gli "archive" nella sottocartella _TriageHub_Archivio
+  if (archiveItems.length) {
+    let archiveDir;
+    try {
+      archiveDir = await dirHandle.getDirectoryHandle('_TriageHub_Archivio', { create: true });
+    } catch (err) {
+      console.error('Cannot create archive subdir', err);
+      errors += archiveItems.length;
+      archiveDir = null;
+    }
+    if (archiveDir) {
+      for (const itemId of archiveItems) {
+        const rec = cleanupFileRegistry.get(itemId);
+        if (!rec) { errors++; continue; }
+        try {
+          // "Spostare" via FSA API = copia + cancella (non c'è move() nativo
+          // multi-browser stabile). Uso il File blob già in memoria per scrivere.
+          const newHandle = await archiveDir.getFileHandle(rec.relPath || rec.file.name, { create: true });
+          const writable = await newHandle.createWritable();
+          await writable.write(rec.file);
+          await writable.close();
+          // Ora rimuovo l'originale
+          await dirHandle.removeEntry(rec.relPath || rec.file.name);
+          moved++;
+          // Rimuovo dall'UI: l'item è "fatto"
+          const idx = ws.items.findIndex(i => i.id === itemId);
+          if (idx !== -1) ws.items.splice(idx, 1);
+          delete ws.itemStatus[itemId];
+          cleanupFileRegistry.delete(itemId);
+        } catch (err) {
+          console.error('Move failed for', rec.relPath, err);
+          errors++;
+        }
+      }
+    }
+  }
+
+  saveState();
+  renderAll();
+  toast(t('fsaDone', deleted, moved, errors));
+}
+
+// Heuristic per identificare quale status è "keep", "archive", "trash" nel
+// workspace cleanup. Per default i template cleanup hanno 3 status in
+// quest'ordine, ma l'utente potrebbe averli rinominati o riordinati.
+function mapStatusRoles(ws) {
+  const roles = { keep: null, archive: null, trash: null };
+  const statuses = ws.statuses || [];
+  // Strategia 1: matcho per nome canonico (case-insensitive, IT + EN)
+  const canon = {
+    keep:    /tener|keep/i,
+    archive: /archivi|archive/i,
+    trash:   /cestin|delete|trash|elimina/i
+  };
+  statuses.forEach(s => {
+    const name = (typeof s.name === 'object') ? (s.name.it + ' ' + s.name.en) : String(s.name || '');
+    if (!roles.keep    && canon.keep.test(name))    roles.keep    = s.id;
+    if (!roles.archive && canon.archive.test(name)) roles.archive = s.id;
+    if (!roles.trash   && canon.trash.test(name))   roles.trash   = s.id;
+  });
+  // Strategia 2: fallback per posizione (1°=keep, 2°=archive, 3°=trash)
+  if (!roles.keep    && statuses[0]) roles.keep    = statuses[0].id;
+  if (!roles.archive && statuses[1]) roles.archive = statuses[1].id;
+  if (!roles.trash   && statuses[2]) roles.trash   = statuses[2].id;
+  return roles;
+}
+
+// Export "ZIP organizzato": pacchetta i file caricati in un .zip con
+// sottocartelle Tenere/Archiviare. I file "Da cestinare" NON vengono inclusi
+// → il risultato è che, sostituendo la cartella originale con il contenuto
+// dello zip, hai eliminato i file indesiderati. Funziona ovunque, anche
+// su Safari, iPhone, Android.
+async function exportCleanupZip() {
+  if (typeof JSZip === 'undefined') {
+    toast(t('zipLibMissing'));
+    return;
+  }
+  const ws = activeWorkspace();
+  if (!ws) return;
+
+  const statusMap = mapStatusRoles(ws);
+  const zip = new JSZip();
+
+  let keepCount = 0, archiveCount = 0, skipCount = 0, missingCount = 0;
+  const folderKeep    = zip.folder(t('zipFolderKeep'));
+  const folderArchive = zip.folder(t('zipFolderArchive'));
+
+  ws.items.forEach(it => {
+    const rec = cleanupFileRegistry.get(it.id);
+    const stId = ws.itemStatus[it.id];
+    // Senza blob non posso includere il file (es. dopo un reload pagina)
+    if (!rec) { missingCount++; return; }
+    if (stId === statusMap.trash) { skipCount++; return; }
+    if (stId === statusMap.archive) {
+      folderArchive.file(it.name, rec.file);
+      archiveCount++;
+    } else {
+      // Tutto il resto (keep o non smistato) finisce in "Tenere"
+      folderKeep.file(it.name, rec.file);
+      keepCount++;
+    }
+  });
+
+  if (keepCount === 0 && archiveCount === 0) {
+    toast(t('zipEmpty'));
+    return;
+  }
+
+  // Aggiungo un README dentro lo zip per spiegare cos'è
+  zip.file('README.txt', buildZipReadme(keepCount, archiveCount, skipCount, missingCount));
+
+  toast(t('zipBuilding'));
+  try {
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    });
+    const ts = new Date().toISOString().slice(0, 10);
+    const wsName = localized(ws.name) || 'workspace';
+    const safeName = String(wsName).replace(/[^a-z0-9-_]+/gi, '_');
+    saveFile(blob, `TriageHub_${safeName}_${ts}.zip`);
+    toast(t('zipDone', keepCount, archiveCount, skipCount));
+  } catch (err) {
+    console.error(err);
+    toast(t('zipError'));
+  }
+  // Chiudo il dialog di export solo se è effettivamente aperto
+  // (la funzione può anche essere chiamata fuori da quel flow)
+  const dlg = document.getElementById('dlg-export');
+  if (dlg && dlg.open) closeDialog('dlg-export');
+}
+
+function buildZipReadme(keep, archive, skip, missing) {
+  return [
+    '=== TriageHub — ZIP organizzato ===',
+    '',
+    `File da tenere:     ${keep}`,
+    `File da archiviare: ${archive}`,
+    `File scartati (da cestinare, non inclusi): ${skip}`,
+    missing ? `File non disponibili (blob perso dopo reload): ${missing}` : null,
+    '',
+    'Come usare questo ZIP:',
+    '1. Estrai lo ZIP in una nuova cartella',
+    '2. Trovi due sottocartelle: Tenere/ e Archiviare/',
+    '3. I file "Da cestinare" NON sono stati inclusi: per ottenere',
+    '   il risultato finale, sostituisci la cartella originale con',
+    '   il contenuto di questo ZIP (oppure cancella la vecchia e usa questa).',
+    '',
+    'Generato da TriageHub v1.4.0 — https://github.com/pezzaliapp/TriageHub'
+  ].filter(Boolean).join('\n');
+}
+
+// Helper download — riusabile, evita dipendenza da implementazioni interne
+function saveFile(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+// Apre un overlay con anteprima del file. Funziona per immagini, video, audio
+// e PDF (se il browser sa renderli inline). Per gli altri, mostra solo info.
+function openCleanupPreview(itemId) {
+  const rec = cleanupFileRegistry.get(itemId);
+  if (!rec) { toast(t('previewNoBlob')); return; }
+  const file = rec.file;
+  const overlay = document.getElementById('cleanup-preview-overlay');
+  const content = document.getElementById('cleanup-preview-content');
+  const caption = document.getElementById('cleanup-preview-caption');
+  const mime = file.type || '';
+  const url = URL.createObjectURL(file);
+  let inner = '';
+  if (mime.startsWith('image/')) {
+    inner = `<img src="${url}" alt="${escapeHtml(file.name)}">`;
+  } else if (mime.startsWith('video/')) {
+    inner = `<video src="${url}" controls autoplay></video>`;
+  } else if (mime.startsWith('audio/')) {
+    inner = `<audio src="${url}" controls autoplay style="width:100%"></audio>`;
+  } else if (mime === 'application/pdf') {
+    inner = `<iframe src="${url}" style="width:100%;height:80vh;border:0;background:#fff;border-radius:8px"></iframe>`;
+  } else {
+    inner = `<div class="preview-fallback">
+      <div class="preview-fallback-icon">📄</div>
+      <div class="preview-fallback-msg">${escapeHtml(t('previewUnsupported'))}</div>
+    </div>`;
+  }
+  content.innerHTML = inner;
+  const sizeMB = Math.round((file.size / (1024 * 1024)) * 100) / 100;
+  caption.textContent = `${file.name} • ${sizeMB} MB${mime ? ' • ' + mime : ''}`;
+  overlay.classList.add('is-open');
+  overlay.dataset.objectUrl = url; // così posso revocarlo alla chiusura
+}
+
+function closeCleanupPreview() {
+  const overlay = document.getElementById('cleanup-preview-overlay');
+  const content = document.getElementById('cleanup-preview-content');
+  if (overlay.dataset.objectUrl) {
+    URL.revokeObjectURL(overlay.dataset.objectUrl);
+    delete overlay.dataset.objectUrl;
+  }
+  content.innerHTML = '';
+  overlay.classList.remove('is-open');
+}
 
 // ============================================
 // XLSX TEMPLATE (v1.3.0)
@@ -4375,14 +4998,38 @@ document.getElementById('btn-export').addEventListener('click', () => {
   const xlsxBtn = document.getElementById('exp-xlsx');
   const pdfBtn = document.getElementById('exp-pdf');
   if (xlsxBtn) xlsxBtn.classList.toggle('hidden', !isXlsx);
+  // v1.4.0: bottone "ZIP organizzato" solo per cleanup workspaces con file in memoria
+  const isCleanupWithBlobs = ws.templateId === 'cleanup' &&
+    ws.items.some(it => cleanupFileRegistry.has(it.id));
+  const zipBtn = document.getElementById('exp-zip');
+  if (zipBtn) zipBtn.classList.toggle('hidden', !isCleanupWithBlobs);
   // Per gli xlsx workspaces, sposta il "primary" su Excel: rimuovi modifier su PDF.
-  if (pdfBtn) pdfBtn.classList.toggle('export-option--primary', !isXlsx);
+  // Per i cleanup con blob, il primary è ZIP: rimuovi modifier su PDF.
+  if (pdfBtn) pdfBtn.classList.toggle('export-option--primary', !isXlsx && !isCleanupWithBlobs);
   openDialog('dlg-export');
 });
 
 document.getElementById('exp-xlsx').addEventListener('click', () => {
   closeDialog('dlg-export');
   openDialog('dlg-xlsx-export');
+});
+
+// v1.4.0: ZIP organizzato
+document.getElementById('exp-zip').addEventListener('click', () => {
+  exportCleanupZip();
+});
+
+// v1.4.0: chiusura overlay anteprima
+document.getElementById('cleanup-preview-close').addEventListener('click', closeCleanupPreview);
+document.getElementById('cleanup-preview-overlay').addEventListener('click', e => {
+  // Click sull'overlay (fuori dal contenuto) chiude
+  if (e.target.id === 'cleanup-preview-overlay') closeCleanupPreview();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const ov = document.getElementById('cleanup-preview-overlay');
+    if (ov && ov.classList.contains('is-open')) closeCleanupPreview();
+  }
 });
 
 // JSON = backup COMPLETO di tutti i workspace (formato v1.2).
